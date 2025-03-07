@@ -244,39 +244,39 @@ bool EEPROMManager::saveSafetyConfig(uint32_t positionErrorThreshold, float velo
     return true;
 }
 
-int EEPROMManager::loadUserData(void* data, size_t size) {
-    if (!m_initialized || !m_configValid || data == nullptr) {
-        return -1;
-    }
-
-    // Limit size to available space
-    if (size > ADDR_USER_DATA_SIZE) {
-        size = ADDR_USER_DATA_SIZE;
-    }
-
-    // Read data byte-by-byte
-    uint8_t* byteData = static_cast<uint8_t*>(data);
-    for (size_t i = 0; i < size; i++) {
-        byteData[i] = EEPROM.read(ADDR_USER_DATA_START + i);
-    }
-
-    return size;
-}
-
-int EEPROMManager::saveUserData(const void* data, size_t size) {
+int EEPROMManager::saveUserData(const void* data, size_t size, uint16_t address) {
     if (!m_initialized || data == nullptr) {
         return -1;
     }
 
     // Limit size to available space
-    if (size > ADDR_USER_DATA_SIZE) {
-        size = ADDR_USER_DATA_SIZE;
+    if (size + address > CONFIG_EEPROM_SIZE) {
+        size = CONFIG_EEPROM_SIZE - address;
     }
 
     // Write data byte-by-byte
     const uint8_t* byteData = static_cast<const uint8_t*>(data);
     for (size_t i = 0; i < size; i++) {
-        EEPROM.write(ADDR_USER_DATA_START + i, byteData[i]);
+        EEPROM.write(address + i, byteData[i]);
+    }
+
+    return size;
+}
+
+int EEPROMManager::loadUserData(void* data, size_t size, uint16_t address) {
+    if (!m_initialized || !m_configValid || data == nullptr) {
+        return -1;
+    }
+
+    // Limit size to available space
+    if (size + address > CONFIG_EEPROM_SIZE) {
+        size = CONFIG_EEPROM_SIZE - address;
+    }
+
+    // Read data byte-by-byte
+    uint8_t* byteData = static_cast<uint8_t*>(data);
+    for (size_t i = 0; i < size; i++) {
+        byteData[i] = EEPROM.read(address + i);
     }
 
     return size;

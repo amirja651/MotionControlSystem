@@ -184,22 +184,24 @@ class EEPROMManager {
                           float maxTemperature);
 
     /**
-     * Load user data
+     * Save user data to a specific EEPROM address
      *
-     * @param data Pointer to data buffer
-     * @param size Size of data buffer
-     * @return Number of bytes read, or -1 if error
-     */
-    int loadUserData(void* data, size_t size);
-
-    /**
-     * Save user data
-     *
-     * @param data Pointer to data buffer
-     * @param size Size of data to save
+     * @param data Pointer to data to save
+     * @param size Size of data
+     * @param address EEPROM address to save data
      * @return Number of bytes written, or -1 if error
      */
-    int saveUserData(const void* data, size_t size);
+    int saveUserData(const void* data, size_t size, uint16_t address);
+
+    /**
+     * Load user data from a specific EEPROM address
+     *
+     * @param data Pointer to buffer to load data
+     * @param size Size of data
+     * @param address EEPROM address to load data from
+     * @return Number of bytes read, or -1 if error
+     */
+    int loadUserData(void* data, size_t size, uint16_t address);
 
    private:
     // EEPROM state

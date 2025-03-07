@@ -409,7 +409,11 @@ void SystemManager::restoreMotorPositions() {
             }
 
             // Move to the previously saved position
-            motor->moveToPosition(position);
+            // Restore motor positions
+            motor->moveToPosition(position,
+                                  CONFIG_DEFAULT_MAX_VELOCITY / 2.0f,  // Default half max velocity
+                                  CONFIG_DEFAULT_ACCELERATION,         // Default acceleration
+                                  CONFIG_DEFAULT_DECELERATION);        // Default deceleration
         }
     }
 }
