@@ -37,8 +37,8 @@
 #define CONFIG_EEPROM_VERSION 1
 
 // Motion Control Parameters
-#define CONFIG_MAX_MOTORS 4
-#define CONFIG_MAX_ENCODERS 4
+#define CONFIG_MAX_MOTORS 1
+#define CONFIG_MAX_ENCODERS 1
 #define CONFIG_DEFAULT_ACCELERATION 1000.0f  // steps/s²
 #define CONFIG_DEFAULT_DECELERATION 1000.0f  // steps/s²
 #define CONFIG_DEFAULT_MAX_VELOCITY 5000.0f  // steps/s
@@ -81,8 +81,8 @@
 #define CONFIG_MOTOR0_STEP_PIN 32
 #define CONFIG_MOTOR0_DIR_PIN 33
 #define CONFIG_MOTOR0_ENABLE_PIN 0xFF  // 0xFF indicates no pin assigned
-#define CONFIG_MOTOR0_ENCODER_A_PIN 26
-#define CONFIG_MOTOR0_ENCODER_B_PIN 27
+#define CONFIG_MOTOR0_ENCODER_A_PIN 23
+#define CONFIG_MOTOR0_ENCODER_B_PIN 22
 #define CONFIG_MOTOR0_LIMIT_MIN_PIN 0xFF  // 0xFF indicates no pin assigned
 #define CONFIG_MOTOR0_LIMIT_MAX_PIN 0xFF  // 0xFF indicates no pin assigned
 
@@ -154,7 +154,7 @@ const MotorConfig DEFAULT_MOTOR_CONFIGS[CONFIG_MAX_MOTORS] = {
         1000000,
         false  // invertEnable default: false
     },
-    {
+    /*{
         // Motor 1
         1,
         CONFIG_MOTOR1_STEP_PIN,
@@ -179,7 +179,7 @@ const MotorConfig DEFAULT_MOTOR_CONFIGS[CONFIG_MAX_MOTORS] = {
         -1000000,
         1000000,
         false  // invertEnable default: false
-    },
+    },*/
     // Additional motor configurations can be added here as needed
 };
 

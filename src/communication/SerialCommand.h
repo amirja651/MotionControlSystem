@@ -153,6 +153,16 @@ class SerialCommand {
      * @return True if successful, false otherwise
      */
     bool handleShutdown(const String &params, String &response);
+
+    /**
+     * Handle status output command
+     * Enables or disables status reporter serial output
+     *
+     * @param params Command parameters
+     * @param response Command response
+     * @return True if successful, false otherwise
+     */
+    bool handleStatusOutput(const String &params, String &response);
 };
 
 #endif  // SERIAL_COMMAND_H

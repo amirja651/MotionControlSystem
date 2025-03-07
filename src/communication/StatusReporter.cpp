@@ -16,7 +16,7 @@ StatusReporter::StatusReporter(SystemManager *systemManager, uint8_t updateFrequ
       m_updateFrequencyHz(updateFrequencyHz > 0 ? updateFrequencyHz
                                                 : CONFIG_STATUS_UPDATE_FREQUENCY_HZ),
       m_lastUpdateMs(0),
-      m_serialOutputEnabled(true) {
+      m_serialOutputEnabled(false) {
     // Initialize status structure
     memset(&m_status, 0, sizeof(SystemStatus));
 }

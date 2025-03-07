@@ -190,9 +190,12 @@ void SerialCommand::registerBuiltInCommands() {
         "debug", "<level>", "Set debug log level",
         std::bind(&SerialCommand::handleDebug, this, std::placeholders::_1, std::placeholders::_2));
 
-    // Add shutdown command
     addCommand("shutdown", "", "Shutdown system normally and save positions",
                std::bind(&SerialCommand::handleShutdown, this, std::placeholders::_1,
+                         std::placeholders::_2));
+
+    addCommand("status_output", "<on|off>", "Enable or disable status JSON output",
+               std::bind(&SerialCommand::handleStatusOutput, this, std::placeholders::_1,
                          std::placeholders::_2));
 }
 
@@ -886,5 +889,43 @@ bool SerialCommand::handleShutdown(const String &params, String &response) {
 
     response = "System shutting down normally. Positions saved.";
     return true;
+}
+
+/**
+ * Handle status output command
+ * Enables or disables status reporter serial output
+ *
+ * @param params Command parameters
+ * @param response Command response
+ * @return True if successful, false otherwise
+ */
+bool SerialCommand::handleStatusOutput(const String &params, String &response) {
+    if (m_systemManager == nullptr) {
+        response = "System manager not available";
+        return false;
+    }
+
+    StatusReporter *statusReporter = m_systemManager->getStatusReporter();
+    if (statusReporter == nullptr) {
+        response = "Status reporter not available";
+        return false;
+    }
+
+    String paramsStr = params;
+    paramsStr.trim();
+    paramsStr.toLowerCase();
+
+    if (paramsStr == "on" || paramsStr == "true" || paramsStr == "1") {
+        statusReporter->enableSerialOutput(true);
+        response = "Status output enabled";
+        return true;
+    } else if (paramsStr == "off" || paramsStr == "false" || paramsStr == "0") {
+        statusReporter->enableSerialOutput(false);
+        response = "Status output disabled";
+        return true;
+    } else {
+        response = "Invalid parameter. Usage: status_output <on|off>";
+        return false;
+    }
 }
 // End of Code
