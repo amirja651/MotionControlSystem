@@ -209,6 +209,13 @@ class SafetyMonitor {
     uint32_t m_lastCheckTimeMs;
 
     /**
+     * Read voltage from analog input sensor
+     *
+     * @return Measured voltage value
+     */
+    float readVoltageSensor();
+
+    /**
      * Check emergency stop button
      *
      * @return True if emergency stop is pressed, false otherwise

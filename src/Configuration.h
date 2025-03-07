@@ -70,6 +70,12 @@
 #define CONFIG_CONTROL_TIMER TIMER_0
 #define CONFIG_STEP_TIMER TIMER_1
 
+// Voltage sensing configuration
+#define CONFIG_VOLTAGE_SENSE_PIN 36            // ADC1_CH0
+#define CONFIG_VOLTAGE_MIN 3.1f                // Minimum safe voltage
+#define CONFIG_VOLTAGE_MAX 3.3f                // Maximum safe voltage
+#define CONFIG_VOLTAGE_WARNING_THRESHOLD 0.5f  // 50% deviation tolerance
+
 // Pin Assignments (can be overridden in MotorConfig instances)
 // Default pins for Motor 0
 #define CONFIG_MOTOR0_STEP_PIN 32

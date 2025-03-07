@@ -23,9 +23,9 @@ SafetyMonitor::SafetyMonitor(MotorManager* motorManager, Logger* logger)
       m_velocityErrorThreshold(CONFIG_SAFETY_VELOCITY_TOLERANCE),
       m_temperatureWarningThreshold(CONFIG_SAFETY_MAX_TEMPERATURE_C - 10.0f),
       m_temperatureErrorThreshold(CONFIG_SAFETY_MAX_TEMPERATURE_C),
-      m_minVoltage(10.0f),
-      m_maxVoltage(12.5f),
-      m_voltageWarningThreshold(0.1f),
+      m_minVoltage(CONFIG_VOLTAGE_MIN),
+      m_maxVoltage(CONFIG_VOLTAGE_MAX),
+      m_voltageWarningThreshold(CONFIG_VOLTAGE_WARNING_THRESHOLD),
       m_lastCheckTimeMs(0) {
 }
 
@@ -353,7 +353,7 @@ SafetyCode SafetyMonitor::checkSystemConditions() {
     float voltage = 12.0f;
 
     // On a real system, you would read from a voltage sensor
-    // For example: voltage = readVoltageSensor();
+    voltage = readVoltageSensor();
 
     // Add to voltage buffer for trend analysis
     m_voltageBuffer.push(voltage);
@@ -467,5 +467,51 @@ void SafetyMonitor::logSafetyEvent(SystemSafetyStatus status, SafetyCode code) {
             m_logger->logInfo(message);
             break;
     }
+}
+
+float SafetyMonitor::readVoltageSensor() {
+    // Get GPIO manager instance
+    GPIOManager* gpioManager = GPIOManager::getInstance();
+    
+    // Validate GPIO manager
+    if (gpioManager == nullptr) {
+        // Log error or handle initialization failure
+        if (m_logger) {
+            m_logger->logError("GPIO Manager not available for voltage sensing");
+        }
+        return 0.0f;
+    }
+
+    // Allocate analog input pin if not already allocated
+    if (!gpioManager->isPinAvailable(CONFIG_VOLTAGE_SENSE_PIN)) {
+        // Attempt to allocate pin for analog input
+        if (!gpioManager->allocatePin(CONFIG_VOLTAGE_SENSE_PIN, 
+                                      PinMode::ANALOG_INPUT_PIN, 
+                                      "VoltageMonitoring")) {
+            if (m_logger) {
+                m_logger->logError("Failed to allocate voltage sense pin");
+            }
+            return 0.0f;
+        }
+    }
+
+    // Read raw analog value
+    int rawValue = analogRead(CONFIG_VOLTAGE_SENSE_PIN);
+
+    // Convert raw value to voltage
+    // Assumes 12-bit ADC (0-4095) and voltage divider configuration
+    float voltage = (rawValue * 3.3f) / 4095.0f;
+
+    // Apply voltage divider scaling factor if needed
+    // Example: If using a voltage divider with R1=10k, R2=1k
+    // voltage *= (R1 + R2) / R2;
+
+    // Optional: Log voltage reading for debugging
+    if (m_logger) {
+        m_logger->logDebug("Voltage Sensor: Raw=" + String(rawValue) + 
+                           ", Voltage=" + String(voltage, 2) + "V");
+    }
+
+    return voltage;
 }
 // End of Code
