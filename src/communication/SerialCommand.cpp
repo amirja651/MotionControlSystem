@@ -189,6 +189,11 @@ void SerialCommand::registerBuiltInCommands() {
     addCommand(
         "debug", "<level>", "Set debug log level",
         std::bind(&SerialCommand::handleDebug, this, std::placeholders::_1, std::placeholders::_2));
+
+    // Add shutdown command
+    addCommand("shutdown", "", "Shutdown system normally and save positions",
+               std::bind(&SerialCommand::handleShutdown, this, std::placeholders::_1,
+                         std::placeholders::_2));
 }
 
 void SerialCommand::parseCommand(const String &commandString, String &command, String &params) {
@@ -881,20 +886,5 @@ bool SerialCommand::handleShutdown(const String &params, String &response) {
 
     response = "System shutting down normally. Positions saved.";
     return true;
-}
-
-/**
- * Register built-in commands
- * Add the custom shutdown command
- */
-void SerialCommand::registerBuiltInCommands() {
-    // Existing commands...
-
-    // Add shutdown command
-    addCommand("shutdown", "", "Shutdown system normally and save positions",
-               std::bind(&SerialCommand::handleShutdown, this, std::placeholders::_1,
-                         std::placeholders::_2));
-
-    // Continue with existing code...
 }
 // End of Code
