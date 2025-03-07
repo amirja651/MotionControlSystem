@@ -1,0 +1,368 @@
+/*
+ * ESP32 High-Precision Motion Control System
+ * System Manager Implementation
+ */
+
+ #include "SystemManager.h"
+
+ SystemManager::SystemManager()
+     : m_motorManager(nullptr)
+     , m_safetyMonitor(nullptr)
+     , m_logger(nullptr)
+     , m_taskScheduler(nullptr)
+     , m_statusReporter(nullptr)
+     , m_eepromManager(nullptr)
+     , m_systemState(SystemState::INITIALIZING)
+     , m_startTimeMs(0)
+     , m_cpuUsageCore0(0.0f)
+     , m_cpuUsageCore1(0.0f)
+     , m_freeMemory(0)
+     , m_lastMetricsUpdateMs(0)
+     , m_controlLoopStartTimeUs(0)
+     , m_controlLoopExecutionTimeUs(0)
+ {
+ }
+ 
+ SystemManager::~SystemManager() {
+     // Clean up resources
+     delete m_statusReporter;
+     delete m_safetyMonitor;
+     delete m_taskScheduler;
+     delete m_motorManager;
+     delete m_logger;
+     delete m_eepromManager;
+ }
+ 
+ bool SystemManager::initialize() {
+     // Record start time
+     m_startTimeMs = millis();
+     
+     // Create system components in the correct order
+     
+     // EEPROM Manager first as it's needed by other components
+     m_eepromManager = new EEPROMManager();
+     if (!m_eepromManager->initialize()) {
+         return false;
+     }
+     
+     // Logger for system-wide logging
+     m_logger = new Logger();
+     if (!m_logger->initialize()) {
+         return false;
+     }
+     
+     m_logger->logInfo("System initializing...");
+     
+     // Task scheduler
+     m_taskScheduler = new TaskScheduler();
+     if (!m_taskScheduler->initialize()) {
+         m_logger->logError("Failed to initialize task scheduler");
+         return false;
+     }
+     
+     // Motor manager for motion control
+     m_motorManager = new MotorManager();
+     if (!m_motorManager->initialize()) {
+         m_logger->logError("Failed to initialize motor manager");
+         return false;
+     }
+     
+     // Safety monitor
+     m_safetyMonitor = new SafetyMonitor(m_motorManager, m_logger);
+     if (!m_safetyMonitor->initialize()) {
+         m_logger->logError("Failed to initialize safety monitor");
+         return false;
+     }
+     
+     // Status reporter
+     m_statusReporter = new StatusReporter(this);
+     if (!m_statusReporter->initialize()) {
+         m_logger->logError("Failed to initialize status reporter");
+         return false;
+     }
+     
+     // Load system configuration from EEPROM
+     if (!loadSystemConfiguration()) {
+         m_logger->logWarning("Could not load system configuration, using defaults");
+     }
+     
+     // Update system metrics
+     updateSystemMetrics();
+     
+     // Set system state to ready
+     m_systemState = SystemState::READY;
+     
+     m_logger->logInfo("System initialized successfully");
+     
+     return true;
+ }
+ 
+ SystemState SystemManager::getSystemState() const {
+     return m_systemState;
+ }
+ 
+ SafetyMonitor* SystemManager::getSafetyMonitor() {
+     return m_safetyMonitor;
+ }
+ 
+ MotorManager* SystemManager::getMotorManager() {
+     return m_motorManager;
+ }
+ 
+ Logger* SystemManager::getLogger() {
+     return m_logger;
+ }
+ 
+ TaskScheduler* SystemManager::getTaskScheduler() {
+     return m_taskScheduler;
+ }
+ 
+ StatusReporter* SystemManager::getStatusReporter() {
+     return m_statusReporter;
+ }
+ 
+ EEPROMManager* SystemManager::getEEPROMManager() {
+     return m_eepromManager;
+ }
+ 
+ void SystemManager::setSystemState(SystemState state) {
+     // Only allow specific state transitions
+     switch (m_systemState) {
+         case SystemState::INITIALIZING:
+             // Can transition to READY or ERROR
+             if (state == SystemState::READY || state == SystemState::ERROR) {
+                 m_systemState = state;
+             }
+             break;
+         
+         case SystemState::READY:
+             // Can transition to RUNNING, ERROR, or EMERGENCY_STOP
+             if (state == SystemState::RUNNING || 
+                 state == SystemState::ERROR || 
+                 state == SystemState::EMERGENCY_STOP) {
+                 m_systemState = state;
+             }
+             break;
+         
+         case SystemState::RUNNING:
+             // Can transition to READY, ERROR, or EMERGENCY_STOP
+             if (state == SystemState::READY || 
+                 state == SystemState::ERROR || 
+                 state == SystemState::EMERGENCY_STOP) {
+                 m_systemState = state;
+             }
+             break;
+         
+         case SystemState::ERROR:
+             // Can transition to READY, EMERGENCY_STOP, or SHUTDOWN
+             if (state == SystemState::READY || 
+                 state == SystemState::EMERGENCY_STOP || 
+                 state == SystemState::SHUTDOWN) {
+                 m_systemState = state;
+             }
+             break;
+         
+         case SystemState::EMERGENCY_STOP:
+             // Can transition to READY or SHUTDOWN
+             if (state == SystemState::READY || 
+                 state == SystemState::SHUTDOWN) {
+                 m_systemState = state;
+             }
+             break;
+         
+         case SystemState::SHUTDOWN:
+             // Terminal state, no transitions allowed
+             break;
+     }
+     
+     // Log state change
+     if (m_logger != nullptr) {
+         m_logger->logInfo("System state changed to " + String(static_cast<int>(m_systemState)));
+     }
+ }
+ 
+ void SystemManager::triggerEmergencyStop(SafetyCode reason) {
+     if (m_safetyMonitor != nullptr) {
+         m_safetyMonitor->triggerEmergencyStop(reason);
+     }
+     
+     // Disable all motors
+     if (m_motorManager != nullptr) {
+         m_motorManager->stopAllMotors(true);
+     }
+     
+     // Set system state
+     setSystemState(SystemState::EMERGENCY_STOP);
+     
+     // Log emergency stop
+     if (m_logger != nullptr) {
+         m_logger->logError("EMERGENCY STOP triggered: " + String(static_cast<int>(reason)));
+     }
+ }
+ 
+ bool SystemManager::resetEmergencyStop() {
+     if (m_safetyMonitor == nullptr) {
+         return false;
+     }
+     
+     // Try to reset emergency stop
+     if (m_safetyMonitor->resetEmergencyStop()) {
+         // Set system state back to ready
+         setSystemState(SystemState::READY);
+         
+         // Log reset
+         if (m_logger != nullptr) {
+             m_logger->logInfo("Emergency stop reset");
+         }
+         
+         return true;
+     }
+     
+     return false;
+ }
+ 
+ bool SystemManager::isEmergencyStop() const {
+     return m_systemState == SystemState::EMERGENCY_STOP;
+ }
+ 
+ bool SystemManager::saveSystemConfiguration() {
+     if (m_eepromManager == nullptr) {
+         return false;
+     }
+     
+     bool success = true;
+     
+     // Save motor manager configuration
+     if (m_motorManager != nullptr) {
+         success &= m_motorManager->saveToEEPROM();
+     }
+     
+     // Additional configuration saving can be added here
+     
+     // Commit all changes
+     success &= m_eepromManager->commit();
+     
+     if (success && m_logger != nullptr) {
+         m_logger->logInfo("System configuration saved");
+     }
+     
+     return success;
+ }
+ 
+ bool SystemManager::loadSystemConfiguration() {
+     if (m_eepromManager == nullptr) {
+         return false;
+     }
+     
+     bool success = true;
+     
+     // Load motor manager configuration
+     if (m_motorManager != nullptr) {
+         success &= m_motorManager->loadFromEEPROM();
+     }
+     
+     // Additional configuration loading can be added here
+     
+     if (success && m_logger != nullptr) {
+         m_logger->logInfo("System configuration loaded");
+     }
+     
+     return success;
+ }
+ 
+ uint32_t SystemManager::getUptimeMs() const {
+     return millis() - m_startTimeMs;
+ }
+ 
+ float SystemManager::getCPUUsage(uint8_t core) const {
+     if (core == 0) {
+         return m_cpuUsageCore0;
+     } else if (core == 1) {
+         return m_cpuUsageCore1;
+     }
+     return 0.0f;
+ }
+ 
+ uint32_t SystemManager::getFreeMemory() const {
+     return m_freeMemory;
+ }
+ 
+ void SystemManager::resetSystem() {
+     // Log reset
+     if (m_logger != nullptr) {
+         m_logger->logInfo("System reset requested");
+     }
+     
+     // Save configuration before reset
+     saveSystemConfiguration();
+     
+     // Set state to shutdown
+     setSystemState(SystemState::SHUTDOWN);
+     
+     // Wait for logging to complete
+     delay(100);
+     
+     // Restart ESP32
+     ESP.restart();
+ }
+ 
+ void SystemManager::updateSystemMetrics() {
+     // Only update periodically (every second)
+     uint32_t currentTimeMs = millis();
+     if (currentTimeMs - m_lastMetricsUpdateMs < 1000) {
+         return;
+     }
+     
+     m_lastMetricsUpdateMs = currentTimeMs;
+     
+     // Update CPU usage
+     m_cpuUsageCore0 = calculateCPUUsage(0);
+     m_cpuUsageCore1 = calculateCPUUsage(1);
+     
+     // Update free memory
+     m_freeMemory = calculateFreeMemory();
+ }
+ 
+ float SystemManager::calculateCPUUsage(uint8_t core) {
+     // This is an estimation since ESP32 doesn't provide direct CPU usage metrics
+     // A more accurate implementation would use FreeRTOS task statistics
+     
+     // Start timing
+     uint32_t startTime = micros();
+     
+     // Baseline delay (empty loop)
+     for (volatile int i = 0; i < 1000; i++) {
+         // Empty loop for baseline measurement
+     }
+     
+     uint32_t baselineTime = micros() - startTime;
+     
+     // Delay when CPU is busy
+     startTime = micros();
+     
+     // This loop will be affected by other tasks running on the core
+     for (volatile int i = 0; i < 1000; i++) {
+         // Same empty loop, but now affected by CPU load
+     }
+     
+     uint32_t loadedTime = micros() - startTime;
+     
+     // Calculate load percentage
+     // Higher ratio means more time spent in the loop, indicating less CPU load
+     float ratio = static_cast<float>(baselineTime) / static_cast<float>(loadedTime);
+     
+     // Convert to percentage (0-100)
+     float usage = (1.0f - ratio) * 100.0f;
+     
+     // Clamp to valid range
+     if (usage < 0.0f) usage = 0.0f;
+     if (usage > 100.0f) usage = 100.0f;
+     
+     return usage;
+ }
+ 
+ uint32_t SystemManager::calculateFreeMemory() {
+     // ESP32 method for getting free heap size
+     return ESP.getFreeHeap();
+ }
+ // End of Code

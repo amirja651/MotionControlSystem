@@ -1,0 +1,82 @@
+ESP32 High-Precision Motion Control System
+ 
+A modular, real-time motion control system for ESP32 that supports
+multiple motors with high-resolution encoder feedback, implementing
+advanced PID control strategies and optimized for the ESP32's
+dual-core architecture.
+ 
+
+/Project Structure:
+ 
+ /MotionControlSystem/
+ ├── MotionControlSystem.ino         // Main sketch file
+ ├── Configuration.h                 // System-wide configuration
+ ├── SystemManager.h/.cpp            // System orchestration and task management
+ ├── MotorManager.h/.cpp             // Central motor management 
+ ├── core/                           // Core functionality
+ │   ├── Motor.h/.cpp                // Motor abstraction
+ │   ├── Encoder.h/.cpp              // Encoder signal processing
+ │   ├── PIDController.h/.cpp        // Advanced PID implementation
+ │   ├── TrajectoryPlanner.h/.cpp    // Trajectory generation
+ │   └── SafetyMonitor.h/.cpp        // Safety and error handling
+ ├── utils/                          // Utility functions
+ │   ├── TaskScheduler.h/.cpp        // Core task scheduling
+ │   ├── CircularBuffer.h/.cpp       // Efficient data buffering
+ │   ├── FilterLib.h/.cpp            // Signal filtering tools
+ │   ├── EEPROMManager.h/.cpp        // Parameter storage
+ │   ├── Logger.h/.cpp               // Diagnostic logging
+ │   └── MathUtils.h/.cpp            // Optimized math functions
+ ├── hardware/                       // Hardware interfaces
+ │   ├── GPIOManager.h/.cpp          // GPIO pin management
+ │   ├── TimerManager.h/.cpp         // Hardware timer control
+ │   ├── DriverInterface.h           // Driver abstraction interface
+ │   ├── drivers/                    // Specific motor driver implementations
+ │   │   ├── StepperDriver.h/.cpp    // Stepper motor driver
+ │   │   ├── DCMotorDriver.h/.cpp    // DC motor driver
+ │   │   └── ServoDriver.h/.cpp      // Servo motor driver
+ │   └── encoders/                   // Encoder implementations
+ │       ├── QuadratureEncoder.h/.cpp // Quadrature encoder
+ │       ├── AbsoluteEncoder.h/.cpp   // Absolute position encoder
+ │       └── IncrementalEncoder.h/.cpp // Incremental encoder
+ ├── communication/                  // Communication interfaces
+ │   ├── SerialCommand.h/.cpp        // Serial command processor
+ │   ├── CommandProtocol.h/.cpp      // Command protocol implementation
+ │   └── StatusReporter.h/.cpp       // Status reporting service
+ └── examples/                       // Example configurations
+     ├── SingleMotorExample.h        // Single motor setup example
+     ├── DualMotorExample.h          // Dual motor configuration
+     └── CustomApplication.h         // Template for custom applications
+ 
+
+ ESP32 Motion Control System
+│
+├── Application Layer
+│   ├── SystemManager - Overall system coordination
+│   ├── Configuration - System-wide settings
+│   └── main.cpp - Entry point and multi-core management
+│
+├── Control Layer
+│   ├── MotorManager - Motor management
+│   ├── Motor - Individual motor control
+│   ├── PIDController - PID control algorithm
+│   ├── TrajectoryPlanner - Motion profile generation
+│   └── SafetyMonitor - System safety monitoring
+│
+├── Hardware Abstraction Layer
+│   ├── DriverInterface - Abstract driver interface
+│   │   └── StepperDriver - Stepper motor driver implementation
+│   ├── Encoder - Encoder reading
+│   ├── GPIOManager - GPIO pin management
+│   └── TimerManager - Hardware timer management
+│
+├── Utility Layer
+│   ├── TaskScheduler - High-priority task scheduling
+│   ├── Logger - Diagnostic logging system
+│   ├── EEPROMManager - Persistent settings storage
+│   ├── CircularBuffer - Ring buffer implementation
+│   └── MathUtils - Optimized mathematical functions
+│
+└── Communication Layer
+    ├── SerialCommand - Text-based user interface
+    ├── CommandProtocol - Binary command protocol
+    └── StatusReporter - System status reporting
