@@ -1,7 +1,7 @@
 /*
  * ESP32 High-Precision Motion Control System
  * Configuration Header
- * 
+ *
  * Central configuration file defining system-wide parameters,
  * pinouts, and operational constants.
  */
@@ -22,11 +22,11 @@
 #define CONFIG_MAX_LOG_ENTRIES 50
 
 // Task Configuration
-#define CONFIG_CONTROL_LOOP_FREQUENCY_HZ 1000  // 1kHz control loop
+#define CONFIG_CONTROL_LOOP_FREQUENCY_HZ 1000      // 1kHz control loop
 #define CONFIG_TRAJECTORY_UPDATE_FREQUENCY_HZ 250  // 250Hz trajectory updates
-#define CONFIG_STATUS_UPDATE_FREQUENCY_HZ 10  // 10Hz status reporting
-#define CONFIG_SAFETY_CHECK_INTERVAL_US 500  // 500us safety check interval
-#define CONFIG_CONTROL_LOOP_YIELD_US 50  // 50us yield in main loop
+#define CONFIG_STATUS_UPDATE_FREQUENCY_HZ 10       // 10Hz status reporting
+#define CONFIG_SAFETY_CHECK_INTERVAL_US 500        // 500us safety check interval
+#define CONFIG_CONTROL_LOOP_YIELD_US 50            // 50us yield in main loop
 #define CONFIG_AUXILIARY_TASK_STACK_SIZE 4096
 #define CONFIG_AUXILIARY_TASK_PRIORITY 1
 #define CONFIG_CONTROL_TASK_PRIORITY 10
@@ -55,14 +55,14 @@
 #define CONFIG_PID_DERIVATIVE_FILTER_ALPHA 0.1f  // Low-pass filter for D term
 
 // Encoder Parameters
-#define CONFIG_ENCODER_BUFFER_SIZE 16  // Size of circular buffer for filtering
-#define CONFIG_ENCODER_DEFAULT_PPR 2000  // Pulses per revolution
+#define CONFIG_ENCODER_BUFFER_SIZE 16          // Size of circular buffer for filtering
+#define CONFIG_ENCODER_DEFAULT_PPR 2000        // Pulses per revolution
 #define CONFIG_ENCODER_INTERPOLATION_FACTOR 4  // 4x interpolation
 
 // Safety Parameters
-#define CONFIG_SAFETY_POSITION_TOLERANCE 100  // Max position error in steps
-#define CONFIG_SAFETY_VELOCITY_TOLERANCE 1000  // Max velocity error in steps/s
-#define CONFIG_SAFETY_MAX_TEMPERATURE_C 80  // Maximum motor temperature
+#define CONFIG_SAFETY_POSITION_TOLERANCE 100        // Max position error in steps
+#define CONFIG_SAFETY_VELOCITY_TOLERANCE 1000       // Max velocity error in steps/s
+#define CONFIG_SAFETY_MAX_TEMPERATURE_C 80          // Maximum motor temperature
 #define CONFIG_EMERGENCY_STOP_DECELERATION 5000.0f  // Emergency stop decel rate
 
 // Timer Configuration
@@ -121,55 +121,53 @@ struct MotorConfig {
 
 // Default configurations for static allocation
 const MotorConfig DEFAULT_MOTOR_CONFIGS[CONFIG_MAX_MOTORS] = {
-    { // Motor 0
-        0,
-        CONFIG_MOTOR0_STEP_PIN,
-        CONFIG_MOTOR0_DIR_PIN,
-        CONFIG_MOTOR0_ENABLE_PIN,
-        CONFIG_MOTOR0_ENCODER_A_PIN,
-        CONFIG_MOTOR0_ENCODER_B_PIN,
-        CONFIG_MOTOR0_LIMIT_MIN_PIN,
-        CONFIG_MOTOR0_LIMIT_MAX_PIN,
-        CONFIG_DEFAULT_MAX_VELOCITY,
-        CONFIG_DEFAULT_ACCELERATION,
-        CONFIG_DEFAULT_DECELERATION,
-        CONFIG_DEFAULT_MAX_JERK,
-        CONFIG_DEFAULT_PID_KP,
-        CONFIG_DEFAULT_PID_KI,
-        CONFIG_DEFAULT_PID_KD,
-        CONFIG_DEFAULT_PID_FF,
-        CONFIG_ENCODER_DEFAULT_PPR,
-        false,
-        false,
-        true,
-        -1000000,
-        1000000
-    },
-    { // Motor 1
-        1,
-        CONFIG_MOTOR1_STEP_PIN,
-        CONFIG_MOTOR1_DIR_PIN,
-        CONFIG_MOTOR1_ENABLE_PIN,
-        CONFIG_MOTOR1_ENCODER_A_PIN,
-        CONFIG_MOTOR1_ENCODER_B_PIN,
-        CONFIG_MOTOR1_LIMIT_MIN_PIN,
-        CONFIG_MOTOR1_LIMIT_MAX_PIN,
-        CONFIG_DEFAULT_MAX_VELOCITY,
-        CONFIG_DEFAULT_ACCELERATION,
-        CONFIG_DEFAULT_DECELERATION,
-        CONFIG_DEFAULT_MAX_JERK,
-        CONFIG_DEFAULT_PID_KP,
-        CONFIG_DEFAULT_PID_KI,
-        CONFIG_DEFAULT_PID_KD,
-        CONFIG_DEFAULT_PID_FF,
-        CONFIG_ENCODER_DEFAULT_PPR,
-        false,
-        false,
-        true,
-        -1000000,
-        1000000
-    },
+    {// Motor 0
+     0,
+     CONFIG_MOTOR0_STEP_PIN,
+     CONFIG_MOTOR0_DIR_PIN,
+     CONFIG_MOTOR0_ENABLE_PIN,
+     CONFIG_MOTOR0_ENCODER_A_PIN,
+     CONFIG_MOTOR0_ENCODER_B_PIN,
+     CONFIG_MOTOR0_LIMIT_MIN_PIN,
+     CONFIG_MOTOR0_LIMIT_MAX_PIN,
+     CONFIG_DEFAULT_MAX_VELOCITY,
+     CONFIG_DEFAULT_ACCELERATION,
+     CONFIG_DEFAULT_DECELERATION,
+     CONFIG_DEFAULT_MAX_JERK,
+     CONFIG_DEFAULT_PID_KP,
+     CONFIG_DEFAULT_PID_KI,
+     CONFIG_DEFAULT_PID_KD,
+     CONFIG_DEFAULT_PID_FF,
+     CONFIG_ENCODER_DEFAULT_PPR,
+     false,
+     false,
+     true,
+     -1000000,
+     1000000},
+    {// Motor 1
+     1,
+     CONFIG_MOTOR1_STEP_PIN,
+     CONFIG_MOTOR1_DIR_PIN,
+     CONFIG_MOTOR1_ENABLE_PIN,
+     CONFIG_MOTOR1_ENCODER_A_PIN,
+     CONFIG_MOTOR1_ENCODER_B_PIN,
+     CONFIG_MOTOR1_LIMIT_MIN_PIN,
+     CONFIG_MOTOR1_LIMIT_MAX_PIN,
+     CONFIG_DEFAULT_MAX_VELOCITY,
+     CONFIG_DEFAULT_ACCELERATION,
+     CONFIG_DEFAULT_DECELERATION,
+     CONFIG_DEFAULT_MAX_JERK,
+     CONFIG_DEFAULT_PID_KP,
+     CONFIG_DEFAULT_PID_KI,
+     CONFIG_DEFAULT_PID_KD,
+     CONFIG_DEFAULT_PID_FF,
+     CONFIG_ENCODER_DEFAULT_PPR,
+     false,
+     false,
+     true,
+     -1000000,
+     1000000},
     // Additional motor configurations can be added here as needed
 };
 
-#endif // CONFIGURATION_H
+#endif  // CONFIGURATION_H
