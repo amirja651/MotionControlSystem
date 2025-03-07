@@ -16,11 +16,24 @@ SerialCommand::SerialCommand(SystemManager *systemManager)
     : m_systemManager(systemManager), m_commandBufferIndex(0), m_lastCommandTimeMs(0) {
     // Clear command buffer
     memset(m_commandBuffer, 0, CONFIG_COMMAND_BUFFER_SIZE);
+
+    // Pre-allocate space for commands to avoid reallocation issues
+    m_commands.reserve(20);
+
+    // Debug output to verify construction
+    Serial.println("Debug - SerialCommand constructed");
 }
 
 bool SerialCommand::initialize() {
+    // Debug output
+    Serial.println("Debug - Initializing SerialCommand");
+
     // Register built-in commands
     registerBuiltInCommands();
+
+    // Debug output after registration
+    Serial.print("Debug - Command count after initialization: ");
+    Serial.println(m_commands.size());
 
     return true;
 }
@@ -51,6 +64,11 @@ void SerialCommand::processCommands() {
             if (m_commandBufferIndex > 0) {
                 // Null-terminate the command
                 m_commandBuffer[m_commandBufferIndex] = 0;
+
+                // Add debugging to see what's actually in the buffer
+                Serial.print("\nDebug - Command received: '");
+                Serial.print(m_commandBuffer);
+                Serial.println("'");
 
                 // Execute the command
                 String response;
@@ -119,6 +137,13 @@ bool SerialCommand::executeCommand(const String &command, String &response) {
     String cmdName, params;
     parseCommand(command, cmdName, params);
 
+    // Debug output to see what's being parsed
+    Serial.print("Debug - Parsed command: '");
+    Serial.print(cmdName);
+    Serial.print("', params: '");
+    Serial.print(params);
+    Serial.println("'");
+
     // Convert command to lowercase
     cmdName.toLowerCase();
 
@@ -135,12 +160,15 @@ bool SerialCommand::executeCommand(const String &command, String &response) {
         return success;
     } else {
         // Command not found
-        response = "Unknown command '" + cmdName + "'. Type 'help' for available commands.";
+        response = "\nUnknown command '" + cmdName + "'. Type 'help' for available commands.";
         return false;
     }
 }
 
 void SerialCommand::registerBuiltInCommands() {
+    // Debug output to see this function is being called
+    Serial.println("Debug - Registering built-in commands");
+
     // Add all built-in commands
     addCommand(
         "help", "[command]", "Display help information",
@@ -197,6 +225,11 @@ void SerialCommand::registerBuiltInCommands() {
     addCommand("status_output", "<on|off>", "Enable or disable status JSON output",
                std::bind(&SerialCommand::handleStatusOutput, this, std::placeholders::_1,
                          std::placeholders::_2));
+
+    // After registering all commands, print debug info
+    Serial.print("Debug - Registered ");
+    Serial.print(m_commands.size());
+    Serial.println(" commands");
 }
 
 void SerialCommand::parseCommand(const String &commandString, String &command, String &params) {

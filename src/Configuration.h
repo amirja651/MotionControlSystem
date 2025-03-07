@@ -86,18 +86,9 @@
 #define CONFIG_MOTOR0_LIMIT_MIN_PIN 0xFF  // 0xFF indicates no pin assigned
 #define CONFIG_MOTOR0_LIMIT_MAX_PIN 0xFF  // 0xFF indicates no pin assigned
 
-// Default pins for Motor 1
-#define CONFIG_MOTOR1_STEP_PIN 12
-#define CONFIG_MOTOR1_DIR_PIN 14
-#define CONFIG_MOTOR1_ENABLE_PIN 0xFF  // 0xFF indicates no pin assigned
-#define CONFIG_MOTOR1_ENCODER_A_PIN 4
-#define CONFIG_MOTOR1_ENCODER_B_PIN 15
-#define CONFIG_MOTOR1_LIMIT_MIN_PIN 0xFF  // 0xFF indicates no pin assigned
-#define CONFIG_MOTOR1_LIMIT_MAX_PIN 0xFF  // 0xFF indicates no pin assigned
-
 // Command Interface
 #define CONFIG_MAX_COMMAND_LENGTH 64
-#define CONFIG_COMMAND_BUFFER_SIZE 8
+#define CONFIG_COMMAND_BUFFER_SIZE 20
 
 // Structure for motor configuration
 struct MotorConfig {

@@ -1,16 +1,5 @@
 {
     "files.associations": {
-        "optional": "cpp",
-        "istream": "cpp",
-        "ostream": "cpp",
-        "system_error": "cpp",
-        "array": "cpp",
-        "functional": "cpp",
-        "tuple": "cpp",
-        "type_traits": "cpp",
-        "utility": "cpp",
-        "C_Cpp.clang_format_fallbackStyle": "Google",
-        "editor.formatOnSave": true
-
+        "functional": "cpp"
     }
 }

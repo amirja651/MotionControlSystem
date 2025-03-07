@@ -66,6 +66,28 @@ void setup() {
     // Initialize serial communication for debugging and commands
     Serial.begin(CONFIG_SERIAL_BAUD_RATE);
 
+    // Wait a moment for serial to stabilize
+    delay(100);
+
+    Serial.println("ESP32 Motion Control System starting...");
+
+    // Initialize logger first for better debug output
+    if (!logger.initialize()) {
+        Serial.println("Logger initialization failed");
+        while (1) {
+            delay(1000);
+        }
+    }
+
+    // Initialize serial command processor before system manager
+    // to ensure it's ready to handle commands
+    if (!serialCommand.initialize()) {
+        logger.logError("Serial command initialization failed");
+        while (1) {
+            delay(1000);
+        }
+    }
+
     // Initialize system components with proper error handling
     if (!systemManager.initialize()) {
         logger.logError("System initialization failed");
@@ -127,9 +149,19 @@ void setup() {
     // Log successful initialization
     logger.logInfo("System initialized successfully");
 
+    // Make sure serial command interface is properly started
+    serialCommand.begin();
+
+    // Print test command to verify command processing
+    Serial.println("Command test: Executing 'help' command directly");
+    String response;
+    serialCommand.executeCommand("help", response);
+    Serial.println(response);
+
     // Print welcome message
     Serial.println("ESP32 Motion Control System initialized");
     Serial.println("Type 'help' for available commands");
+    Serial.print("> ");
 }
 
 /**
