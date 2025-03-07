@@ -350,6 +350,8 @@ class Motor {
     // Motor configuration
     MotorConfig m_config;
 
+    bool m_invertEnable;  // Flag to invert enable pin logic
+
     // Motor components
     Encoder m_encoder;
     PIDController m_controller;

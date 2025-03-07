@@ -30,7 +30,9 @@ Motor::Motor(const MotorConfig& config)
       m_limitMinState(false),
       m_limitMaxState(false),
       m_lastControlUpdateUs(0),
-      m_lastTrajectoryUpdateUs(0) {
+      m_lastTrajectoryUpdateUs(0),
+      m_invertEnable(config.invertEnable)  // Initialize invert enable flag
+{
     // Initialize motor state
     memset(&m_state, 0, sizeof(MotorState));
     m_state.status = MotorStatus::DISABLED_;
@@ -47,6 +49,23 @@ bool Motor::initialize() {
     // For now, we'll use a stepper driver
     m_driver = new StepperDriver(m_config.stepPin, m_config.dirPin, m_config.enablePin,
                                  m_config.invertDirection);
+
+    // Check and configure the enable pin
+    if (m_config.enablePin != 0xFF) {
+        pinMode(m_config.enablePin, OUTPUT);
+        digitalWrite(m_config.enablePin,
+                     m_invertEnable ? LOW : HIGH);  // Disable default
+    }
+
+    // Check and configure the limit pins
+    if (m_config.limitMinPin != 0xFF) {
+        pinMode(m_config.limitMinPin, INPUT_PULLUP);
+    }
+
+    if (m_config.limitMaxPin != 0xFF) {
+        pinMode(m_config.limitMaxPin, INPUT_PULLUP);
+    }
+
     if (!m_driver->initialize()) {
         return false;
     }

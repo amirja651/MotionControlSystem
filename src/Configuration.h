@@ -80,20 +80,20 @@
 // Default pins for Motor 0
 #define CONFIG_MOTOR0_STEP_PIN 32
 #define CONFIG_MOTOR0_DIR_PIN 33
-#define CONFIG_MOTOR0_ENABLE_PIN 25
+#define CONFIG_MOTOR0_ENABLE_PIN 0xFF  // 0xFF indicates no pin assigned
 #define CONFIG_MOTOR0_ENCODER_A_PIN 26
 #define CONFIG_MOTOR0_ENCODER_B_PIN 27
-#define CONFIG_MOTOR0_LIMIT_MIN_PIN 34
-#define CONFIG_MOTOR0_LIMIT_MAX_PIN 35
+#define CONFIG_MOTOR0_LIMIT_MIN_PIN 0xFF  // 0xFF indicates no pin assigned
+#define CONFIG_MOTOR0_LIMIT_MAX_PIN 0xFF  // 0xFF indicates no pin assigned
 
 // Default pins for Motor 1
 #define CONFIG_MOTOR1_STEP_PIN 12
 #define CONFIG_MOTOR1_DIR_PIN 14
-#define CONFIG_MOTOR1_ENABLE_PIN 27
+#define CONFIG_MOTOR1_ENABLE_PIN 0xFF  // 0xFF indicates no pin assigned
 #define CONFIG_MOTOR1_ENCODER_A_PIN 4
 #define CONFIG_MOTOR1_ENCODER_B_PIN 15
-#define CONFIG_MOTOR1_LIMIT_MIN_PIN 36
-#define CONFIG_MOTOR1_LIMIT_MAX_PIN 39
+#define CONFIG_MOTOR1_LIMIT_MIN_PIN 0xFF  // 0xFF indicates no pin assigned
+#define CONFIG_MOTOR1_LIMIT_MAX_PIN 0xFF  // 0xFF indicates no pin assigned
 
 // Command Interface
 #define CONFIG_MAX_COMMAND_LENGTH 64
@@ -123,56 +123,63 @@ struct MotorConfig {
     bool useSoftLimits;
     int32_t softLimitMin;
     int32_t softLimitMax;
+    bool invertEnable;  // Invert enable pin logic
 };
 
 // Default configurations for static allocation
 const MotorConfig DEFAULT_MOTOR_CONFIGS[CONFIG_MAX_MOTORS] = {
-    {// Motor 0
-     0,
-     CONFIG_MOTOR0_STEP_PIN,
-     CONFIG_MOTOR0_DIR_PIN,
-     CONFIG_MOTOR0_ENABLE_PIN,
-     CONFIG_MOTOR0_ENCODER_A_PIN,
-     CONFIG_MOTOR0_ENCODER_B_PIN,
-     CONFIG_MOTOR0_LIMIT_MIN_PIN,
-     CONFIG_MOTOR0_LIMIT_MAX_PIN,
-     CONFIG_DEFAULT_MAX_VELOCITY,
-     CONFIG_DEFAULT_ACCELERATION,
-     CONFIG_DEFAULT_DECELERATION,
-     CONFIG_DEFAULT_MAX_JERK,
-     CONFIG_DEFAULT_PID_KP,
-     CONFIG_DEFAULT_PID_KI,
-     CONFIG_DEFAULT_PID_KD,
-     CONFIG_DEFAULT_PID_FF,
-     CONFIG_ENCODER_DEFAULT_PPR,
-     false,
-     false,
-     true,
-     -1000000,
-     1000000},
-    {// Motor 1
-     1,
-     CONFIG_MOTOR1_STEP_PIN,
-     CONFIG_MOTOR1_DIR_PIN,
-     CONFIG_MOTOR1_ENABLE_PIN,
-     CONFIG_MOTOR1_ENCODER_A_PIN,
-     CONFIG_MOTOR1_ENCODER_B_PIN,
-     CONFIG_MOTOR1_LIMIT_MIN_PIN,
-     CONFIG_MOTOR1_LIMIT_MAX_PIN,
-     CONFIG_DEFAULT_MAX_VELOCITY,
-     CONFIG_DEFAULT_ACCELERATION,
-     CONFIG_DEFAULT_DECELERATION,
-     CONFIG_DEFAULT_MAX_JERK,
-     CONFIG_DEFAULT_PID_KP,
-     CONFIG_DEFAULT_PID_KI,
-     CONFIG_DEFAULT_PID_KD,
-     CONFIG_DEFAULT_PID_FF,
-     CONFIG_ENCODER_DEFAULT_PPR,
-     false,
-     false,
-     true,
-     -1000000,
-     1000000},
+    {
+        // Motor 0
+        0,
+        CONFIG_MOTOR0_STEP_PIN,
+        CONFIG_MOTOR0_DIR_PIN,
+        CONFIG_MOTOR0_ENABLE_PIN,
+        CONFIG_MOTOR0_ENCODER_A_PIN,
+        CONFIG_MOTOR0_ENCODER_B_PIN,
+        CONFIG_MOTOR0_LIMIT_MIN_PIN,
+        CONFIG_MOTOR0_LIMIT_MAX_PIN,
+        CONFIG_DEFAULT_MAX_VELOCITY,
+        CONFIG_DEFAULT_ACCELERATION,
+        CONFIG_DEFAULT_DECELERATION,
+        CONFIG_DEFAULT_MAX_JERK,
+        CONFIG_DEFAULT_PID_KP,
+        CONFIG_DEFAULT_PID_KI,
+        CONFIG_DEFAULT_PID_KD,
+        CONFIG_DEFAULT_PID_FF,
+        CONFIG_ENCODER_DEFAULT_PPR,
+        false,
+        false,
+        true,
+        -1000000,
+        1000000,
+        false  // invertEnable default: false
+    },
+    {
+        // Motor 1
+        1,
+        CONFIG_MOTOR1_STEP_PIN,
+        CONFIG_MOTOR1_DIR_PIN,
+        CONFIG_MOTOR1_ENABLE_PIN,
+        CONFIG_MOTOR1_ENCODER_A_PIN,
+        CONFIG_MOTOR1_ENCODER_B_PIN,
+        CONFIG_MOTOR1_LIMIT_MIN_PIN,
+        CONFIG_MOTOR1_LIMIT_MAX_PIN,
+        CONFIG_DEFAULT_MAX_VELOCITY,
+        CONFIG_DEFAULT_ACCELERATION,
+        CONFIG_DEFAULT_DECELERATION,
+        CONFIG_DEFAULT_MAX_JERK,
+        CONFIG_DEFAULT_PID_KP,
+        CONFIG_DEFAULT_PID_KI,
+        CONFIG_DEFAULT_PID_KD,
+        CONFIG_DEFAULT_PID_FF,
+        CONFIG_ENCODER_DEFAULT_PPR,
+        false,
+        false,
+        true,
+        -1000000,
+        1000000,
+        false  // invertEnable default: false
+    },
     // Additional motor configurations can be added here as needed
 };
 
