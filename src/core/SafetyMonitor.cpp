@@ -349,8 +349,11 @@ SafetyCode SafetyMonitor::checkSystemConditions() {
         return SafetyCode::HIGH_TEMPERATURE;
     }
 
+// Only check voltage if power monitoring is enabled
+#if CONFIG_POWER_MONITORING_ENABLED
+
     // Example: Check voltage (simulated)
-    float voltage = 12.0f;
+    float voltage = 3.3f;
 
     // On a real system, you would read from a voltage sensor
     voltage = readVoltageSensor();
@@ -372,6 +375,7 @@ SafetyCode SafetyMonitor::checkSystemConditions() {
     if (voltageMax - voltageMin > m_voltageWarningThreshold * (m_maxVoltage - m_minVoltage)) {
         return SafetyCode::POWER_SUPPLY_FLUCTUATION;
     }
+#endif  // CONFIG_POWER_MONITORING_ENABLED
 
     return SafetyCode::NONE;
 }
@@ -470,9 +474,14 @@ void SafetyMonitor::logSafetyEvent(SystemSafetyStatus status, SafetyCode code) {
 }
 
 float SafetyMonitor::readVoltageSensor() {
+// Skip voltage reading if power monitoring is disabled
+#if !CONFIG_POWER_MONITORING_ENABLED
+    return (m_minVoltage + m_maxVoltage) / 2.0f;  // Return a safe value in the middle of the range
+#else
+
     // Get GPIO manager instance
     GPIOManager* gpioManager = GPIOManager::getInstance();
-    
+
     // Validate GPIO manager
     if (gpioManager == nullptr) {
         // Log error or handle initialization failure
@@ -485,8 +494,7 @@ float SafetyMonitor::readVoltageSensor() {
     // Allocate analog input pin if not already allocated
     if (!gpioManager->isPinAvailable(CONFIG_VOLTAGE_SENSE_PIN)) {
         // Attempt to allocate pin for analog input
-        if (!gpioManager->allocatePin(CONFIG_VOLTAGE_SENSE_PIN, 
-                                      PinMode::ANALOG_INPUT_PIN, 
+        if (!gpioManager->allocatePin(CONFIG_VOLTAGE_SENSE_PIN, PinMode::ANALOG_INPUT_PIN,
                                       "VoltageMonitoring")) {
             if (m_logger) {
                 m_logger->logError("Failed to allocate voltage sense pin");
@@ -508,10 +516,11 @@ float SafetyMonitor::readVoltageSensor() {
 
     // Optional: Log voltage reading for debugging
     if (m_logger) {
-        m_logger->logDebug("Voltage Sensor: Raw=" + String(rawValue) + 
+        m_logger->logDebug("Voltage Sensor: Raw=" + String(rawValue) +
                            ", Voltage=" + String(voltage, 2) + "V");
     }
 
     return voltage;
+#endif  // CONFIG_POWER_MONITORING_ENABLED
 }
 // End of Code

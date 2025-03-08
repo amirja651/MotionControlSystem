@@ -424,6 +424,11 @@ void SystemManager::restoreMotorPositions() {
  * @return true if shutdown was normal, false if power failure
  */
 bool SystemManager::wasNormalShutdown() {
+// Skip power failure recovery if power monitoring is disabled
+#if !CONFIG_POWER_MONITORING_ENABLED
+    return true;  // Always report normal shutdown if power monitoring is disabled
+#endif
+
     if (m_eepromManager == nullptr) {
         return false;
     }

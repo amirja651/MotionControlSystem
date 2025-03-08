@@ -69,6 +69,7 @@ void setup() {
     // Wait a moment for serial to stabilize
     delay(100);
 
+    Serial.println();
     Serial.println("ESP32 Motion Control System starting...");
 
     // Initialize logger first for better debug output
@@ -104,12 +105,16 @@ void setup() {
         }
     }
 
-    // Check for power failure recovery
+// Check for power failure recovery only if power monitoring is enabled
+#if CONFIG_POWER_MONITORING_ENABLED
     if (!systemManager.wasNormalShutdown()) {
         // Power interruption detected
         logger.logInfo("Power interruption detected. Restoring previous positions...");
         systemManager.restoreMotorPositions();
     }
+#else
+    logger.logWarning("Power monitoring disabled. Skipping power failure recovery.");
+#endif
 
     // Reset the shutdown flag for next time
     systemManager.setNormalShutdown(false);
@@ -159,10 +164,11 @@ void setup() {
     // Serial.println(response);
 
     // Print welcome message
+    delay(100);
     Serial.println();
     Serial.println(SYSTEM_NAME " initialized");
     Serial.println("Type 'help' for available commands");
-    Serial.print("> ");
+    // Serial.print("> ");
 }
 
 /**

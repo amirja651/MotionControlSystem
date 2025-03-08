@@ -12,13 +12,13 @@
 #include <Arduino.h>
 
 // ANSI Color codes for terminal output
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_BLUE    "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN    "\x1b[36m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
+#define ANSI_COLOR_RED      "\x1b[31m"
+#define ANSI_COLOR_GREEN    "\x1b[32m"
+#define ANSI_COLOR_YELLOW   "\x1b[33m"
+#define ANSI_COLOR_BLUE     "\x1b[34m"
+#define ANSI_COLOR_MAGENTA  "\x1b[35m"
+#define ANSI_COLOR_CYAN     "\x1b[36m"
+#define ANSI_COLOR_RESET    "\x1b[0m"
 
 // System Identification
 #define SYSTEM_VERSION "1.0.0"
@@ -80,6 +80,7 @@
 #define CONFIG_STEP_TIMER TIMER_1
 
 // Voltage sensing configuration
+#define CONFIG_POWER_MONITORING_ENABLED false  // Set to false to disable power monitoring
 #define CONFIG_VOLTAGE_SENSE_PIN 36            // ADC1_CH0
 #define CONFIG_VOLTAGE_MIN 3.1f                // Minimum safe voltage
 #define CONFIG_VOLTAGE_MAX 3.3f                // Maximum safe voltage
