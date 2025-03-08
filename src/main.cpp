@@ -153,13 +153,14 @@ void setup() {
     serialCommand.begin();
 
     // Print test command to verify command processing
-    Serial.println("Command test: Executing 'help' command directly");
-    String response;
-    serialCommand.executeCommand("help", response);
-    Serial.println(response);
+    // Serial.println("Command test: Executing 'help' command directly");
+    // String response;
+    // serialCommand.executeCommand("help", response);
+    // Serial.println(response);
 
     // Print welcome message
-    Serial.println("ESP32 Motion Control System initialized");
+    Serial.println();
+    Serial.println(SYSTEM_NAME " initialized");
     Serial.println("Type 'help' for available commands");
     Serial.print("> ");
 }

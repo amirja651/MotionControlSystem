@@ -59,6 +59,45 @@ bool MotorManager::addMotor(const MotorConfig& config) {
         return false;
     }
 
+    // Validate pin numbers (ESP32 has GPIO pins 0-39)
+    if (config.stepPin > 39) {
+        Serial.printf("Invalid step pin for motor %d: %d\n", config.index, config.stepPin);
+        return false;
+    }
+
+    if (config.dirPin > 39) {
+        Serial.printf("Invalid dir pin for motor %d: %d\n", config.index, config.dirPin);
+        return false;
+    }
+
+    // Enable pin can be 0xFF (no pin) or a valid pin number
+    if (config.enablePin != 0xFF && config.enablePin > 39) {
+        Serial.printf("Invalid enable pin for motor %d: %d\n", config.index, config.enablePin);
+        return false;
+    }
+
+    // Validate encoder pins if used
+    if (config.encoderAPin != 0xFF && config.encoderAPin > 39) {
+        Serial.printf("Invalid encoder A pin for motor %d: %d\n", config.index, config.encoderAPin);
+        return false;
+    }
+
+    if (config.encoderBPin != 0xFF && config.encoderBPin > 39) {
+        Serial.printf("Invalid encoder B pin for motor %d: %d\n", config.index, config.encoderBPin);
+        return false;
+    }
+
+    // Validate limit switch pins if used
+    if (config.limitMinPin != 0xFF && config.limitMinPin > 39) {
+        Serial.printf("Invalid limit min pin for motor %d: %d\n", config.index, config.limitMinPin);
+        return false;
+    }
+
+    if (config.limitMaxPin != 0xFF && config.limitMaxPin > 39) {
+        Serial.printf("Invalid limit max pin for motor %d: %d\n", config.index, config.limitMaxPin);
+        return false;
+    }
+
     // Create new motor
     Motor* motor = new Motor(config);
 

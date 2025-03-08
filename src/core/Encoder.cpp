@@ -29,6 +29,23 @@ Encoder::Encoder(uint8_t encAPin, uint8_t encBPin, uint16_t pulsesPerRev, bool i
 }
 
 bool Encoder::initialize() {
+    // Validate pins before configuring them
+    if (m_encoderAPin > 39 && m_encoderAPin != 0xFF) {
+        Serial.printf("Invalid encoder A pin: %d\n", m_encoderAPin);
+        return false;
+    }
+
+    if (m_encoderBPin > 39 && m_encoderBPin != 0xFF) {
+        Serial.printf("Invalid encoder B pin: %d\n", m_encoderBPin);
+        return false;
+    }
+
+    // If pins are 0xFF, encoder is in open-loop mode
+    if (m_encoderAPin == 0xFF || m_encoderBPin == 0xFF) {
+        // No physical encoder, operate in open-loop mode
+        return true;
+    }
+    
     // Configure encoder pins as inputs with pull-ups
     pinMode(m_encoderAPin, INPUT_PULLUP);
     pinMode(m_encoderBPin, INPUT_PULLUP);

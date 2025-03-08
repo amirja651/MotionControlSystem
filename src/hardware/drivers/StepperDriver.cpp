@@ -49,15 +49,35 @@ StepperDriver::~StepperDriver() {
 }
 
 bool StepperDriver::initialize() {
+    // Validate pins before configuring them
+    if (m_stepPin > 39) {
+        Serial.printf("Warning: Invalid STEP pin: %d\n", m_stepPin);
+        return false;
+    }
+
+    if (m_dirPin > 39) {
+        Serial.printf("Warning: Invalid DIR pin: %d\n", m_dirPin);
+        return false;
+    }
+
     // Configure pins
     pinMode(m_stepPin, OUTPUT);
     pinMode(m_dirPin, OUTPUT);
-    pinMode(m_enablePin, OUTPUT);
+
+    // Only configure enable pin if it's valid (not 0xFF)
+    if (m_enablePin != 0xFF && m_enablePin <= 39) {
+        pinMode(m_enablePin, OUTPUT);
+        digitalWrite(m_enablePin, m_invertEnable ? LOW : HIGH);  // Default to disabled
+    } else {
+        // Log if enable pin is invalid but not 0xFF (0xFF means intentionally not used)
+        if (m_enablePin != 0xFF) {
+            Serial.printf("Warning: Invalid ENABLE pin: %d\n", m_enablePin);
+        }
+    }
 
     // Initialize pins to default state
     digitalWrite(m_stepPin, LOW);
-    digitalWrite(m_dirPin, m_invertDir ? HIGH : LOW);        // Default to forward direction
-    digitalWrite(m_enablePin, m_invertEnable ? LOW : HIGH);  // Default to disabled
+    digitalWrite(m_dirPin, m_invertDir ? HIGH : LOW);  // Default to forward direction
 
     // Get timer manager
     m_timerManager = TimerManager::getInstance();
@@ -69,13 +89,20 @@ bool StepperDriver::initialize() {
 }
 
 void StepperDriver::enable() {
-    digitalWrite(m_enablePin, m_invertEnable ? HIGH : LOW);
+    // Only use the enable pin if it's valid
+    if (m_enablePin != 0xFF && m_enablePin <= 39) {
+        digitalWrite(m_enablePin, m_invertEnable ? HIGH : LOW);
+    }
     m_enabled = true;
 }
 
 void StepperDriver::disable() {
     stop(true);  // Stop any ongoing movement
-    digitalWrite(m_enablePin, m_invertEnable ? LOW : HIGH);
+    
+    // Only use the enable pin if it's valid
+    if (m_enablePin != 0xFF && m_enablePin <= 39) {
+        digitalWrite(m_enablePin, m_invertEnable ? LOW : HIGH);
+    }
     m_enabled = false;
 }
 

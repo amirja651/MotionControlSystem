@@ -44,12 +44,6 @@ void SerialCommand::begin(uint32_t baudRate) {
         Serial.begin(baudRate);
         delay(100);  // Give serial time to initialize
     }
-
-    // Send welcome message
-    Serial.println();
-    Serial.println("ESP32 Motion Control System");
-    Serial.println("Type 'help' for available commands");
-    Serial.print("> ");
 }
 
 void SerialCommand::processCommands() {

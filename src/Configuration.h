@@ -11,6 +11,15 @@
 
 #include <Arduino.h>
 
+// ANSI Color codes for terminal output
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
 // System Identification
 #define SYSTEM_VERSION "1.0.0"
 #define SYSTEM_NAME "ESP32 Motion Control System"
@@ -145,32 +154,6 @@ const MotorConfig DEFAULT_MOTOR_CONFIGS[CONFIG_MAX_MOTORS] = {
         1000000,
         false  // invertEnable default: false
     },
-    /*{
-        // Motor 1
-        1,
-        CONFIG_MOTOR1_STEP_PIN,
-        CONFIG_MOTOR1_DIR_PIN,
-        CONFIG_MOTOR1_ENABLE_PIN,
-        CONFIG_MOTOR1_ENCODER_A_PIN,
-        CONFIG_MOTOR1_ENCODER_B_PIN,
-        CONFIG_MOTOR1_LIMIT_MIN_PIN,
-        CONFIG_MOTOR1_LIMIT_MAX_PIN,
-        CONFIG_DEFAULT_MAX_VELOCITY,
-        CONFIG_DEFAULT_ACCELERATION,
-        CONFIG_DEFAULT_DECELERATION,
-        CONFIG_DEFAULT_MAX_JERK,
-        CONFIG_DEFAULT_PID_KP,
-        CONFIG_DEFAULT_PID_KI,
-        CONFIG_DEFAULT_PID_KD,
-        CONFIG_DEFAULT_PID_FF,
-        CONFIG_ENCODER_DEFAULT_PPR,
-        false,
-        false,
-        true,
-        -1000000,
-        1000000,
-        false  // invertEnable default: false
-    },*/
     // Additional motor configurations can be added here as needed
 };
 

@@ -50,19 +50,19 @@ bool Motor::initialize() {
     m_driver = new StepperDriver(m_config.stepPin, m_config.dirPin, m_config.enablePin,
                                  m_config.invertDirection);
 
-    // Check and configure the enable pin
-    if (m_config.enablePin != 0xFF) {
+    // Check and configure the enable pin only if it's valid
+    if (m_config.enablePin != 0xFF && m_config.enablePin <= 39) {
         pinMode(m_config.enablePin, OUTPUT);
         digitalWrite(m_config.enablePin,
                      m_invertEnable ? LOW : HIGH);  // Disable default
     }
 
-    // Check and configure the limit pins
-    if (m_config.limitMinPin != 0xFF) {
+    // Check and configure the limit pins only if they're valid
+    if (m_config.limitMinPin != 0xFF && m_config.limitMinPin <= 39) {
         pinMode(m_config.limitMinPin, INPUT_PULLUP);
     }
 
-    if (m_config.limitMaxPin != 0xFF) {
+    if (m_config.limitMaxPin != 0xFF && m_config.limitMaxPin <= 39) {
         pinMode(m_config.limitMaxPin, INPUT_PULLUP);
     }
 
@@ -82,12 +82,12 @@ bool Motor::initialize() {
     // Configure GPIO pins for limit switches if needed
     GPIOManager* gpioManager = GPIOManager::getInstance();
     if (gpioManager != nullptr) {
-        if (m_config.limitMinPin != 0xFF) {
+        if (m_config.limitMinPin != 0xFF && m_config.limitMinPin <= 39) {
             gpioManager->allocatePin(m_config.limitMinPin, PinMode::INPUT_PULLUP_PIN,
                                      "Motor" + String(m_config.index) + "LimitMin");
         }
 
-        if (m_config.limitMaxPin != 0xFF) {
+        if (m_config.limitMaxPin != 0xFF && m_config.limitMaxPin <= 39) {
             gpioManager->allocatePin(m_config.limitMaxPin, PinMode::INPUT_PULLUP_PIN,
                                      "Motor" + String(m_config.index) + "LimitMax");
         }
@@ -493,8 +493,8 @@ bool Motor::readLimitSwitches() {
     bool limitTriggered = false;
 
     if (m_limitSwitchesEnabled) {
-        // Read limit switch pins if configured
-        if (m_config.limitMinPin != 0xFF) {
+        // Read limit switch pins if configured and valid
+        if (m_config.limitMinPin != 0xFF && m_config.limitMinPin <= 39) {
             m_limitMinState = digitalRead(m_config.limitMinPin) == LOW;
             if (m_invertLimitMin) {
                 m_limitMinState = !m_limitMinState;
@@ -508,7 +508,7 @@ bool Motor::readLimitSwitches() {
             }
         }
 
-        if (m_config.limitMaxPin != 0xFF) {
+        if (m_config.limitMaxPin != 0xFF && m_config.limitMaxPin <= 39) {
             m_limitMaxState = digitalRead(m_config.limitMaxPin) == LOW;
             if (m_invertLimitMax) {
                 m_limitMaxState = !m_limitMaxState;
