@@ -184,8 +184,35 @@ void Logger::outputLogEntry(const LogEntry& entry) {
 }
 
 String Logger::formatLogEntry(const LogEntry& entry) const {
+    // Add appropriate color based on log level
+    String colorCode = "";
+    String resetCode = ANSI_COLOR_RESET;
+
+    switch (entry.level) {
+        case LogLevel::ERROR:
+            colorCode = ANSI_COLOR_RED;
+            break;
+        case LogLevel::WARNING:
+            colorCode = ANSI_COLOR_YELLOW;
+            break;
+        case LogLevel::INFO:
+            colorCode = ANSI_COLOR_GREEN;
+            break;
+        case LogLevel::DEBUG:
+            colorCode = ANSI_COLOR_CYAN;
+            break;
+        case LogLevel::VERBOSE:
+            colorCode = ANSI_COLOR_BLUE;
+            break;
+        default:
+            // No color for other levels
+            colorCode = "";
+            resetCode = "";
+            break;
+    }
+
     // Format: [timestamp] LEVEL [source]: message
-    String formatted = "[";
+    String formatted = colorCode + "[";
     formatted += String(entry.timestamp);
     formatted += "] ";
     formatted += logLevelToString(entry.level);
@@ -198,6 +225,7 @@ String Logger::formatLogEntry(const LogEntry& entry) const {
 
     formatted += ": ";
     formatted += entry.message;
+    formatted += resetCode;  // Reset color at the end
 
     return formatted;
 }

@@ -70,7 +70,7 @@ void setup() {
     delay(100);
 
     Serial.println();
-    Serial.println(SYSTEM_NAME " starting...");
+    Serial.println(ANSI_COLOR_MAGENTA SYSTEM_NAME " starting..." ANSI_COLOR_RESET);
     Serial.println();
 
     // Initialize logger first for better debug output
@@ -171,17 +171,12 @@ void setup() {
     // Make sure serial command interface is properly started
     serialCommand.begin();
 
-    // Print test command to verify command processing
-    // Serial.println("Command test: Executing 'help' command directly");
-    // String response;
-    // serialCommand.executeCommand("help", response);
-    // Serial.println(response);
-
     // Print welcome message
     delay(100);
     Serial.println();
-    Serial.println(SYSTEM_NAME " initialized");
-    Serial.println("Type 'help' for available commands");
+    Serial.println(ANSI_COLOR_MAGENTA SYSTEM_NAME " initialized" ANSI_COLOR_RESET);
+    Serial.println();
+    Serial.println("Type " ANSI_COLOR_BLUE "'help'" ANSI_COLOR_RESET " for available commands");
     // Serial.print("> ");
 }
 
