@@ -27,6 +27,18 @@ public:
         m_infoCount++;
     }
     
+    void logDebug(const String& message, uint8_t source = 0) override {
+        // Add debug logging for completeness
+        m_lastDebug = message;
+        m_debugCount++;
+    }
+    
+    void logVerbose(const String& message, uint8_t source = 0) override {
+        // Add verbose logging for completeness
+        m_lastVerbose = message;
+        m_verboseCount++;
+    }
+    
     bool initialize(uint32_t serialBaudRate = 0) override {
         return true;
     }
@@ -34,27 +46,39 @@ public:
     int getErrorCount() const { return m_errorCount; }
     int getWarningCount() const { return m_warningCount; }
     int getInfoCount() const { return m_infoCount; }
+    int getDebugCount() const { return m_debugCount; }
+    int getVerboseCount() const { return m_verboseCount; }
     
     String getLastError() const { return m_lastError; }
     String getLastWarning() const { return m_lastWarning; }
     String getLastInfo() const { return m_lastInfo; }
+    String getLastDebug() const { return m_lastDebug; }
+    String getLastVerbose() const { return m_lastVerbose; }
     
     void reset() {
         m_errorCount = 0;
         m_warningCount = 0;
         m_infoCount = 0;
+        m_debugCount = 0;
+        m_verboseCount = 0;
         m_lastError = "";
         m_lastWarning = "";
         m_lastInfo = "";
+        m_lastDebug = "";
+        m_lastVerbose = "";
     }
     
 private:
     int m_errorCount;
     int m_warningCount;
     int m_infoCount;
+    int m_debugCount;
+    int m_verboseCount;
     String m_lastError;
     String m_lastWarning;
     String m_lastInfo;
+    String m_lastDebug;
+    String m_lastVerbose;
 };
 
 // Mock Stepper Driver for testing Motor class
@@ -147,10 +171,12 @@ public:
     
     void setPosition(int32_t position) override {
         m_position = position;
+        Encoder::setPosition(position); // Call base class implementation
     }
     
     void setVelocity(float velocity) override {
         m_velocity = velocity;
+        Encoder::setVelocity(velocity); // Call base class implementation
     }
     
     int32_t getPosition() const override {
@@ -159,6 +185,11 @@ public:
     
     float getVelocity() const override {
         return m_velocity;
+    }
+    
+    void update(uint32_t deltaTimeUs) override {
+        // Mock implementation that just updates the base class
+        Encoder::update(deltaTimeUs);
     }
     
     void simulateMovement(int32_t steps, float velocity) {
