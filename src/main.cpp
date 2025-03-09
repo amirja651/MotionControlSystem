@@ -100,6 +100,9 @@ void setup() {
         }
     }
 
+    // The SystemManager should store a reference to this instance:
+    systemManager.setStatusReporter(&statusReporter);
+
     // Initialize the status reporter after the system manager is ready
     if (!statusReporter.initialize()) {
         logger.logError("Status reporter initialization failed");
@@ -191,7 +194,7 @@ void loop() {
     taskScheduler.executeControlTasks();
 
     // Make sure the status reporter is updating
-    //statusReporter.updateStatus();
+    // statusReporter.updateStatus();
 
     // Periodically save motor positions (every 10 seconds)
     static uint32_t lastSaveTimeMs = 0;

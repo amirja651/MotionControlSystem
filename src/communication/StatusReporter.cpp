@@ -48,6 +48,15 @@ void StatusReporter::setUpdateFrequency(uint8_t frequencyHz) {
 void StatusReporter::updateStatus() {
     uint32_t currentTimeMs = millis();
 
+    // Print debug info occasionally
+    static uint32_t lastDebugMs = 0;
+    if (currentTimeMs - lastDebugMs >= 5000) {
+        Serial.print("Debug - StatusReporter::updateStatus m_serialOutputEnabled=");
+        Serial.println(m_serialOutputEnabled ? "true" : "false");
+        lastDebugMs = currentTimeMs;
+    }
+
+    
     // Check if it's time to update
     if (m_updateFrequencyHz > 0) {
         uint32_t updateIntervalMs = 1000 / m_updateFrequencyHz;
@@ -88,6 +97,11 @@ void StatusReporter::clearStatusCallbacks() {
 
 void StatusReporter::enableSerialOutput(bool enable) {
     m_serialOutputEnabled = enable;
+    Serial.print("Debug - StatusReporter::enableSerialOutput called with: ");
+    Serial.println(enable ? "true" : "false");
+    // Print memory address for debugging
+    Serial.print("Debug - StatusReporter address: 0x");
+    Serial.println((uint32_t)this, HEX);
 }
 
 String StatusReporter::generateStatusJson() const {

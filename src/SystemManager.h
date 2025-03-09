@@ -96,6 +96,13 @@ class SystemManager {
     StatusReporter* getStatusReporter();
 
     /**
+     * Set Status reporter
+     *
+     * @return Pointer to status reporter
+     */
+    void setStatusReporter(StatusReporter* reporter);
+
+    /**
      * Get EEPROM manager
      *
      * @return Pointer to EEPROM manager

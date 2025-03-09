@@ -936,6 +936,8 @@ bool SerialCommand::handleStatusOutput(const String &params, String &response) {
     if (statusReporter == nullptr) {
         response = "Status reporter not available";
         return false;
+    } else {
+        response = "Status reporter available )))))))))))";
     }
 
     String paramsStr = params;

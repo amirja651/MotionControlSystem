@@ -33,7 +33,7 @@
 // Task Configuration
 #define CONFIG_CONTROL_LOOP_FREQUENCY_HZ 1000      // 1kHz control loop
 #define CONFIG_TRAJECTORY_UPDATE_FREQUENCY_HZ 250  // 250Hz trajectory updates
-#define CONFIG_STATUS_UPDATE_FREQUENCY_HZ 10       // 10Hz status reporting
+#define CONFIG_STATUS_UPDATE_FREQUENCY_HZ 1        // 1Hz status reporting
 #define CONFIG_SAFETY_CHECK_INTERVAL_US 500        // 500us safety check interval
 #define CONFIG_CONTROL_LOOP_YIELD_US 50            // 50us yield in main loop
 #define CONFIG_AUXILIARY_TASK_STACK_SIZE 4096

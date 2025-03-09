@@ -120,6 +120,10 @@ StatusReporter *SystemManager::getStatusReporter() {
     return m_statusReporter;
 }
 
+void SystemManager::setStatusReporter(StatusReporter* reporter) {
+    m_statusReporter = reporter;
+}
+
 EEPROMManager *SystemManager::getEEPROMManager() {
     return m_eepromManager;
 }
