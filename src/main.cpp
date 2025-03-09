@@ -70,20 +70,12 @@ void setup() {
     delay(100);
 
     Serial.println();
-    Serial.println("ESP32 Motion Control System starting...");
+    Serial.println(SYSTEM_NAME " starting...");
+    Serial.println();
 
     // Initialize logger first for better debug output
     if (!logger.initialize()) {
         Serial.println("Logger initialization failed");
-        while (1) {
-            delay(1000);
-        }
-    }
-
-    // Initialize serial command processor before system manager
-    // to ensure it's ready to handle commands
-    if (!serialCommand.initialize()) {
-        logger.logError("Serial command initialization failed");
         while (1) {
             delay(1000);
         }
@@ -97,9 +89,28 @@ void setup() {
         }  // Safety halt if critical initialization fails
     }
 
+    // Make sure the serialCommand knows about the systemManager
+    serialCommand.setSystemManager(&systemManager);
+
     // Initialize the motor manager with the configured motors
     if (!motorManager.initialize()) {
         logger.logError("Motor manager initialization failed");
+        while (1) {
+            delay(1000);
+        }
+    }
+
+    // Initialize the status reporter after the system manager is ready
+    if (!statusReporter.initialize()) {
+        logger.logError("Status reporter initialization failed");
+        while (1) {
+            delay(1000);
+        }
+    }
+
+    // to ensure it's ready to handle commands
+    if (!serialCommand.initialize()) {
+        logger.logError("Serial command initialization failed");
         while (1) {
             delay(1000);
         }
@@ -178,6 +189,9 @@ void setup() {
 void loop() {
     // Execute all scheduled high-priority control tasks
     taskScheduler.executeControlTasks();
+
+    // Make sure the status reporter is updating
+    //statusReporter.updateStatus();
 
     // Periodically save motor positions (every 10 seconds)
     static uint32_t lastSaveTimeMs = 0;
