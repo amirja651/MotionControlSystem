@@ -39,7 +39,32 @@ StepperDriver::StepperDriver(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin,
       m_lastStepTimeUs(0),
       m_stepsToGo(0),
       m_timerManager(nullptr),
-      m_usingTimer(false) {
+      m_usingTimer(false),
+      m_logger(nullptr) {
+}
+
+StepperDriver::StepperDriver(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin, bool invertDir,
+                             bool invertEnable, Logger* logger)
+    : m_stepPin(stepPin),
+      m_dirPin(dirPin),
+      m_enablePin(enablePin),
+      m_invertDir(invertDir),
+      m_invertEnable(invertEnable),
+      m_enabled(false),
+      m_direction(true),
+      m_speed(0.0f),
+      m_position(0),
+      m_targetPosition(0),
+      m_isMoving(false),
+      m_microstepMode(MicrostepMode::SIXTEENTH_STEP),
+      m_microsteps(16),
+      m_maxStepsPerSecond(CONFIG_DEFAULT_MAX_VELOCITY),
+      m_stepIntervalUs(0),
+      m_lastStepTimeUs(0),
+      m_stepsToGo(0),
+      m_timerManager(nullptr),
+      m_usingTimer(false),
+      m_logger(logger) {
 }
 
 StepperDriver::~StepperDriver() {
@@ -55,23 +80,16 @@ StepperDriver::~StepperDriver() {
 bool StepperDriver::initialize() {
     // Validate pins before configuring them
     if (m_stepPin > 39) {
-#ifdef ARDUINO
-        Serial.printf("Warning: Invalid STEP pin: %d\n", m_stepPin);
-#else
-        Serial.print("Warning: Invalid STEP pin: ");
-        Serial.println(m_stepPin);
-#endif
+        if (m_logger) {
+            m_logger->logWarning("Warning: Invalid STEP pin: " + String(m_stepPin));
+        }
         return false;
     }
 
     if (m_dirPin > 39) {
-#ifdef ARDUINO
-        Serial.printf("Warning: Invalid STEP pin: %d\n", m_stepPin);
-#else
-        char buffer[256];
-        sprintf(buffer, "Warning: Invalid STEP pin: %d\n", m_stepPin);
-        Serial.print(buffer);
-#endif
+        if (m_logger) {
+            m_logger->logWarning("Invalid DIR pin: " + String(m_dirPin));
+        }
         return false;
     }
 
@@ -85,8 +103,8 @@ bool StepperDriver::initialize() {
         digitalWrite(m_enablePin, m_invertEnable ? LOW : HIGH);  // Default to disabled
     } else {
         // Log if enable pin is invalid but not 0xFF (0xFF means intentionally not used)
-        if (m_enablePin != 0xFF) {
-            Serial.printf("Warning: Invalid ENABLE pin: %d\n", m_enablePin);
+        if (m_enablePin != 0xFF && m_logger) {
+            m_logger->logWarning("Invalid ENABLE pin: " + String(m_enablePin));
         }
     }
 
@@ -99,6 +117,11 @@ bool StepperDriver::initialize() {
 
     // Set this as the active driver for timer callbacks
     s_activeDriver = this;
+
+    if (m_logger) {
+        m_logger->logInfo("Stepper driver initialized with step pin: " + String(m_stepPin) +
+                          ", dir pin: " + String(m_dirPin));
+    }
 
     return true;
 }

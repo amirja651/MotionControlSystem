@@ -9,6 +9,8 @@
 #ifndef SINGLE_MOTOR_EXAMPLE_H
 #define SINGLE_MOTOR_EXAMPLE_H
 
+#if EXAMPLE_ENABLED
+
 #include <Arduino.h>
 
 #include "../Configuration.h"
@@ -591,6 +593,8 @@ class SingleMotorExample {
         motor->moveToPosition(centerPos, speed, accel, accel);
     }
 };
+
+#endif  // EXAMPLE_ENABLED
 
 #endif  // SINGLE_MOTOR_EXAMPLE_H
         // End of Code

@@ -8,7 +8,7 @@
 #include "../hardware/GPIOManager.h"
 #include "../hardware/drivers/StepperDriver.h"
 
-Motor::Motor(const MotorConfig& config)
+Motor::Motor(const MotorConfig& config, Logger* logger)
     : m_config(config),
       m_encoder(config.encoderAPin, config.encoderBPin, config.encoderPPR, config.invertEncoder),
       m_controller(config.pidKp, config.pidKi, config.pidKd, config.pidFf),
@@ -31,9 +31,9 @@ Motor::Motor(const MotorConfig& config)
       m_limitMaxState(false),
       m_lastControlUpdateUs(0),
       m_lastTrajectoryUpdateUs(0),
-      m_invertEnable(config.invertEnable)  // Initialize invert enable flag
-{
-    // Initialize motor state
+      m_invertEnable(config.invertEnable),  // Initialize invert enable flag
+      m_logger(logger) {
+        // Initialize motor state
     memset(&m_state, 0, sizeof(MotorState));
     m_state.status = MotorStatus::DISABLED_;
     m_state.error = MotorError::NONE;
@@ -48,7 +48,7 @@ bool Motor::initialize() {
     // Initialize driver
     // For now, we'll use a stepper driver
     m_driver = new StepperDriver(m_config.stepPin, m_config.dirPin, m_config.enablePin,
-                                 m_config.invertDirection);
+                                 m_config.invertDirection, m_config.invertEnable, m_logger);
 
     // Check and configure the enable pin only if it's valid
     if (m_config.enablePin != 0xFF && m_config.enablePin <= 39) {

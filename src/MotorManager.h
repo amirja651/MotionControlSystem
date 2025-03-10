@@ -14,6 +14,7 @@
 #include "Configuration.h"
 #include "core/Motor.h"
 #include "utils/EEPROMManager.h"
+#include "utils/Logger.h"
 
 /**
  * Motor Manager Class
@@ -28,6 +29,7 @@ class MotorManager {
      * @param maxMotors Maximum number of motors to manage
      */
     MotorManager(uint8_t maxMotors = CONFIG_MAX_MOTORS);
+    MotorManager(uint8_t maxMotors = CONFIG_MAX_MOTORS, Logger* logger = nullptr);
 
     /**
      * Destructor
@@ -163,6 +165,9 @@ class MotorManager {
 
     // EEPROM manager for parameter storage
     EEPROMManager m_eepromManager;
+
+    // Logger instance
+    Logger* m_logger;
 };
 
 #endif  // MOTOR_MANAGER_H

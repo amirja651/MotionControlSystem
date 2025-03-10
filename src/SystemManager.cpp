@@ -60,7 +60,7 @@ bool SystemManager::initialize() {
     }
 
     // Motor manager for motion control
-    m_motorManager = new MotorManager();
+    m_motorManager = new MotorManager(CONFIG_MAX_MOTORS, m_logger);
     if (!m_motorManager->initialize()) {
         m_logger->logError("Failed to initialize motor manager");
         return false;

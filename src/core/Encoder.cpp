@@ -5,7 +5,8 @@
 
 #include "Encoder.h"
 
-Encoder::Encoder(uint8_t encAPin, uint8_t encBPin, uint16_t pulsesPerRev, bool invertDirection)
+Encoder::Encoder(uint8_t encAPin, uint8_t encBPin, uint16_t pulsesPerRev, bool invertDirection,
+                 Logger* logger)
     : m_encoderAPin(encAPin),
       m_encoderBPin(encBPin),
       m_pulsesPerRev(pulsesPerRev),
@@ -21,31 +22,35 @@ Encoder::Encoder(uint8_t encAPin, uint8_t encBPin, uint16_t pulsesPerRev, bool i
       m_lastUpdateTimeUs(0),
       m_timeSinceLastTransitionUs(0),
       m_deltaTimeUs(0),
-      m_velocityFilterAlpha(0.2f)  // Default: moderate filtering
-      ,
-      m_positionFilterAlpha(0.5f)  // Default: less filtering for position
-      ,
-      m_direction(0) {
+      m_velocityFilterAlpha(0.2f),  // Default: moderate filtering
+      m_positionFilterAlpha(0.5f),  // Default: less filtering for position
+      m_direction(0),
+      m_logger(logger) {
 }
 
 bool Encoder::initialize() {
     // Validate pins before configuring them
     if (m_encoderAPin > 39 && m_encoderAPin != 0xFF) {
-        Serial.printf("Invalid encoder A pin: %d\n", m_encoderAPin);
+        if (m_logger) {
+            m_logger->logError("Invalid encoder A pin: " + String(m_encoderAPin));
+        }
         return false;
     }
 
     if (m_encoderBPin > 39 && m_encoderBPin != 0xFF) {
-        Serial.printf("Invalid encoder B pin: %d\n", m_encoderBPin);
+        if (m_logger) {
+            m_logger->logError("Invalid encoder B pin: " + String(m_encoderBPin));
+        }
         return false;
     }
 
     // If pins are 0xFF, encoder is in open-loop mode
     if (m_encoderAPin == 0xFF || m_encoderBPin == 0xFF) {
         // No physical encoder, operate in open-loop mode
+        m_logger->logWarning("No physical encoder, operate in open-loop mode");
         return true;
     }
-    
+
     // Configure encoder pins as inputs with pull-ups
     pinMode(m_encoderAPin, INPUT_PULLUP);
     pinMode(m_encoderBPin, INPUT_PULLUP);

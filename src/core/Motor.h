@@ -16,6 +16,7 @@
 #include "../hardware/GPIOManager.h"
 #include "../hardware/TimerManager.h"
 #include "../utils/CircularBuffer.h"
+#include "../utils/Logger.h"
 #include "Encoder.h"
 #include "PIDController.h"
 #include "TrajectoryPlanner.h"
@@ -88,7 +89,7 @@ class Motor {
      *
      * @param config Motor configuration
      */
-    Motor(const MotorConfig& config);
+    Motor(const MotorConfig& config, Logger* logger = nullptr);
 
     /**
      * Initialize the motor
@@ -357,7 +358,12 @@ class Motor {
     PIDController m_controller;
     TrajectoryPlanner m_trajectoryPlanner;
     DriverInterface* m_driver;
-
+    
+    /**
+     * Logger instance
+     */
+    Logger* m_logger;
+    
     // Motor state
     MotorState m_state;
     MotorControlMode m_controlMode;
@@ -435,5 +441,5 @@ class Motor {
      */
     void setError(MotorError error);
 };
-
 #endif  // MOTOR_H
+        // End of Code

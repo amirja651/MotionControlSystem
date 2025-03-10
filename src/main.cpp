@@ -18,9 +18,9 @@
 
 // System components
 SystemManager systemManager;
-MotorManager motorManager;
-TaskScheduler taskScheduler;
 Logger logger;
+MotorManager motorManager(CONFIG_MAX_MOTORS, &logger);
+TaskScheduler taskScheduler;
 SerialCommand serialCommand;
 StatusReporter statusReporter(&systemManager, CONFIG_STATUS_UPDATE_FREQUENCY_HZ);
 
@@ -69,13 +69,11 @@ void setup() {
     // Wait a moment for serial to stabilize
     delay(100);
 
-    Serial.println();
     Serial.println(ANSI_COLOR_MAGENTA SYSTEM_NAME " starting..." ANSI_COLOR_RESET);
-    Serial.println();
 
     // Initialize logger first for better debug output
     if (!logger.initialize()) {
-        Serial.println("Logger initialization failed");
+        Serial.println(ANSI_COLOR_RED "Logger initialization failed" ANSI_COLOR_RESET);
         while (1) {
             delay(1000);
         }
@@ -172,12 +170,10 @@ void setup() {
     serialCommand.begin();
 
     // Print welcome message
+    logger.logInfo(SYSTEM_NAME " initialized");
     delay(100);
-    Serial.println();
-    Serial.println(ANSI_COLOR_MAGENTA SYSTEM_NAME " initialized" ANSI_COLOR_RESET);
-    Serial.println();
     Serial.println("Type " ANSI_COLOR_BLUE "'help'" ANSI_COLOR_RESET " for available commands");
-    // Serial.print("> ");
+    Serial.print("> ");
 }
 
 /**

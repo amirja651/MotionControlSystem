@@ -13,6 +13,7 @@
 
 #include "../Configuration.h"
 #include "../utils/CircularBuffer.h"
+#include "../utils/Logger.h"
 #include "../utils/MathUtils.h"
 
 class Encoder {
@@ -26,7 +27,7 @@ class Encoder {
      * @param invertDirection Whether to invert the direction
      */
     Encoder(uint8_t encAPin, uint8_t encBPin, uint16_t pulsesPerRev = CONFIG_ENCODER_DEFAULT_PPR,
-            bool invertDirection = false);
+            bool invertDirection = false, Logger* logger = nullptr);
 
     /**
      * Initialize the encoder
@@ -137,6 +138,9 @@ class Encoder {
     uint32_t getCountsPerRevolution() const;
 
    private:
+    // Logger instance
+    Logger* m_logger;
+
     // Pin configuration
     uint8_t m_encoderAPin;
     uint8_t m_encoderBPin;

@@ -9,6 +9,8 @@
 #ifndef DUAL_MOTOR_EXAMPLE_H
 #define DUAL_MOTOR_EXAMPLE_H
 
+#if EXAMPLE_ENABLED
+
 #include <Arduino.h>
 
 #include "../Configuration.h"
@@ -943,6 +945,8 @@ class DualMotorExample {
         return true;
     }
 };
+
+#endif  // EXAMPLE_ENABLED
 
 #endif  // DUAL_MOTOR_EXAMPLE_H
         // End of Code

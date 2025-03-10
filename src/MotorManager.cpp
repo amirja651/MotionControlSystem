@@ -5,14 +5,21 @@
 
 #include "MotorManager.h"
 
-MotorManager::MotorManager(uint8_t maxMotors)
-    : m_maxMotors(maxMotors > 0 ? maxMotors : CONFIG_MAX_MOTORS), m_motorCount(0) {
+MotorManager::MotorManager(uint8_t maxMotors, Logger* logger)
+    : m_maxMotors(maxMotors > 0 ? maxMotors : CONFIG_MAX_MOTORS),
+      m_motorCount(0),
+      m_logger(logger) {
     // Allocate memory for motor pointers
     m_motors = new Motor*[m_maxMotors];
 
     // Initialize all pointers to nullptr
     for (uint8_t i = 0; i < m_maxMotors; i++) {
         m_motors[i] = nullptr;
+    }
+
+    // Log creation if logger is available
+    if (m_logger) {
+        m_logger->logInfo("Motor Manager created with " + String(m_maxMotors) + " motors capacity");
     }
 }
 
@@ -32,12 +39,18 @@ MotorManager::~MotorManager() {
 bool MotorManager::initialize() {
     // Initialize EEPROM manager
     if (!m_eepromManager.initialize()) {
+        if (m_logger) {
+            m_logger->logError("Failed to initialize EEPROM manager");
+        }
         return false;
     }
 
     // If there are predefined motor configurations, add them
     for (uint8_t i = 0; i < CONFIG_MAX_MOTORS; i++) {
         if (i < m_maxMotors) {
+            if (m_logger) {
+                m_logger->logInfo("Adding default motor " + String(i));
+            }
             addMotor(DEFAULT_MOTOR_CONFIGS[i]);
         }
     }
@@ -45,56 +58,87 @@ bool MotorManager::initialize() {
     // Load saved parameters if available
     loadFromEEPROM();
 
+    if (m_logger) {
+        m_logger->logInfo("Motor Manager initialized with " + String(m_motorCount) + " motors");
+    }
+
     return true;
 }
 
 bool MotorManager::addMotor(const MotorConfig& config) {
     // Check if we have room for another motor
     if (m_motorCount >= m_maxMotors) {
+        if (m_logger) {
+            m_logger->logError("Cannot add motor: maximum motor count reached");
+        }
         return false;
     }
 
     // Check if motor index is valid
     if (config.index >= m_maxMotors) {
+        if (m_logger) {
+            m_logger->logError("Invalid motor index: " + String(config.index));
+        }
         return false;
     }
 
     // Validate pin numbers (ESP32 has GPIO pins 0-39)
     if (config.stepPin > 39) {
-        Serial.printf("Invalid step pin for motor %d: %d\n", config.index, config.stepPin);
+        if (m_logger) {
+            m_logger->logError("Invalid step pin for motor " + String(config.index) + ": " +
+                               String(config.stepPin));
+        }
         return false;
     }
 
     if (config.dirPin > 39) {
-        Serial.printf("Invalid dir pin for motor %d: %d\n", config.index, config.dirPin);
+        if (m_logger) {
+            m_logger->logError("Invalid dir pin for motor " + String(config.index) + ": " +
+                               String(config.dirPin));
+        }
         return false;
     }
 
     // Enable pin can be 0xFF (no pin) or a valid pin number
     if (config.enablePin != 0xFF && config.enablePin > 39) {
-        Serial.printf("Invalid enable pin for motor %d: %d\n", config.index, config.enablePin);
+        if (m_logger) {
+            m_logger->logError("Invalid enable pin for motor " + String(config.index) + ": " +
+                               String(config.enablePin));
+        }
         return false;
     }
 
     // Validate encoder pins if used
     if (config.encoderAPin != 0xFF && config.encoderAPin > 39) {
-        Serial.printf("Invalid encoder A pin for motor %d: %d\n", config.index, config.encoderAPin);
+        if (m_logger) {
+            m_logger->logError("Invalid encoder A pin for motor " + String(config.index) + ": " +
+                               String(config.encoderAPin));
+        }
         return false;
     }
 
     if (config.encoderBPin != 0xFF && config.encoderBPin > 39) {
-        Serial.printf("Invalid encoder B pin for motor %d: %d\n", config.index, config.encoderBPin);
+        if (m_logger) {
+            m_logger->logError("Invalid encoder B pin for motor " + String(config.index) + ": " +
+                               String(config.encoderBPin));
+        }
         return false;
     }
 
     // Validate limit switch pins if used
     if (config.limitMinPin != 0xFF && config.limitMinPin > 39) {
-        Serial.printf("Invalid limit min pin for motor %d: %d\n", config.index, config.limitMinPin);
+        if (m_logger) {
+            m_logger->logError("Invalid limit min pin for motor " + String(config.index) + ": " +
+                               String(config.limitMinPin));
+        }
         return false;
     }
 
     if (config.limitMaxPin != 0xFF && config.limitMaxPin > 39) {
-        Serial.printf("Invalid limit max pin for motor %d: %d\n", config.index, config.limitMaxPin);
+        if (m_logger) {
+            m_logger->logError("Invalid limit max pin for motor " + String(config.index) + ": " +
+                               String(config.limitMaxPin));
+        }
         return false;
     }
 
@@ -103,12 +147,18 @@ bool MotorManager::addMotor(const MotorConfig& config) {
 
     // Initialize the motor
     if (!motor->initialize()) {
+        if (m_logger) {
+            m_logger->logError("Failed to initialize motor " + String(config.index));
+        }
         delete motor;
         return false;
     }
 
     // If there's already a motor at this index, replace it
     if (m_motors[config.index] != nullptr) {
+        if (m_logger) {
+            m_logger->logInfo("Replacing existing motor at index " + String(config.index));
+        }
         delete m_motors[config.index];
     } else {
         // Increment motor count only if this is a new slot
@@ -117,6 +167,10 @@ bool MotorManager::addMotor(const MotorConfig& config) {
 
     // Store motor
     m_motors[config.index] = motor;
+
+    if (m_logger) {
+        m_logger->logInfo("Motor " + String(config.index) + " added successfully");
+    }
 
     return true;
 }

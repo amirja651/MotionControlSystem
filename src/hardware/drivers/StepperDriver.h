@@ -9,17 +9,10 @@
 #ifndef STEPPER_DRIVER_H
 #define STEPPER_DRIVER_H
 
-#ifdef ARDUINO
-  // For ESP32 target
-  #define STEPPER_ISR_ATTR IRAM_ATTR
-#else
-  // For native testing environment
-  #define STEPPER_ISR_ATTR
-#endif
-
 #include <Arduino.h>
 
 #include "../../Configuration.h"
+#include "../../utils/Logger.h"
 #include "../DriverInterface.h"
 #include "../TimerManager.h"
 
@@ -51,6 +44,9 @@ class StepperDriver : public DriverInterface {
      */
     StepperDriver(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin, bool invertDir = false,
                   bool invertEnable = false);
+
+    StepperDriver(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin, bool invertDir = false,
+                  bool invertEnable = false, Logger* logger = nullptr);
 
     /**
      * Destructor
@@ -248,6 +244,9 @@ class StepperDriver : public DriverInterface {
     // Timer control
     TimerManager* m_timerManager;
     bool m_usingTimer;
+
+    // Logger instance
+    Logger* m_logger;
 
     /**
      * Generate a step pulse

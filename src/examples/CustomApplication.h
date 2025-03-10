@@ -9,6 +9,8 @@
 #ifndef CUSTOM_APPLICATION_H
 #define CUSTOM_APPLICATION_H
 
+#if EXAMPLE_ENABLED
+
 #include <Arduino.h>
 
 #include "../Configuration.h"
@@ -454,5 +456,7 @@ class CustomApplication {
         return true;
     }
 };
+
+#endif  // EXAMPLE_ENABLED
 
 #endif  // CUSTOM_APPLICATION_H
