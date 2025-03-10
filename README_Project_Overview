@@ -1,0 +1,116 @@
+# ESP32 High-Precision Motion Control System
+
+## Project Overview
+
+### System Architecture
+
+The ESP32 High-Precision Motion Control System is a sophisticated motion control framework designed for ultra-precise multi-axis positioning applications, particularly suited for laser alignment and precision instrumentation. The system leverages the ESP32's dual-core architecture to achieve real-time performance and high reliability.
+
+#### Key Architectural Layers
+
+1. **Application Layer**
+   - `SystemManager`: Central coordination of system components
+   - `Configuration.h`: Global system-wide configuration
+   - `main.cpp`: Entry point and multi-core task distribution
+
+2. **Control Layer**
+   - `MotorManager`: Manages multiple motors
+   - `Motor`: Individual motor control abstraction
+   - `PIDController`: Advanced closed-loop control algorithm
+   - `TrajectoryPlanner`: Generates smooth motion profiles
+   - `SafetyMonitor`: Comprehensive system safety monitoring
+
+3. **Hardware Abstraction Layer**
+   - `DriverInterface`: Abstract driver for different motor types
+   - `StepperDriver`: Stepper motor control implementation
+   - `Encoder`: High-resolution position feedback
+   - `GPIOManager`: Pin management and allocation
+   - `TimerManager`: Precise hardware timing control
+
+4. **Utility Layer**
+   - `TaskScheduler`: Real-time task management
+   - `CircularBuffer`: Efficient data buffering
+   - `EEPROMManager`: Persistent configuration storage
+   - `Logger`: Diagnostic logging system
+   - `MathUtils`: Optimized mathematical functions
+
+5. **Communication Layer**
+   - `SerialCommand`: Text-based command interface
+   - `CommandProtocol`: Binary communication protocol
+   - `StatusReporter`: System status reporting
+
+### Key Design Principles
+
+- **Modularity**: Highly decoupled components with clear interfaces
+- **Real-Time Performance**: Dual-core task scheduling
+- **Precision**: Sub-micrometer positioning capabilities
+- **Safety**: Comprehensive monitoring and error handling
+- **Flexibility**: Support for multiple motor types and configurations
+
+### Core Features
+
+- Closed-loop position and velocity control
+- Advanced PID control with adaptive gains
+- Jerk-limited motion profiling
+- Soft and hard limit protection
+- Power failure recovery
+- Extensive logging and diagnostics
+- Configurable safety thresholds
+- Multiple communication interfaces
+
+### Supported Motor Types
+
+- Stepper motors (primary focus)
+- DC motors (basic support)
+- Servo motors (planned)
+
+### Target Applications
+
+- Laser alignment systems
+- Precision optical positioning
+- Scientific instrumentation
+- CNC machines
+- Robotic systems requiring high-precision movement
+
+### Development Environment
+
+- Platform: ESP32
+- Framework: Arduino
+- Build System: PlatformIO
+- Testing: Unity test framework
+- Programming Language: C++11
+
+### Performance Characteristics
+
+- Control Loop Frequency: Up to 1 kHz
+- Position Resolution: Sub-micron (depends on motor and encoder)
+- Velocity Resolution: As low as 0.1 steps/second
+- Supported Encoder Interpolation: Up to 32x
+
+### Safety and Reliability
+
+- Emergency stop functionality
+- Comprehensive error detection
+- Voltage and temperature monitoring
+- Power failure recovery
+- Soft and hard limit protection
+
+## Getting Started
+
+1. Clone the repository
+2. Install PlatformIO
+3. Configure your specific motor and system parameters in `Configuration.h`
+4. Build and upload the firmware
+5. Connect motors and establish communication
+
+## Contributing
+
+Contributions are welcome! Please read the contributing guidelines and code of conduct before submitting pull requests.
+
+## License
+
+[Insert License Information]
+
+## Support
+
+For support, please file an issue on the GitHub repository or contact the maintainers.
