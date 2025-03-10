@@ -9,7 +9,11 @@
 static StepperDriver* s_activeDriver = nullptr;
 
 // Timer ISR
-static void IRAM_ATTR stepperTimerISR() {
+static void
+#ifdef ARDUINO
+    IRAM_ATTR
+#endif
+    stepperTimerISR() {
     if (s_activeDriver != nullptr) {
         s_activeDriver->handleTimerInterrupt();
     }
@@ -51,12 +55,23 @@ StepperDriver::~StepperDriver() {
 bool StepperDriver::initialize() {
     // Validate pins before configuring them
     if (m_stepPin > 39) {
+#ifdef ARDUINO
         Serial.printf("Warning: Invalid STEP pin: %d\n", m_stepPin);
+#else
+        Serial.print("Warning: Invalid STEP pin: ");
+        Serial.println(m_stepPin);
+#endif
         return false;
     }
 
     if (m_dirPin > 39) {
-        Serial.printf("Warning: Invalid DIR pin: %d\n", m_dirPin);
+#ifdef ARDUINO
+        Serial.printf("Warning: Invalid STEP pin: %d\n", m_stepPin);
+#else
+        char buffer[256];
+        sprintf(buffer, "Warning: Invalid STEP pin: %d\n", m_stepPin);
+        Serial.print(buffer);
+#endif
         return false;
     }
 
@@ -98,7 +113,7 @@ void StepperDriver::enable() {
 
 void StepperDriver::disable() {
     stop(true);  // Stop any ongoing movement
-    
+
     // Only use the enable pin if it's valid
     if (m_enablePin != 0xFF && m_enablePin <= 39) {
         digitalWrite(m_enablePin, m_invertEnable ? LOW : HIGH);

@@ -9,6 +9,14 @@
 #ifndef STEPPER_DRIVER_H
 #define STEPPER_DRIVER_H
 
+#ifdef ARDUINO
+  // For ESP32 target
+  #define STEPPER_ISR_ATTR IRAM_ATTR
+#else
+  // For native testing environment
+  #define STEPPER_ISR_ATTR
+#endif
+
 #include <Arduino.h>
 
 #include "../../Configuration.h"
