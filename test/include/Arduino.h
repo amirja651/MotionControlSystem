@@ -2,15 +2,14 @@
 #define MOCK_ARDUINO_H
 
 #include <cstdint>
+#include <cstring>
 #include <string>
+#include "WString.h" 
 
-// Basic Arduino-like functions
-unsigned long millis();
-unsigned long micros();
-void delay(unsigned long ms);
-void delayMicroseconds(unsigned int us);
+// Add these if not already present
+void interrupts();
+void noInterrupts();
 
-// GPIO and Serial placeholders
 class SerialClass {
 public:
     void begin(long baudRate);
@@ -39,6 +38,14 @@ int digitalRead(uint8_t pin);
 // ESP32-specific placeholder
 namespace esp_random {
     uint32_t get();
+}
+
+inline void delay(unsigned long ms) {
+    // In a native test environment, this is a no-op
+}
+
+inline void delayMicroseconds(unsigned int us) {
+    // In a native test environment, this is a no-op
 }
 
 #endif // MOCK_ARDUINO_H
