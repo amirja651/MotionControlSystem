@@ -60,7 +60,7 @@ class EEPROMManager {
      *
      * @return True if commit successful, false otherwise
      */
-    bool commit();
+    virtual bool commit();
 
     /**
      * Reset EEPROM to default values
@@ -91,7 +91,7 @@ class EEPROMManager {
      * @param ff Feed-forward gain
      * @return True if parameters saved successfully, false otherwise
      */
-    bool savePIDParameters(uint8_t motorIndex, float kp, float ki, float kd, float ff);
+    virtual bool savePIDParameters(uint8_t motorIndex, float kp, float ki, float kd, float ff);
 
     /**
      * Load motor profile parameters
@@ -139,7 +139,7 @@ class EEPROMManager {
      * @param enabled Whether soft limits are enabled
      * @return True if limits saved successfully, false otherwise
      */
-    bool saveSoftLimits(uint8_t motorIndex, int32_t minLimit, int32_t maxLimit, bool enabled);
+    virtual bool saveSoftLimits(uint8_t motorIndex, int32_t minLimit, int32_t maxLimit, bool enabled);
 
     /**
      * Load system configuration

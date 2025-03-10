@@ -79,7 +79,7 @@ class SystemManager {
      *
      * @return Pointer to logger
      */
-    Logger* getLogger();
+    virtual Logger* getLogger();
 
     /**
      * Get task scheduler
@@ -121,14 +121,14 @@ class SystemManager {
      *
      * @param reason Reason for emergency stop
      */
-    void triggerEmergencyStop(SafetyCode reason);
+    virtual void triggerEmergencyStop(SafetyCode reason);
 
     /**
      * Reset emergency stop
      *
      * @return True if reset successful, false otherwise
      */
-    bool resetEmergencyStop();
+    virtual bool resetEmergencyStop();
 
     /**
      * Check if system is in emergency stop
@@ -142,14 +142,14 @@ class SystemManager {
      *
      * @return True if saved successfully, false otherwise
      */
-    bool saveSystemConfiguration();
+    virtual bool saveSystemConfiguration();
 
     /**
      * Load system configuration from EEPROM
      *
      * @return True if loaded successfully, false otherwise
      */
-    bool loadSystemConfiguration();
+    virtual bool loadSystemConfiguration();
 
     /**
      * Get system uptime in milliseconds
@@ -176,7 +176,7 @@ class SystemManager {
     /**
      * Reset the system
      */
-    void resetSystem();
+    virtual void resetSystem();
 
     /**
      * Update system metrics

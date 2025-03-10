@@ -13,7 +13,16 @@ public:
     bool m_loadConfigCalled = false;
     bool m_emergencyStopCalled = false;
     bool m_emergencyStopResetCalled = false;
+    MockLogger* m_mockLogger = nullptr; 
+
+    Logger* getLogger() override {
+        return m_mockLogger;
+    }
     
+    void setMockLogger(MockLogger* logger) {
+        m_mockLogger = logger;
+    }
+
     void resetSystem() override {
         m_resetCalled = true;
     }
@@ -58,7 +67,8 @@ void setUp() {
     mockLogger = new MockLogger();
     
     // Connect logger to system manager
-    mockSystemManager->getLogger = [&]() -> Logger* { return mockLogger; };
+    // mockSystemManager->getLogger = [&]() -> Logger* { return mockLogger; };
+    mockSystemManager->setMockLogger(mockLogger);
     
     // Create command handlers
     serialCommand = new SerialCommand(mockSystemManager);

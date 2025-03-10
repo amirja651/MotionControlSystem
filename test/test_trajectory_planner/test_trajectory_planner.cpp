@@ -1,7 +1,7 @@
 #include <unity.h>
 #include <Arduino.h>
 #include "core/TrajectoryPlanner.h"
-#include "../test_mocks.h"
+#include "../include/test_mocks.h"
 
 // Define test cases for TrajectoryPlanner
 

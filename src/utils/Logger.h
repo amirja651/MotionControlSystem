@@ -60,7 +60,7 @@ class Logger {
      * @param serialBaudRate Serial baud rate for log output
      * @return True if initialization successful, false otherwise
      */
-    bool initialize(uint32_t serialBaudRate = 0);
+    virtual bool initialize(uint32_t serialBaudRate = 0);
 
     /**
      * Set log level
@@ -83,7 +83,7 @@ class Logger {
      * @param message Message to log
      * @param source Source component (optional)
      */
-    void logError(const String& message, uint8_t source = 0);
+    virtual void logError(const String& message, uint8_t source = 0);
 
     /**
      * Log a warning message
@@ -91,7 +91,7 @@ class Logger {
      * @param message Message to log
      * @param source Source component (optional)
      */
-    void logWarning(const String& message, uint8_t source = 0);
+    virtual void logWarning(const String& message, uint8_t source = 0);
 
     /**
      * Log an info message
@@ -99,7 +99,7 @@ class Logger {
      * @param message Message to log
      * @param source Source component (optional)
      */
-    void logInfo(const String& message, uint8_t source = 0);
+    virtual void logInfo(const String& message, uint8_t source = 0);
 
     /**
      * Log a debug message
@@ -107,7 +107,7 @@ class Logger {
      * @param message Message to log
      * @param source Source component (optional)
      */
-    void logDebug(const String& message, uint8_t source = 0);
+    virtual void logDebug(const String& message, uint8_t source = 0);
 
     /**
      * Log a verbose message
@@ -115,7 +115,7 @@ class Logger {
      * @param message Message to log
      * @param source Source component (optional)
      */
-    void logVerbose(const String& message, uint8_t source = 0);
+    virtual void logVerbose(const String& message, uint8_t source = 0);
 
     /**
      * Process any pending log entries

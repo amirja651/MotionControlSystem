@@ -33,7 +33,7 @@ class Encoder {
      *
      * @return True if initialization successful, false otherwise
      */
-    bool initialize();
+    virtual bool initialize();
 
     /**
      * Reset encoder position to zero
@@ -45,7 +45,7 @@ class Encoder {
      *
      * @param position New position value
      */
-    void setPosition(int32_t position);
+    virtual void setPosition(int32_t position);
 
     /**
      * Set encoder velocity to a specific value
@@ -53,14 +53,14 @@ class Encoder {
      *
      * @param velocity New velocity value
      */
-    void setVelocity(float velocity);
+    virtual void setVelocity(float velocity);
 
     /**
      * Get current encoder position
      *
      * @return Current position in encoder counts
      */
-    int32_t getPosition() const;
+    virtual int32_t getPosition() const;
 
     /**
      * Get filtered encoder position
@@ -74,7 +74,7 @@ class Encoder {
      *
      * @return Current velocity in counts per second
      */
-    float getVelocity() const;
+    virtual float getVelocity() const;
 
     /**
      * Get filtered encoder velocity
@@ -117,7 +117,7 @@ class Encoder {
      *
      * @param deltaTimeUs Time since last update in microseconds
      */
-    void update(uint32_t deltaTimeUs);
+    virtual void update(uint32_t deltaTimeUs);
 
     /**
      * Process encoder A/B pin state change
