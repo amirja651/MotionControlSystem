@@ -120,7 +120,7 @@ StatusReporter *SystemManager::getStatusReporter() {
     return m_statusReporter;
 }
 
-void SystemManager::setStatusReporter(StatusReporter* reporter) {
+void SystemManager::setStatusReporter(StatusReporter *reporter) {
     m_statusReporter = reporter;
 }
 
@@ -455,4 +455,9 @@ void SystemManager::setNormalShutdown(bool state) {
     m_eepromManager->saveUserData(&state, sizeof(state), SHUTDOWN_FLAG_ADDR);
     m_eepromManager->commit();
 }
+
+int SystemManager::getMotorPositionsAddr() {
+    return MOTOR_POSITIONS_ADDR;
+};
+
 // End of Code

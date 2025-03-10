@@ -211,7 +211,13 @@ class SystemManager {
      */
     void setNormalShutdown(bool state);
 
+    /**
+     * Get the EEPROM address for motor positions
+     */
+    int getMotorPositionsAddr();
+
    private:
+    // Other members...
     // System components
     MotorManager* m_motorManager;
     SafetyMonitor* m_safetyMonitor;
