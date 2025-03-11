@@ -41,10 +41,8 @@ class StepperDriver : public DriverInterface {
      * @param enablePin Enable pin number
      * @param invertDir Whether to invert direction pin logic
      * @param invertEnable Whether to invert enable pin logic
+     * @param logger Pointer to logger instance
      */
-    StepperDriver(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin, bool invertDir = false,
-                  bool invertEnable = false);
-
     StepperDriver(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin, bool invertDir = false,
                   bool invertEnable = false, Logger* logger = nullptr);
 
@@ -273,6 +271,15 @@ class StepperDriver : public DriverInterface {
      * Stop the timer
      */
     void stopTimer();
+
+    /**
+     * Convert microstepping mode to string for logging
+     *
+     * @param mode Microstepping mode
+     * @return String representation of mode
+     */
+    String microstepModeToString(MicrostepMode mode) const;
 };
 
 #endif  // STEPPER_DRIVER_H
+        // End of Code

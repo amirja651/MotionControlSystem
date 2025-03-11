@@ -12,6 +12,7 @@
 #include <Arduino.h>
 
 #include "../Configuration.h"
+#include "../utils/Logger.h"
 #include "../utils/MathUtils.h"
 
 /**
@@ -56,11 +57,12 @@ class TrajectoryPlanner {
      * @param maxAcceleration Default maximum acceleration
      * @param maxDeceleration Default maximum deceleration
      * @param maxJerk Default maximum jerk
+     * @param logger Pointer to logger instance
      */
     TrajectoryPlanner(float maxVelocity = CONFIG_DEFAULT_MAX_VELOCITY,
                       float maxAcceleration = CONFIG_DEFAULT_ACCELERATION,
                       float maxDeceleration = CONFIG_DEFAULT_DECELERATION,
-                      float maxJerk = CONFIG_DEFAULT_MAX_JERK);
+                      float maxJerk = CONFIG_DEFAULT_MAX_JERK, Logger* logger = nullptr);
 
     /**
      * Initialize the trajectory planner
@@ -191,6 +193,9 @@ class TrajectoryPlanner {
     float m_defaultMaxDeceleration;
     float m_defaultMaxJerk;
 
+    // Logger instance
+    Logger* m_logger;
+
     // Internal calculation methods
 
     /**
@@ -237,6 +242,14 @@ class TrajectoryPlanner {
      * @param elapsedTimeSeconds Elapsed time in seconds
      */
     void updateSCurveProfile(float elapsedTimeSeconds);
+
+    /**
+     * Convert profile type to string
+     *
+     * @param profileType Profile type
+     * @return String representation
+     */
+    String profileTypeToString(ProfileType profileType) const;
 };
 
 #endif  // TRAJECTORY_PLANNER_H

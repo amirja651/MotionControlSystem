@@ -9,38 +9,8 @@
 static StepperDriver* s_activeDriver = nullptr;
 
 // Timer ISR
-static void
-#ifdef ARDUINO
-    IRAM_ATTR
-#endif
-    stepperTimerISR() {
-    if (s_activeDriver != nullptr) {
-        s_activeDriver->handleTimerInterrupt();
-    }
-}
-
-StepperDriver::StepperDriver(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin, bool invertDir,
-                             bool invertEnable)
-    : m_stepPin(stepPin),
-      m_dirPin(dirPin),
-      m_enablePin(enablePin),
-      m_invertDir(invertDir),
-      m_invertEnable(invertEnable),
-      m_enabled(false),
-      m_direction(true),
-      m_speed(0.0f),
-      m_position(0),
-      m_targetPosition(0),
-      m_isMoving(false),
-      m_microstepMode(MicrostepMode::SIXTEENTH_STEP),
-      m_microsteps(16),
-      m_maxStepsPerSecond(CONFIG_DEFAULT_MAX_VELOCITY),
-      m_stepIntervalUs(0),
-      m_lastStepTimeUs(0),
-      m_stepsToGo(0),
-      m_timerManager(nullptr),
-      m_usingTimer(false),
-      m_logger(nullptr) {
+static void IRAM_ATTR stepperTimerISR() {
+    s_activeDriver->handleTimerInterrupt();
 }
 
 StepperDriver::StepperDriver(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin, bool invertDir,
@@ -81,14 +51,14 @@ bool StepperDriver::initialize() {
     // Validate pins before configuring them
     if (m_stepPin > 39) {
         if (m_logger) {
-            m_logger->logWarning("Warning: Invalid STEP pin: " + String(m_stepPin));
+            m_logger->logError("Invalid STEP pin: " + String(m_stepPin), LogModule::STEPPER_DRIVER);
         }
         return false;
     }
 
     if (m_dirPin > 39) {
         if (m_logger) {
-            m_logger->logWarning("Invalid DIR pin: " + String(m_dirPin));
+            m_logger->logError("Invalid DIR pin: " + String(m_dirPin), LogModule::STEPPER_DRIVER);
         }
         return false;
     }
@@ -104,7 +74,8 @@ bool StepperDriver::initialize() {
     } else {
         // Log if enable pin is invalid but not 0xFF (0xFF means intentionally not used)
         if (m_enablePin != 0xFF && m_logger) {
-            m_logger->logWarning("Invalid ENABLE pin: " + String(m_enablePin));
+            m_logger->logWarning("Invalid ENABLE pin: " + String(m_enablePin),
+                                 LogModule::STEPPER_DRIVER);
         }
     }
 
@@ -113,14 +84,16 @@ bool StepperDriver::initialize() {
     digitalWrite(m_dirPin, m_invertDir ? HIGH : LOW);  // Default to forward direction
 
     // Get timer manager
-    m_timerManager = TimerManager::getInstance();
+    m_timerManager = TimerManager::getInstance(m_logger);
 
     // Set this as the active driver for timer callbacks
     s_activeDriver = this;
 
     if (m_logger) {
         m_logger->logInfo("Stepper driver initialized with step pin: " + String(m_stepPin) +
-                          ", dir pin: " + String(m_dirPin));
+                              ", dir pin: " + String(m_dirPin) +
+                              ", microstepping: " + microstepModeToString(m_microstepMode),
+                          LogModule::STEPPER_DRIVER);
     }
 
     return true;
@@ -132,6 +105,10 @@ void StepperDriver::enable() {
         digitalWrite(m_enablePin, m_invertEnable ? HIGH : LOW);
     }
     m_enabled = true;
+
+    if (m_logger) {
+        m_logger->logInfo("Stepper driver enabled", LogModule::STEPPER_DRIVER);
+    }
 }
 
 void StepperDriver::disable() {
@@ -142,6 +119,10 @@ void StepperDriver::disable() {
         digitalWrite(m_enablePin, m_invertEnable ? LOW : HIGH);
     }
     m_enabled = false;
+
+    if (m_logger) {
+        m_logger->logInfo("Stepper driver disabled", LogModule::STEPPER_DRIVER);
+    }
 }
 
 bool StepperDriver::isEnabled() const {
@@ -151,11 +132,21 @@ bool StepperDriver::isEnabled() const {
 void StepperDriver::setDirection(bool direction) {
     m_direction = direction;
     digitalWrite(m_dirPin, (direction ^ m_invertDir) ? HIGH : LOW);
+
+    if (m_logger) {
+        m_logger->logDebug("Direction set to " + String(direction ? "forward" : "reverse"),
+                           LogModule::STEPPER_DRIVER);
+    }
 }
 
 void StepperDriver::setSpeed(float speed) {
     // Constrain speed to maximum
     if (fabs(speed) > m_maxStepsPerSecond) {
+        if (m_logger) {
+            m_logger->logWarning(
+                "Speed constrained from " + String(speed) + " to " + String(m_maxStepsPerSecond),
+                LogModule::STEPPER_DRIVER);
+        }
         speed = speed > 0 ? m_maxStepsPerSecond : -m_maxStepsPerSecond;
     }
 
@@ -175,6 +166,12 @@ void StepperDriver::setSpeed(float speed) {
     if (m_isMoving && !m_usingTimer && m_speed > 0.0f) {
         startTimer(m_stepIntervalUs);
     }
+
+    if (m_logger) {
+        m_logger->logDebug("Speed set to " + String(m_speed) + " steps/s" +
+                               " (interval: " + String(m_stepIntervalUs) + "us)",
+                           LogModule::STEPPER_DRIVER);
+    }
 }
 
 int32_t StepperDriver::step(int32_t steps) {
@@ -192,11 +189,20 @@ int32_t StepperDriver::step(int32_t steps) {
     // Start moving
     m_isMoving = true;
 
+    if (m_logger) {
+        m_logger->logInfo("Starting movement of " + String(steps) + " steps",
+                          LogModule::STEPPER_DRIVER);
+    }
+
     // If speed is set, start the timer for continuous stepping
     if (m_speed > 0.0f) {
         startTimer(m_stepIntervalUs);
     } else {
         // For manual stepping without timer
+        if (m_logger) {
+            m_logger->logWarning("Manual stepping with no speed set", LogModule::STEPPER_DRIVER);
+        }
+
         for (int32_t i = 0; i < abs(steps); i++) {
             pulseStep();
             delayMicroseconds(CONFIG_MIN_STEP_INTERVAL_US);
@@ -219,6 +225,12 @@ bool StepperDriver::moveTo(int32_t position) {
     // Store target position
     m_targetPosition = position;
 
+    if (m_logger) {
+        m_logger->logInfo("Moving to position " + String(position) + " (current: " +
+                              String(m_position) + ", delta: " + String(stepsToMove) + ")",
+                          LogModule::STEPPER_DRIVER);
+    }
+
     // Move the calculated steps
     step(stepsToMove);
 
@@ -228,6 +240,13 @@ bool StepperDriver::moveTo(int32_t position) {
 void StepperDriver::setOutput(float output) {
     // For stepper motors, output (-1.0 to 1.0) maps to speed and direction
     float speed = fabs(output) * m_maxStepsPerSecond;
+
+    if (m_logger) {
+        m_logger->logDebug(
+            "Setting output " + String(output) + " -> speed " + String(output < 0 ? -speed : speed),
+            LogModule::STEPPER_DRIVER);
+    }
+
     setSpeed(output < 0 ? -speed : speed);
 }
 
@@ -238,6 +257,11 @@ void StepperDriver::stop(bool emergency) {
     // Reset movement state
     m_isMoving = false;
     m_stepsToGo = 0;
+
+    if (m_logger) {
+        m_logger->logInfo("Motor stop" + String(emergency ? " (emergency)" : ""),
+                          LogModule::STEPPER_DRIVER);
+    }
 
     // If not emergency stop, we would typically decelerate here
     // For simplicity, we just stop immediately for now
@@ -258,6 +282,11 @@ int32_t StepperDriver::getCurrentPosition() const {
 bool StepperDriver::setCurrentPosition(int32_t position) {
     m_position = position;
     m_targetPosition = position;  // Reset target to current position
+
+    if (m_logger) {
+        m_logger->logInfo("Position reset to " + String(position), LogModule::STEPPER_DRIVER);
+    }
+
     return true;
 }
 
@@ -287,6 +316,10 @@ String StepperDriver::getConfig() const {
 }
 
 bool StepperDriver::setConfig(const String& config) {
+    if (m_logger) {
+        m_logger->logInfo("Applying configuration: " + config, LogModule::STEPPER_DRIVER);
+    }
+
     // Parse JSON configuration and apply settings
     // This is a simplified implementation without full JSON parsing
 
@@ -340,6 +373,11 @@ bool StepperDriver::setConfig(const String& config) {
 }
 
 bool StepperDriver::setMicrostepMode(MicrostepMode mode) {
+    if (m_logger) {
+        m_logger->logInfo("Setting microstepping mode to " + microstepModeToString(mode),
+                          LogModule::STEPPER_DRIVER);
+    }
+
     m_microstepMode = mode;
 
     // Convert enum to actual microsteps
@@ -375,6 +413,11 @@ MicrostepMode StepperDriver::getMicrostepMode() const {
 }
 
 void StepperDriver::setMaxStepsPerSecond(float maxStepsPerSecond) {
+    if (m_logger) {
+        m_logger->logInfo("Setting max steps per second to " + String(maxStepsPerSecond),
+                          LogModule::STEPPER_DRIVER);
+    }
+
     m_maxStepsPerSecond = maxStepsPerSecond;
 }
 
@@ -408,6 +451,9 @@ void StepperDriver::handleTimerInterrupt() {
     if (m_stepsToGo <= 0) {
         stopTimer();
         m_isMoving = false;
+
+        // Logging in ISR context is generally not safe,
+        // we should queue this message for later processing
     }
 }
 
@@ -433,6 +479,12 @@ uint32_t StepperDriver::calculateStepInterval(float speed) {
 
     // Enforce minimum step interval
     if (intervalUs < CONFIG_MIN_STEP_INTERVAL_US) {
+        if (m_logger) {
+            m_logger->logWarning("Step interval " + String(intervalUs) +
+                                     "us below minimum, setting to " +
+                                     String(CONFIG_MIN_STEP_INTERVAL_US) + "us",
+                                 LogModule::STEPPER_DRIVER);
+        }
         intervalUs = CONFIG_MIN_STEP_INTERVAL_US;
     }
 
@@ -442,12 +494,21 @@ uint32_t StepperDriver::calculateStepInterval(float speed) {
 bool StepperDriver::startTimer(uint32_t intervalUs) {
     // If no timer manager, can't use timer
     if (m_timerManager == nullptr) {
+        if (m_logger) {
+            m_logger->logError("Cannot start timer: timer manager not available",
+                               LogModule::STEPPER_DRIVER);
+        }
         return false;
     }
 
     // If already using timer, stop it first
     if (m_usingTimer) {
         stopTimer();
+    }
+
+    if (m_logger) {
+        m_logger->logDebug("Starting timer with interval " + String(intervalUs) + "us",
+                           LogModule::STEPPER_DRIVER);
     }
 
     // Register the timer callback
@@ -457,6 +518,8 @@ bool StepperDriver::startTimer(uint32_t intervalUs) {
 
     if (success) {
         m_usingTimer = true;
+    } else if (m_logger) {
+        m_logger->logError("Failed to start timer", LogModule::STEPPER_DRIVER);
     }
 
     return success;
@@ -466,5 +529,29 @@ void StepperDriver::stopTimer() {
     if (m_usingTimer && m_timerManager != nullptr) {
         m_timerManager->stopTimer(CONFIG_STEP_TIMER);
         m_usingTimer = false;
+
+        if (m_logger) {
+            m_logger->logDebug("Timer stopped", LogModule::STEPPER_DRIVER);
+        }
     }
 }
+
+String StepperDriver::microstepModeToString(MicrostepMode mode) const {
+    switch (mode) {
+        case MicrostepMode::FULL_STEP:
+            return "FULL_STEP (1/1)";
+        case MicrostepMode::HALF_STEP:
+            return "HALF_STEP (1/2)";
+        case MicrostepMode::QUARTER_STEP:
+            return "QUARTER_STEP (1/4)";
+        case MicrostepMode::EIGHTH_STEP:
+            return "EIGHTH_STEP (1/8)";
+        case MicrostepMode::SIXTEENTH_STEP:
+            return "SIXTEENTH_STEP (1/16)";
+        case MicrostepMode::THIRTYSECOND_STEP:
+            return "THIRTYSECOND_STEP (1/32)";
+        default:
+            return "UNKNOWN";
+    }
+}
+// End of Code
