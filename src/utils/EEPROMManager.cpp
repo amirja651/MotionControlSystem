@@ -5,13 +5,19 @@
 
 #include "EEPROMManager.h"
 
-EEPROMManager::EEPROMManager()
-    : m_initialized(false), m_configValid(false), m_configVersion(CONFIG_EEPROM_VERSION) {
+EEPROMManager::EEPROMManager(Logger* logger)
+    : m_logger(logger),
+      m_initialized(false),
+      m_configValid(false),
+      m_configVersion(CONFIG_EEPROM_VERSION) {
 }
 
 bool EEPROMManager::initialize() {
     // Initialize EEPROM
     if (!EEPROM.begin(CONFIG_EEPROM_SIZE)) {
+        if (m_logger) {
+            m_logger->logError("Failed to initialize EEPROM", LogModule::SYSTEM);
+        }
         return false;
     }
 
@@ -25,9 +31,18 @@ bool EEPROMManager::initialize() {
         // Read configuration version
         readValue(ADDR_VERSION, m_configVersion);
         m_configValid = true;
+        if (m_logger) {
+            m_logger->logInfo(
+                "Valid EEPROM configuration found, version: " + String(m_configVersion),
+                LogModule::SYSTEM);
+        }
     } else {
         // No valid configuration found
         m_configValid = false;
+        if (m_logger) {
+            m_logger->logWarning("No valid EEPROM configuration found, initializing with defaults",
+                                 LogModule::SYSTEM);
+        }
         // Initialize with default values if needed
         resetToDefaults();
     }
@@ -41,15 +56,35 @@ bool EEPROMManager::isConfigValid() const {
 
 bool EEPROMManager::commit() {
     if (!m_initialized) {
+        if (m_logger) {
+            m_logger->logError("Cannot commit EEPROM: not initialized", LogModule::SYSTEM);
+        }
         return false;
     }
 
-    return EEPROM.commit();
+    bool result = EEPROM.commit();
+
+    if (m_logger) {
+        if (result) {
+            m_logger->logInfo("EEPROM configuration committed successfully", LogModule::SYSTEM);
+        } else {
+            m_logger->logError("Failed to commit EEPROM configuration", LogModule::SYSTEM);
+        }
+    }
+
+    return result;
 }
 
 bool EEPROMManager::resetToDefaults() {
     if (!m_initialized) {
+        if (m_logger) {
+            m_logger->logError("Cannot reset EEPROM: not initialized", LogModule::SYSTEM);
+        }
         return false;
+    }
+
+    if (m_logger) {
+        m_logger->logInfo("Resetting EEPROM to default values", LogModule::SYSTEM);
     }
 
     // Write magic marker and version
@@ -68,6 +103,10 @@ bool EEPROMManager::resetToDefaults() {
 
         // Soft limits
         saveSoftLimits(i, -1000000, 1000000, true);
+
+        if (m_logger) {
+            m_logger->logDebug("Reset defaults for motor " + String(i), LogModule::SYSTEM);
+        }
     }
 
     // Reset system configuration
@@ -88,6 +127,11 @@ bool EEPROMManager::resetToDefaults() {
 bool EEPROMManager::loadPIDParameters(uint8_t motorIndex, float& kp, float& ki, float& kd,
                                       float& ff) {
     if (!m_initialized || !m_configValid || !isValidMotorIndex(motorIndex)) {
+        if (m_logger) {
+            m_logger->logWarning(
+                "Cannot load PID parameters: EEPROM not initialized or invalid motor index",
+                LogModule::SYSTEM);
+        }
         return false;
     }
 
@@ -97,11 +141,23 @@ bool EEPROMManager::loadPIDParameters(uint8_t motorIndex, float& kp, float& ki, 
     readValue(baseAddr + 2 * sizeof(float), kd);
     readValue(baseAddr + 3 * sizeof(float), ff);
 
+    if (m_logger) {
+        m_logger->logDebug("Loaded PID parameters for motor " + String(motorIndex) +
+                               ": Kp=" + String(kp) + ", Ki=" + String(ki) + ", Kd=" + String(kd) +
+                               ", Ff=" + String(ff),
+                           LogModule::SYSTEM);
+    }
+
     return true;
 }
 
 bool EEPROMManager::savePIDParameters(uint8_t motorIndex, float kp, float ki, float kd, float ff) {
     if (!m_initialized || !isValidMotorIndex(motorIndex)) {
+        if (m_logger) {
+            m_logger->logWarning(
+                "Cannot save PID parameters: EEPROM not initialized or invalid motor index",
+                LogModule::SYSTEM);
+        }
         return false;
     }
 
@@ -110,6 +166,13 @@ bool EEPROMManager::savePIDParameters(uint8_t motorIndex, float kp, float ki, fl
     writeValue(baseAddr + sizeof(float), ki);
     writeValue(baseAddr + 2 * sizeof(float), kd);
     writeValue(baseAddr + 3 * sizeof(float), ff);
+
+    if (m_logger) {
+        m_logger->logInfo("Saved PID parameters for motor " + String(motorIndex) +
+                              ": Kp=" + String(kp) + ", Ki=" + String(ki) + ", Kd=" + String(kd) +
+                              ", Ff=" + String(ff),
+                          LogModule::SYSTEM);
+    }
 
     return true;
 }
@@ -246,11 +309,19 @@ bool EEPROMManager::saveSafetyConfig(uint32_t positionErrorThreshold, float velo
 
 int EEPROMManager::saveUserData(const void* data, size_t size, uint16_t address) {
     if (!m_initialized || data == nullptr) {
+        if (m_logger) {
+            m_logger->logError("Cannot save user data: EEPROM not initialized or null data",
+                               LogModule::SYSTEM);
+        }
         return -1;
     }
 
     // Limit size to available space
     if (size + address > CONFIG_EEPROM_SIZE) {
+        if (m_logger) {
+            m_logger->logWarning("User data size exceeds available space, truncating",
+                                 LogModule::SYSTEM);
+        }
         size = CONFIG_EEPROM_SIZE - address;
     }
 
@@ -258,6 +329,12 @@ int EEPROMManager::saveUserData(const void* data, size_t size, uint16_t address)
     const uint8_t* byteData = static_cast<const uint8_t*>(data);
     for (size_t i = 0; i < size; i++) {
         EEPROM.write(address + i, byteData[i]);
+    }
+
+    if (m_logger) {
+        m_logger->logDebug(
+            "Saved " + String(size) + " bytes of user data at address " + String(address),
+            LogModule::SYSTEM);
     }
 
     return size;
@@ -315,3 +392,34 @@ void EEPROMManager::readValue(uint16_t address, T& value) {
 bool EEPROMManager::isValidMotorIndex(uint8_t motorIndex) const {
     return motorIndex < CONFIG_MAX_MOTORS;
 }
+
+// Add this utility method for debugging
+void EEPROMManager::dumpEEPROMContents(uint16_t startAddr, uint16_t length) {
+    if (!m_initialized || !m_logger) {
+        return;
+    }
+
+    length = std::min<uint16_t>(length, CONFIG_EEPROM_SIZE - startAddr);
+
+    String hexDump = "EEPROM [" + String(startAddr) + "-" + String(startAddr + length - 1) + "]: ";
+
+    for (uint16_t i = 0; i < length; i++) {
+        if (i > 0 && i % 16 == 0) {
+            m_logger->logDebug(hexDump, LogModule::SYSTEM);
+            hexDump = "EEPROM [" + String(startAddr + i) + "]: ";
+        }
+
+        uint8_t value = EEPROM.read(startAddr + i);
+
+        if (value < 16) {
+            hexDump += "0";
+        }
+
+        hexDump += String(value, HEX) + " ";
+    }
+
+    if (hexDump.length() > 0) {
+        m_logger->logDebug(hexDump, LogModule::SYSTEM);
+    }
+}
+// End of Code

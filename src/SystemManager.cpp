@@ -50,39 +50,40 @@ bool SystemManager::initialize() {
         return false;
     }
 
-    m_logger->logInfo("System initializing...");
+    m_logger->logInfo("System initializing...", LogModule::SYSTEM);
 
     // Task scheduler
     m_taskScheduler = new TaskScheduler();
     if (!m_taskScheduler->initialize()) {
-        m_logger->logError("Failed to initialize task scheduler");
+        m_logger->logError("Failed to initialize task scheduler", LogModule::SYSTEM);
         return false;
     }
 
     // Motor manager for motion control
     m_motorManager = new MotorManager(CONFIG_MAX_MOTORS, m_logger);
     if (!m_motorManager->initialize()) {
-        m_logger->logError("Failed to initialize motor manager");
+        m_logger->logError("Failed to initialize motor manager", LogModule::SYSTEM);
         return false;
     }
 
     // Safety monitor
     m_safetyMonitor = new SafetyMonitor(m_motorManager, m_logger);
     if (!m_safetyMonitor->initialize()) {
-        m_logger->logError("Failed to initialize safety monitor");
+        m_logger->logError("Failed to initialize safety monitor", LogModule::SYSTEM);
         return false;
     }
 
     // Status reporter
     m_statusReporter = new StatusReporter(this);
     if (!m_statusReporter->initialize()) {
-        m_logger->logError("Failed to initialize status reporter");
+        m_logger->logError("Failed to initialize status reporter", LogModule::SYSTEM);
         return false;
     }
 
     // Load system configuration from EEPROM
     if (!loadSystemConfiguration()) {
-        m_logger->logWarning("Could not load system configuration, using defaults");
+        m_logger->logWarning("Could not load system configuration, using defaults",
+                             LogModule::SYSTEM);
     }
 
     // Update system metrics
@@ -91,7 +92,7 @@ bool SystemManager::initialize() {
     // Set system state to ready
     m_systemState = SystemState::READY;
 
-    m_logger->logInfo("System initialized successfully");
+    m_logger->logInfo("System initialized successfully", LogModule::SYSTEM);
 
     return true;
 }
@@ -176,7 +177,8 @@ void SystemManager::setSystemState(SystemState state) {
 
     // Log state change
     if (m_logger != nullptr) {
-        m_logger->logInfo("System state changed to " + String(static_cast<int>(m_systemState)));
+        m_logger->logInfo("System state changed to " + String(static_cast<int>(m_systemState)),
+                          LogModule::SYSTEM);
     }
 }
 
@@ -195,7 +197,8 @@ void SystemManager::triggerEmergencyStop(SafetyCode reason) {
 
     // Log emergency stop
     if (m_logger != nullptr) {
-        m_logger->logError("EMERGENCY STOP triggered: " + String(static_cast<int>(reason)));
+        m_logger->logError("EMERGENCY STOP triggered: " + String(static_cast<int>(reason)),
+                           LogModule::SAFETY_MONITOR);
     }
 }
 
@@ -211,7 +214,7 @@ bool SystemManager::resetEmergencyStop() {
 
         // Log reset
         if (m_logger != nullptr) {
-            m_logger->logInfo("Emergency stop reset");
+            m_logger->logInfo("Emergency stop reset", LogModule::SYSTEM);
         }
 
         return true;
@@ -242,7 +245,7 @@ bool SystemManager::saveSystemConfiguration() {
     success &= m_eepromManager->commit();
 
     if (success && m_logger != nullptr) {
-        m_logger->logInfo("System configuration saved");
+        m_logger->logInfo("System configuration saved", LogModule::SYSTEM);
     }
 
     return success;
@@ -263,7 +266,7 @@ bool SystemManager::loadSystemConfiguration() {
     // Additional configuration loading can be added here
 
     if (success && m_logger != nullptr) {
-        m_logger->logInfo("System configuration loaded");
+        m_logger->logInfo("System configuration loaded", LogModule::SYSTEM);
     }
 
     return success;
@@ -289,7 +292,7 @@ uint32_t SystemManager::getFreeMemory() const {
 void SystemManager::resetSystem() {
     // Log reset
     if (m_logger != nullptr) {
-        m_logger->logInfo("System reset requested");
+        m_logger->logInfo("System reset requested", LogModule::SYSTEM);
     }
 
     // Save configuration before reset
@@ -459,5 +462,4 @@ void SystemManager::setNormalShutdown(bool state) {
 int SystemManager::getMotorPositionsAddr() {
     return MOTOR_POSITIONS_ADDR;
 };
-
 // End of Code

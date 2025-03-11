@@ -41,14 +41,14 @@ static void IRAM_ATTR timer1ISR(void* arg) {
     }
 }
 
-TimerManager* TimerManager::getInstance() {
+TimerManager* TimerManager::getInstance(Logger* logger) {
     if (s_instance == nullptr) {
-        s_instance = new TimerManager();
+        s_instance = new TimerManager(logger);
     }
     return s_instance;
 }
 
-TimerManager::TimerManager() : m_timerGroup(TIMER_GROUP_0) {
+TimerManager::TimerManager(Logger* logger) : m_logger(logger), m_timerGroup(TIMER_GROUP_0) {
     // Initialize timer state
     for (int i = 0; i < 2; i++) {
         m_timerRunning[i] = false;
@@ -60,18 +60,29 @@ TimerManager::TimerManager() : m_timerGroup(TIMER_GROUP_0) {
     // Set timer indices
     m_timerIdx[0] = TIMER_0;
     m_timerIdx[1] = TIMER_1;
+
+    if (m_logger) {
+        m_logger->logInfo("Timer Manager initialized", LogModule::SYSTEM);
+    }
 }
 
 TimerManager::~TimerManager() {
     // Stop all timers
     stopTimer(0);
     stopTimer(1);
+
+    if (m_logger) {
+        m_logger->logInfo("Timer Manager destroyed", LogModule::SYSTEM);
+    }
 }
 
 bool TimerManager::startTimer(uint8_t timerIndex, uint32_t intervalUs, bool autoReload,
                               TimerCallback callback) {
     // Validate parameters
     if (timerIndex > 1 || intervalUs == 0 || callback == nullptr) {
+        if (m_logger) {
+            m_logger->logError("Failed to start timer: invalid parameters", LogModule::SYSTEM);
+        }
         return false;
     }
 
@@ -87,6 +98,10 @@ bool TimerManager::startTimer(uint8_t timerIndex, uint32_t intervalUs, bool auto
 
     // Configure the timer hardware
     if (!configureTimer(timerIndex, intervalUs, autoReload)) {
+        if (m_logger) {
+            m_logger->logError("Failed to configure timer " + String(timerIndex),
+                               LogModule::SYSTEM);
+        }
         return false;
     }
 
@@ -96,12 +111,22 @@ bool TimerManager::startTimer(uint8_t timerIndex, uint32_t intervalUs, bool auto
     // Mark timer as running
     m_timerRunning[timerIndex] = true;
 
+    if (m_logger) {
+        m_logger->logInfo("Timer " + String(timerIndex) + " started with interval " +
+                              String(intervalUs) +
+                              "us, autoReload=" + String(autoReload ? "true" : "false"),
+                          LogModule::SYSTEM);
+    }
+
     return true;
 }
 
 bool TimerManager::stopTimer(uint8_t timerIndex) {
     // Validate parameters
     if (timerIndex > 1) {
+        if (m_logger) {
+            m_logger->logError("Failed to stop timer: invalid timer index", LogModule::SYSTEM);
+        }
         return false;
     }
 
@@ -115,6 +140,10 @@ bool TimerManager::stopTimer(uint8_t timerIndex) {
 
     // Mark timer as not running
     m_timerRunning[timerIndex] = false;
+
+    if (m_logger) {
+        m_logger->logInfo("Timer " + String(timerIndex) + " stopped", LogModule::SYSTEM);
+    }
 
     return true;
 }
@@ -138,6 +167,10 @@ uint32_t TimerManager::getTimerInterval(uint8_t timerIndex) const {
 bool TimerManager::setTimerInterval(uint8_t timerIndex, uint32_t intervalUs) {
     // Validate parameters
     if (timerIndex > 1 || intervalUs == 0) {
+        if (m_logger) {
+            m_logger->logError("Failed to set timer interval: invalid parameters",
+                               LogModule::SYSTEM);
+        }
         return false;
     }
 
@@ -151,8 +184,27 @@ bool TimerManager::setTimerInterval(uint8_t timerIndex, uint32_t intervalUs) {
         stopTimer(timerIndex);
 
         // Restart the timer with the new interval
-        return startTimer(timerIndex, intervalUs, m_timerAutoReload[timerIndex],
-                          m_timerCallbacks[timerIndex]);
+        bool result = startTimer(timerIndex, intervalUs, m_timerAutoReload[timerIndex],
+                                 m_timerCallbacks[timerIndex]);
+
+        if (m_logger) {
+            if (result) {
+                m_logger->logInfo("Timer " + String(timerIndex) + " interval updated to " +
+                                      String(intervalUs) + "us",
+                                  LogModule::SYSTEM);
+            } else {
+                m_logger->logError("Failed to update timer " + String(timerIndex) + " interval",
+                                   LogModule::SYSTEM);
+            }
+        }
+
+        return result;
+    }
+
+    if (m_logger) {
+        m_logger->logInfo("Timer " + String(timerIndex) + " interval set to " + String(intervalUs) +
+                              "us (timer not running)",
+                          LogModule::SYSTEM);
     }
 
     return true;
@@ -179,6 +231,9 @@ void TimerManager::handleTimer1Interrupt() {
 bool TimerManager::configureTimer(uint8_t timerIndex, uint32_t intervalUs, bool autoReload) {
     // Validate parameters
     if (timerIndex > 1) {
+        if (m_logger) {
+            m_logger->logError("Failed to configure timer: invalid timer index", LogModule::SYSTEM);
+        }
         return false;
     }
 
@@ -197,7 +252,14 @@ bool TimerManager::configureTimer(uint8_t timerIndex, uint32_t intervalUs, bool 
     };
 
     // Initialize timer
-    timer_init(m_timerGroup, m_timerIdx[timerIndex], &config);
+    esp_err_t result = timer_init(m_timerGroup, m_timerIdx[timerIndex], &config);
+    if (result != ESP_OK) {
+        if (m_logger) {
+            m_logger->logError("Timer initialization failed with error code: " + String(result),
+                               LogModule::SYSTEM);
+        }
+        return false;
+    }
 
     // Set counter value to 0
     timer_set_counter_value(m_timerGroup, m_timerIdx[timerIndex], 0);
@@ -210,12 +272,28 @@ bool TimerManager::configureTimer(uint8_t timerIndex, uint32_t intervalUs, bool 
 
     // Register interrupt handler
     if (timerIndex == 0) {
-        timer_isr_register(m_timerGroup, m_timerIdx[timerIndex], timer0ISR, nullptr,
-                           ESP_INTR_FLAG_IRAM, nullptr);
+        result = timer_isr_register(m_timerGroup, m_timerIdx[timerIndex], timer0ISR, nullptr,
+                                    ESP_INTR_FLAG_IRAM, nullptr);
     } else {
-        timer_isr_register(m_timerGroup, m_timerIdx[timerIndex], timer1ISR, nullptr,
-                           ESP_INTR_FLAG_IRAM, nullptr);
+        result = timer_isr_register(m_timerGroup, m_timerIdx[timerIndex], timer1ISR, nullptr,
+                                    ESP_INTR_FLAG_IRAM, nullptr);
+    }
+
+    if (result != ESP_OK) {
+        if (m_logger) {
+            m_logger->logError("Timer ISR registration failed with error code: " + String(result),
+                               LogModule::SYSTEM);
+        }
+        return false;
+    }
+
+    if (m_logger) {
+        m_logger->logDebug("Timer " + String(timerIndex) +
+                               " configured: interval=" + String(intervalUs) +
+                               "us, autoReload=" + String(autoReload ? "true" : "false"),
+                           LogModule::SYSTEM);
     }
 
     return true;
 }
+// End of Code

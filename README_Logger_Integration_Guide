@@ -1,0 +1,276 @@
+# Logger Integration Guide
+
+## Overview
+
+The enhanced ESP32 Motion Control System Logger is a lightweight yet powerful logging utility that leverages FreeRTOS tasks to provide non-blocking, efficient logging capabilities. It supports module-specific log levels, colored output, and custom output destinations.
+
+## Key Features
+
+- **FreeRTOS Task-Based**: Logs are processed asynchronously to minimize impact on critical code paths
+- **Module-Specific Control**: Enable/disable logging for individual modules
+- **Configurable Log Levels**: Set different log levels for different modules
+- **Colorized Output**: Color-coded log levels for improved readability
+- **Custom Output Destinations**: Direct logs to multiple destinations (Serial, custom callbacks)
+- **Low Memory Footprint**: Efficient memory usage with circular buffer mechanism
+
+## Integration Steps
+
+### 1. Initialize the Logger
+
+```cpp
+// In your setup function or initialization code
+Logger logger;
+
+// Basic initialization with default parameters
+logger.initialize();
+
+// Advanced initialization with custom parameters
+LoggerTaskParams params;
+params.taskStackSize = 3072;     // Larger stack size if needed
+params.taskPriority = 2;         // Higher priority if needed
+params.taskCoreId = 0;           // Run on Core 0 (application core)
+params.queueSize = 30;           // Larger queue for busier systems
+logger.initialize(115200, params);
+```
+
+### 2. Configure Module-Specific Logging
+
+```cpp
+// Set global log level (applies to all modules unless overridden)
+logger.setLogLevel(LogLevel::INFO);
+
+// Set module-specific log levels
+logger.setModuleLogLevel(LogModule::MOTOR_MANAGER, LogLevel::DEBUG);
+logger.setModuleLogLevel(LogModule::SAFETY_MONITOR, LogLevel::VERBOSE);
+logger.setModuleLogLevel(LogModule::PID_CONTROLLER, LogLevel::WARNING);
+
+// Enable/disable specific modules
+logger.enableModuleLogging(LogModule::STEPPER_DRIVER, true);
+logger.enableModuleLogging(LogModule::ENCODER, false);  // Disable encoder logs
+```
+
+### 3. Add Logging to Your Modules
+
+```cpp
+// Error logs (always shown if module is enabled)
+logger.logError("Motor driver fault detected", LogModule::STEPPER_DRIVER);
+
+// Warning logs (shown if module level >= WARNING)
+logger.logWarning("Position error approaching threshold", LogModule::PID_CONTROLLER);
+
+// Info logs (shown if module level >= INFO)
+logger.logInfo("Motor homing sequence complete", LogModule::MOTOR_MANAGER);
+
+// Debug logs (shown if module level >= DEBUG)
+logger.logDebug("PID values: Kp=" + String(kp) + ", Ki=" + String(ki), LogModule::PID_CONTROLLER);
+
+// Verbose logs (shown if module level >= VERBOSE)
+logger.logVerbose("Encoder pulse count: " + String(pulseCount), LogModule::ENCODER);
+
+// System logs (default module if not specified)
+logger.logInfo("System starting up");
+```
+
+### 4. Add Custom Log Outputs (Optional)
+
+```cpp
+// Add a custom log output (e.g., to an OLED display, SD card, etc.)
+logger.addLogOutput([this](const LogEntry& entry) {
+    // Example: Log to SD card
+    File logFile = SD.open("/logs.txt", FILE_APPEND);
+    if (logFile) {
+        String formattedLog = String(entry.timestamp) + " " + 
+                             Logger::logLevelToString(entry.level) + " " +
+                             Logger::moduleToString(entry.module) + ": " +
+                             entry.message;
+        logFile.println(formattedLog);
+        logFile.close();
+    }
+});
+```
+
+## Using Pre-defined Modules
+
+The logger defines these standard modules:
+
+- `LogModule::SYSTEM` - System-wide logs
+- `LogModule::MOTOR_MANAGER` - Motor manager logs
+- `LogModule::STEPPER_DRIVER` - Stepper driver logs 
+- `LogModule::PID_CONTROLLER` - PID controller logs
+- `LogModule::ENCODER` - Encoder logs
+- `LogModule::SAFETY_MONITOR` - Safety monitor logs
+- `LogModule::COMMAND_HANDLER` - Command handler logs
+- `LogModule::CUSTOM_1` - Custom module 1
+- `LogModule::CUSTOM_2` - Custom module 2
+- `LogModule::CUSTOM_3` - Custom module 3
+
+## Performance Considerations
+
+1. **Memory Usage**: Each log entry consumes memory in the log buffer. For memory-constrained applications, consider:
+   - Reducing the buffer size (`CONFIG_MAX_LOG_ENTRIES`)
+   - Using shorter log messages
+   - Setting more restrictive log levels in production code
+
+2. **Task Stack Size**: The default stack size (2048 bytes) is sufficient for most applications. Increase if you observe stack overflows.
+
+3. **Task Priority**: The logger task runs at a low priority by default. Increase priority if logs are not being processed quickly enough.
+
+4. **Queue Size**: The default queue size (20 entries) is sufficient for most applications. Increase for systems with heavy logging.
+
+5. **Disable Modules**: For production builds, disable logging for non-critical modules to reduce overhead.
+
+## Configuration Options in Configuration.h
+
+```cpp
+// Logger Configuration
+#define CONFIG_LOG_LEVEL                        3       // 0=OFF, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG, 5=VERBOSE
+#define CONFIG_MAX_LOG_ENTRIES                  50      // Maximum number of log entries to keep in memory
+#define CONFIG_COLOR_OUTPUT_ENABLED             true    // Enable/disable colored output
+
+// Module-specific logging flags
+#define CONFIG_LOG_MOTORMANAGER_ENABLED         true
+#define CONFIG_LOG_STEPPERDRIVER_ENABLED        true
+#define CONFIG_LOG_PIDCONTROLLER_ENABLED        true
+#define CONFIG_LOG_ENCODER_ENABLED              true
+#define CONFIG_LOG_SAFETYMONITOR_ENABLED        true
+#define CONFIG_LOG_SYSTEM_ENABLED               true
+#define CONFIG_LOG_COMMANDHANDLER_ENABLED       true
+```
+
+## Best Practices
+
+1. **Be Selective**: Only log information that is useful for debugging or monitoring
+2. **Use Appropriate Levels**: Use ERROR for critical issues, INFO for operational status, and DEBUG/VERBOSE for detailed troubleshooting
+3. **Include Context**: Include relevant values and states in log messages
+4. **Structure Messages**: Use consistent formats for similar log messages to make parsing easier
+5. **Disable in Production**: Consider disabling verbose logging in production to save resources
+
+## Example: Complete Integration
+
+```cpp
+#include "utils/Logger.h"
+
+class MyComponent {
+private:
+    Logger* m_logger;
+    
+public:
+    MyComponent(Logger* logger) : m_logger(logger) {}
+    
+    void initialize() {
+        if (m_logger) {
+            m_logger->logInfo("MyComponent initializing", LogModule::CUSTOM_1);
+        }
+        
+        // Initialization code
+        
+        if (m_logger) {
+            m_logger->logInfo("MyComponent initialized successfully", LogModule::CUSTOM_1);
+        }
+    }
+    
+    void performOperation(int param1, float param2) {
+        if (m_logger) {
+            m_logger->logDebug("Operation started with param1=" + String(param1) + 
+                              ", param2=" + String(param2), LogModule::CUSTOM_1);
+        }
+        
+        // Operation code
+        
+        if (operationFailed) {
+            if (m_logger) {
+                m_logger->logError("Operation failed: " + errorReason, LogModule::CUSTOM_1);
+            }
+            return;
+        }
+        
+        if (m_logger) {
+            m_logger->logInfo("Operation completed successfully", LogModule::CUSTOM_1);
+        }
+    }
+};
+```
+
+## Troubleshooting
+
+1. **Logs Not Appearing**: Check that the module is enabled and the log level is set appropriately
+2. **Logger Task Crashing**: Increase the task stack size if you're experiencing stack overflows
+3. **Missing Log Entries**: Increase the queue size if logs are being lost during high activity periods
+4. **High Memory Usage**: Reduce the log buffer size or disable verbose logging for non-critical modules
+5. **System Performance Impact**: Lower the logger task priority if it's affecting critical system functions
+
+## Advanced Features
+
+### 1. Log Rotation
+
+To implement log rotation (e.g., to SD card):
+
+```cpp
+// Create a log rotation callback
+size_t logFileCounter = 0;
+size_t maxLogFileSize = 10240; // 10KB per file
+
+logger.addLogOutput([&](const LogEntry& entry) {
+    static File logFile;
+    static size_t currentFileSize = 0;
+    
+    // Format log entry
+    String logText = String(entry.timestamp) + "," + 
+                    Logger::logLevelToString(entry.level) + "," +
+                    Logger::moduleToString(entry.module) + "," +
+                    entry.message + "\n";
+    
+    // Check if we need to open a new file
+    if (!logFile || currentFileSize >= maxLogFileSize) {
+        if (logFile) {
+            logFile.close();
+        }
+        
+        String filename = "/log_" + String(logFileCounter++) + ".csv";
+        logFile = SD.open(filename, FILE_WRITE);
+        currentFileSize = 0;
+        
+        // Write header if new file
+        if (logFile) {
+            logFile.println("timestamp,level,module,message");
+        }
+    }
+    
+    // Write log entry
+    if (logFile) {
+        logFile.print(logText);
+        currentFileSize += logText.length();
+        logFile.flush();
+    }
+});
+```
+
+### 2. Remote Logging
+
+For sending logs to a remote server:
+
+```cpp
+// Set up WiFi client
+WiFiClient client;
+
+// Add remote logging output
+logger.addLogOutput([&](const LogEntry& entry) {
+    // Only send INFO and higher logs remotely to reduce bandwidth
+    if (entry.level <= LogLevel::INFO && client.connected()) {
+        String logJson = "{\"time\":" + String(entry.timestamp) + 
+                        ",\"level\":\"" + Logger::logLevelToString(entry.level) + 
+                        "\",\"module\":\"" + Logger::moduleToString(entry.module) + 
+                        "\",\"msg\":\"" + entry.message + "\"}";
+        
+        client.println(logJson);
+    }
+});
+```
+
+## Conclusion
+
+This enhanced logger provides a flexible, efficient mechanism for debugging and monitoring your ESP32 Motion Control System. By configuring appropriate log levels and enabling only the modules you need, you can balance between detailed debugging information and system performance.
+
+The FreeRTOS task-based implementation ensures that logging doesn't interfere with critical control paths, while the module-specific controls give you fine-grained control over what gets logged.
+
+Proper use of this logger will significantly improve your ability to diagnose issues and monitor system behavior during development and operation.

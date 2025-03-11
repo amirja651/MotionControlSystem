@@ -19,7 +19,8 @@ MotorManager::MotorManager(uint8_t maxMotors, Logger* logger)
 
     // Log creation if logger is available
     if (m_logger) {
-        m_logger->logInfo("Motor Manager created with " + String(m_maxMotors) + " motors capacity");
+        m_logger->logInfo("Motor Manager created with " + String(m_maxMotors) + " motors capacity",
+                          LogModule::MOTOR_MANAGER);
     }
 }
 
@@ -40,7 +41,7 @@ bool MotorManager::initialize() {
     // Initialize EEPROM manager
     if (!m_eepromManager.initialize()) {
         if (m_logger) {
-            m_logger->logError("Failed to initialize EEPROM manager");
+            m_logger->logError("Failed to initialize EEPROM manager", LogModule::MOTOR_MANAGER);
         }
         return false;
     }
@@ -49,7 +50,7 @@ bool MotorManager::initialize() {
     for (uint8_t i = 0; i < CONFIG_MAX_MOTORS; i++) {
         if (i < m_maxMotors) {
             if (m_logger) {
-                m_logger->logInfo("Adding default motor " + String(i));
+                m_logger->logInfo("Adding default motor " + String(i), LogModule::MOTOR_MANAGER);
             }
             addMotor(DEFAULT_MOTOR_CONFIGS[i]);
         }
@@ -59,7 +60,8 @@ bool MotorManager::initialize() {
     loadFromEEPROM();
 
     if (m_logger) {
-        m_logger->logInfo("Motor Manager initialized with " + String(m_motorCount) + " motors");
+        m_logger->logInfo("Motor Manager initialized with " + String(m_motorCount) + " motors",
+                          LogModule::MOTOR_MANAGER);
     }
 
     return true;
@@ -69,7 +71,8 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     // Check if we have room for another motor
     if (m_motorCount >= m_maxMotors) {
         if (m_logger) {
-            m_logger->logError("Cannot add motor: maximum motor count reached");
+            m_logger->logError("Cannot add motor: maximum motor count reached",
+                               LogModule::MOTOR_MANAGER);
         }
         return false;
     }
@@ -77,7 +80,8 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     // Check if motor index is valid
     if (config.index >= m_maxMotors) {
         if (m_logger) {
-            m_logger->logError("Invalid motor index: " + String(config.index));
+            m_logger->logError("Invalid motor index: " + String(config.index),
+                               LogModule::MOTOR_MANAGER);
         }
         return false;
     }
@@ -86,15 +90,17 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     if (config.stepPin > 39) {
         if (m_logger) {
             m_logger->logError("Invalid step pin for motor " + String(config.index) + ": " +
-                               String(config.stepPin));
+                                   String(config.stepPin),
+                               LogModule::MOTOR_MANAGER);
         }
         return false;
     }
 
     if (config.dirPin > 39) {
         if (m_logger) {
-            m_logger->logError("Invalid dir pin for motor " + String(config.index) + ": " +
-                               String(config.dirPin));
+            m_logger->logError(
+                "Invalid dir pin for motor " + String(config.index) + ": " + String(config.dirPin),
+                LogModule::MOTOR_MANAGER);
         }
         return false;
     }
@@ -103,7 +109,8 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     if (config.enablePin != 0xFF && config.enablePin > 39) {
         if (m_logger) {
             m_logger->logError("Invalid enable pin for motor " + String(config.index) + ": " +
-                               String(config.enablePin));
+                                   String(config.enablePin),
+                               LogModule::MOTOR_MANAGER);
         }
         return false;
     }
@@ -112,7 +119,8 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     if (config.encoderAPin != 0xFF && config.encoderAPin > 39) {
         if (m_logger) {
             m_logger->logError("Invalid encoder A pin for motor " + String(config.index) + ": " +
-                               String(config.encoderAPin));
+                                   String(config.encoderAPin),
+                               LogModule::MOTOR_MANAGER);
         }
         return false;
     }
@@ -120,7 +128,8 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     if (config.encoderBPin != 0xFF && config.encoderBPin > 39) {
         if (m_logger) {
             m_logger->logError("Invalid encoder B pin for motor " + String(config.index) + ": " +
-                               String(config.encoderBPin));
+                                   String(config.encoderBPin),
+                               LogModule::MOTOR_MANAGER);
         }
         return false;
     }
@@ -129,7 +138,8 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     if (config.limitMinPin != 0xFF && config.limitMinPin > 39) {
         if (m_logger) {
             m_logger->logError("Invalid limit min pin for motor " + String(config.index) + ": " +
-                               String(config.limitMinPin));
+                                   String(config.limitMinPin),
+                               LogModule::MOTOR_MANAGER);
         }
         return false;
     }
@@ -137,7 +147,8 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     if (config.limitMaxPin != 0xFF && config.limitMaxPin > 39) {
         if (m_logger) {
             m_logger->logError("Invalid limit max pin for motor " + String(config.index) + ": " +
-                               String(config.limitMaxPin));
+                                   String(config.limitMaxPin),
+                               LogModule::MOTOR_MANAGER);
         }
         return false;
     }
@@ -148,7 +159,8 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     // Initialize the motor
     if (!motor->initialize()) {
         if (m_logger) {
-            m_logger->logError("Failed to initialize motor " + String(config.index));
+            m_logger->logError("Failed to initialize motor " + String(config.index),
+                               LogModule::MOTOR_MANAGER);
         }
         delete motor;
         return false;
@@ -157,7 +169,8 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     // If there's already a motor at this index, replace it
     if (m_motors[config.index] != nullptr) {
         if (m_logger) {
-            m_logger->logInfo("Replacing existing motor at index " + String(config.index));
+            m_logger->logInfo("Replacing existing motor at index " + String(config.index),
+                              LogModule::MOTOR_MANAGER);
         }
         delete m_motors[config.index];
     } else {
@@ -169,7 +182,8 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     m_motors[config.index] = motor;
 
     if (m_logger) {
-        m_logger->logInfo("Motor " + String(config.index) + " added successfully");
+        m_logger->logInfo("Motor " + String(config.index) + " added successfully",
+                          LogModule::MOTOR_MANAGER);
     }
 
     return true;
@@ -376,3 +390,4 @@ void MotorManager::resetAllEncoders() {
         }
     }
 }
+// End of Code

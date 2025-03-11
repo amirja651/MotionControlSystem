@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "../Configuration.h"
+#include "../utils/Logger.h"
 
 /**
  * GPIO pin modes
@@ -48,9 +49,10 @@ class GPIOManager {
     /**
      * Get singleton instance
      *
+     * @param logger Optional logger instance
      * @return GPIOManager instance
      */
-    static GPIOManager* getInstance();
+    static GPIOManager* getInstance(Logger* logger = nullptr);
 
     /**
      * Allocate a GPIO pin
@@ -129,9 +131,14 @@ class GPIOManager {
    private:
     /**
      * Private constructor for singleton
+     *
+     * @param logger Pointer to logger instance
      */
-    GPIOManager();
+    GPIOManager(Logger* logger = nullptr);
 
+    // Add logger member
+    Logger* m_logger;
+    
     /**
      * Destructor
      */
@@ -142,6 +149,11 @@ class GPIOManager {
 
     // Pin allocations
     std::vector<PinAllocation> m_pinAllocations;
+
+    /**
+     * Dump pin allocations for debugging
+     */
+    void dumpPinAllocations();
 
     /**
      * Find pin allocation by pin number
@@ -167,6 +179,15 @@ class GPIOManager {
      * @return True if configuration successful, false otherwise
      */
     bool configurePinMode(uint8_t pin, PinMode mode);
+
+    /**
+     * Convert pin mode to string
+     *
+     * @param mode Pin mode
+     * @return String representation of pin mode
+     */
+    String pinModeToString(PinMode mode) const;
 };
 
 #endif  // GPIO_MANAGER_H
+        // End of Code

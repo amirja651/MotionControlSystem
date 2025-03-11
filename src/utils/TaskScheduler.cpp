@@ -5,8 +5,9 @@
 
 #include "TaskScheduler.h"
 
-TaskScheduler::TaskScheduler()
-    : m_totalExecutions(0),
+TaskScheduler::TaskScheduler(Logger* logger)
+    : m_logger(logger),
+      m_totalExecutions(0),
       m_totalExecutionTimeUs(0),
       m_totalMissedDeadlines(0),
       m_lastControlLoopStartUs(0),
@@ -23,12 +24,20 @@ bool TaskScheduler::initialize() {
     m_lastControlLoopStartUs = micros();
     m_lastYieldTimeUs = m_lastControlLoopStartUs;
 
+    if (m_logger) {
+        m_logger->logInfo("Task Scheduler initialized", LogModule::SYSTEM);
+    }
+
     return true;
 }
 
 int TaskScheduler::registerControlTask(TaskFunction function, uint32_t intervalUs,
                                        TaskTimingMode timingMode) {
     if (!function || intervalUs == 0) {
+        if (m_logger) {
+            m_logger->logError("Failed to register control task: invalid parameters",
+                               LogModule::SYSTEM);
+        }
         return -1;
     }
 
@@ -47,12 +56,21 @@ int TaskScheduler::registerControlTask(TaskFunction function, uint32_t intervalU
     // Add to control tasks
     m_controlTasks.push_back(task);
 
+    if (m_logger) {
+        m_logger->logDebug("Control task registered with interval " + String(intervalUs) + "us",
+                           LogModule::SYSTEM);
+    }
+
     return static_cast<int>(m_controlTasks.size() - 1);
 }
 
 int TaskScheduler::registerAuxiliaryTask(TaskFunction function, uint32_t intervalUs,
                                          TaskTimingMode timingMode) {
     if (!function || intervalUs == 0) {
+        if (m_logger) {
+            m_logger->logError("Failed to register auxiliary task: invalid parameters",
+                               LogModule::SYSTEM);
+        }
         return -1;
     }
 
@@ -70,6 +88,11 @@ int TaskScheduler::registerAuxiliaryTask(TaskFunction function, uint32_t interva
 
     // Add to auxiliary tasks
     m_auxiliaryTasks.push_back(task);
+
+    if (m_logger) {
+        m_logger->logDebug("Auxiliary task registered with interval " + String(intervalUs) + "us",
+                           LogModule::SYSTEM);
+    }
 
     return static_cast<int>(m_auxiliaryTasks.size() - 1);
 }
@@ -94,6 +117,13 @@ uint32_t TaskScheduler::executeControlTasks() {
             if (executionTimeUs > task.intervalUs) {
                 task.missedDeadlines++;
                 m_totalMissedDeadlines++;
+
+                if (m_logger) {
+                    m_logger->logWarning(
+                        "Control task missed deadline: " + String(executionTimeUs) + "us > " +
+                            String(task.intervalUs) + "us",
+                        LogModule::SYSTEM);
+                }
             }
 
             // Update current time
@@ -107,6 +137,12 @@ uint32_t TaskScheduler::executeControlTasks() {
     // Update max control loop time
     if (m_controlLoopTimeUs > m_maxControlLoopTimeUs) {
         m_maxControlLoopTimeUs = m_controlLoopTimeUs;
+
+        if (m_logger && m_maxControlLoopTimeUs > 5000) {  // Log only if over 5ms
+            m_logger->logDebug(
+                "New max control loop time: " + String(m_maxControlLoopTimeUs) + "us",
+                LogModule::SYSTEM);
+        }
     }
 
     return tasksExecuted;
@@ -318,6 +354,12 @@ uint32_t TaskScheduler::executeTask(TaskInfo& task, uint32_t currentTimeUs) {
     task.executionTimeUs = executionTimeUs;
     if (executionTimeUs > task.maxExecutionTimeUs) {
         task.maxExecutionTimeUs = executionTimeUs;
+
+        // Log if execution time is extremely high (potential issue)
+        if (m_logger && executionTimeUs > 10000) {  // 10ms threshold
+            m_logger->logWarning("Task execution time spike: " + String(executionTimeUs) + "us",
+                                 LogModule::SYSTEM);
+        }
     }
 
     // Update scheduler statistics
@@ -329,3 +371,4 @@ uint32_t TaskScheduler::executeTask(TaskInfo& task, uint32_t currentTimeUs) {
 
     return executionTimeUs;
 }
+// End of Code

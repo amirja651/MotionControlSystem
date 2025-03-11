@@ -12,6 +12,7 @@
 #include <Arduino.h>
 
 #include "../Configuration.h"
+#include "../utils/Logger.h"
 #include "driver/timer.h"
 #include "esp_timer.h"
 
@@ -24,13 +25,14 @@ typedef void (*TimerCallback)();
  * Timer Manager singleton class
  */
 class TimerManager {
-   public:
+    public:
     /**
      * Get the singleton instance
      *
+     * @param logger Optional logger instance
      * @return TimerManager instance
      */
-    static TimerManager* getInstance();
+    static TimerManager* getInstance(Logger* logger = nullptr);
 
     /**
      * Start a hardware timer
@@ -98,8 +100,13 @@ class TimerManager {
    private:
     /**
      * Private constructor for singleton
+     * 
+     * @param logger Pointer to logger instance
      */
-    TimerManager();
+    TimerManager(Logger* logger = nullptr);
+
+    // Add logger member
+    Logger* m_logger;
 
     /**
      * Destructor
@@ -131,3 +138,4 @@ class TimerManager {
 };
 
 #endif  // TIMER_MANAGER_H
+        // End of Code

@@ -13,6 +13,7 @@
 #include <EEPROM.h>
 
 #include "../Configuration.h"
+#include "../utils/Logger.h"
 
 /**
  * EEPROM address map for system parameters
@@ -37,8 +38,10 @@ class EEPROMManager {
    public:
     /**
      * Constructor
+     *
+     * @param logger Pointer to logger instance
      */
-    EEPROMManager();
+    EEPROMManager(Logger* logger = nullptr);
 
     /**
      * Initialize the EEPROM manager
@@ -139,7 +142,8 @@ class EEPROMManager {
      * @param enabled Whether soft limits are enabled
      * @return True if limits saved successfully, false otherwise
      */
-    virtual bool saveSoftLimits(uint8_t motorIndex, int32_t minLimit, int32_t maxLimit, bool enabled);
+    virtual bool saveSoftLimits(uint8_t motorIndex, int32_t minLimit, int32_t maxLimit,
+                                bool enabled);
 
     /**
      * Load system configuration
@@ -204,6 +208,9 @@ class EEPROMManager {
     int loadUserData(void* data, size_t size, uint16_t address);
 
    private:
+    // Logger instance
+    Logger* m_logger;
+
     // EEPROM state
     bool m_initialized;
     bool m_configValid;
@@ -243,6 +250,15 @@ class EEPROMManager {
      * @return True if index is valid, false otherwise
      */
     bool isValidMotorIndex(uint8_t motorIndex) const;
+
+    /**
+     * Dump EEPROM contents for debugging
+     *
+     * @param startAddr Start address to dump from
+     * @param length Number of bytes to dump
+     */
+    void dumpEEPROMContents(uint16_t startAddr, uint16_t length);
 };
 
 #endif  // EEPROM_MANAGER_H
+        // End of Code

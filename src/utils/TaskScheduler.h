@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "../Configuration.h"
+#include "../utils/Logger.h"
 
 /**
  * Task function definition
@@ -51,8 +52,10 @@ class TaskScheduler {
    public:
     /**
      * Constructor
+     *
+     * @param logger Pointer to logger instance
      */
-    TaskScheduler();
+    TaskScheduler(Logger* logger = nullptr);
 
     /**
      * Initialize the task scheduler
@@ -156,6 +159,9 @@ class TaskScheduler {
                            uint32_t& totalMissedDeadlines, uint32_t& averageControlLoopTimeUs);
 
    private:
+    // Logger instance
+    Logger* m_logger;
+
     // Task lists
     std::vector<TaskInfo> m_controlTasks;
     std::vector<TaskInfo> m_auxiliaryTasks;
@@ -191,3 +197,4 @@ class TaskScheduler {
 };
 
 #endif  // TASK_SCHEDULER_H
+        // End of Code

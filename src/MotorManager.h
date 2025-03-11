@@ -27,9 +27,23 @@ class MotorManager {
      * Constructor
      *
      * @param maxMotors Maximum number of motors to manage
+     * @param logger Pointer to the logger instance
      */
-    MotorManager(uint8_t maxMotors = CONFIG_MAX_MOTORS);
     MotorManager(uint8_t maxMotors = CONFIG_MAX_MOTORS, Logger* logger = nullptr);
+
+    // In the existing class implementation, update log calls to use the module-specific logger:
+
+     // Example (these would be in MotorManager.cpp):
+     // From:
+     // m_logger->logInfo("Motor Manager created with " + String(m_maxMotors) + " motors capacity");
+     // To:
+     // m_logger->logInfo("Motor Manager created with " + String(m_maxMotors) + " motors capacity", LogModule::MOTOR_MANAGER);
+ 
+     // Another example:
+     // From:
+     // m_logger->logError("Cannot add motor: maximum motor count reached");
+     // To:
+     // m_logger->logError("Cannot add motor: maximum motor count reached", LogModule::MOTOR_MANAGER);
 
     /**
      * Destructor

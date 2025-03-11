@@ -71,17 +71,28 @@ void setup() {
 
     Serial.println(ANSI_COLOR_MAGENTA SYSTEM_NAME " starting..." ANSI_COLOR_RESET);
 
-    // Initialize logger first for better debug output
-    if (!logger.initialize()) {
+    // Initialize logger with custom task parameters for better performance
+    LoggerTaskParams loggerParams;
+    loggerParams.taskStackSize = 3072;
+    loggerParams.taskPriority = 2;
+    loggerParams.queueSize = 30;
+    
+    if (!logger.initialize(CONFIG_SERIAL_BAUD_RATE, loggerParams)) {
         Serial.println(ANSI_COLOR_RED "Logger initialization failed" ANSI_COLOR_RESET);
         while (1) {
             delay(1000);
         }
     }
 
+    // Configure module-specific log levels
+    logger.setModuleLogLevel(LogModule::MOTOR_MANAGER, LogLevel::INFO);
+    logger.setModuleLogLevel(LogModule::STEPPER_DRIVER, LogLevel::INFO);
+    logger.setModuleLogLevel(LogModule::PID_CONTROLLER, LogLevel::WARNING);
+    logger.setModuleLogLevel(LogModule::SAFETY_MONITOR, LogLevel::INFO);
+
     // Initialize system components with proper error handling
     if (!systemManager.initialize()) {
-        logger.logError("System initialization failed");
+        logger.logError("System initialization failed", LogModule::SYSTEM);
         while (1) {
             delay(1000);
         }  // Safety halt if critical initialization fails
@@ -200,3 +211,4 @@ void loop() {
     // This is carefully tuned to not impact real-time performance
     delayMicroseconds(CONFIG_CONTROL_LOOP_YIELD_US);
 }
+// End of Code
