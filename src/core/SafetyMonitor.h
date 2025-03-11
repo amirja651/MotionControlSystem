@@ -243,6 +243,23 @@ class SafetyMonitor {
      * @param code Safety code
      */
     void logSafetyEvent(SystemSafetyStatus status, SafetyCode code);
+
+    /**
+     * Convert safety status to string
+     *
+     * @param status Safety status
+     * @return String representation of status
+     */
+    String safetyStatusToString(SystemSafetyStatus status) const;
+
+    /**
+     * Convert safety code to string
+     *
+     * @param code Safety code
+     * @return String representation of code
+     */
+    String safetyCodeToString(SafetyCode code) const;
 };
 
 #endif  // SAFETY_MONITOR_H
+        // End of Code

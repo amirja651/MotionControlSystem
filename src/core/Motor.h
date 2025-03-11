@@ -15,6 +15,7 @@
 #include "../hardware/DriverInterface.h"
 #include "../hardware/GPIOManager.h"
 #include "../hardware/TimerManager.h"
+#include "../hardware/drivers/StepperDriver.h"
 #include "../utils/CircularBuffer.h"
 #include "../utils/Logger.h"
 #include "Encoder.h"
@@ -88,6 +89,7 @@ class Motor {
      * Constructor
      *
      * @param config Motor configuration
+     * @param logger Pointer to logger instance
      */
     Motor(const MotorConfig& config, Logger* logger = nullptr);
 
@@ -358,12 +360,12 @@ class Motor {
     PIDController m_controller;
     TrajectoryPlanner m_trajectoryPlanner;
     DriverInterface* m_driver;
-    
+
     /**
      * Logger instance
      */
     Logger* m_logger;
-    
+
     // Motor state
     MotorState m_state;
     MotorControlMode m_controlMode;
@@ -440,6 +442,30 @@ class Motor {
      * @param error Error code
      */
     void setError(MotorError error);
+
+    /**
+     * Convert control mode to string
+     *
+     * @param mode Control mode
+     * @return String representation
+     */
+    String controlModeToString(MotorControlMode mode) const;
+
+    /**
+     * Convert motor status to string
+     *
+     * @param status Motor status
+     * @return String representation
+     */
+    String motorStatusToString(MotorStatus status) const;
+
+    /**
+     * Convert motor error to string
+     *
+     * @param error Motor error
+     * @return String representation
+     */
+    String motorErrorToString(MotorError error) const;
 };
 #endif  // MOTOR_H
         // End of Code

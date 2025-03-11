@@ -18,6 +18,7 @@
 
 #include "../Configuration.h"
 #include "../utils/CircularBuffer.h"
+#include "../utils/Logger.h"
 #include "../utils/MathUtils.h"
 
 class PIDController {
@@ -30,9 +31,10 @@ class PIDController {
      * @param kd Derivative gain
      * @param ff Feed-forward gain
      * @param dt Control loop time step in seconds
+     * @param logger Pointer to logger instance
      */
     PIDController(float kp = 0.0f, float ki = 0.0f, float kd = 0.0f, float ff = 0.0f,
-                  float dt = 0.001f);
+                  float dt = 0.001f, Logger* logger = nullptr);
 
     /**
      * Initialize the PID controller
@@ -175,6 +177,9 @@ class PIDController {
     float m_maxOutput;        // Maximum output value
     float m_antiWindupLimit;  // Anti-windup limit for integral term
 
+    // Logger instance
+    Logger* m_logger;
+
     // Error circular buffer for advanced filtering
     CircularBuffer<float, 4> m_errorBuffer;
 
@@ -200,3 +205,4 @@ class PIDController {
 };
 
 #endif  // PID_CONTROLLER_H
+        // End of Code
