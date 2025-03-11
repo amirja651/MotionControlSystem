@@ -11,26 +11,40 @@
 
 #include <Arduino.h>
 
-#define EXAMPLE_ENABLED false
-
-// ANSI Color codes for terminal output
-#define ANSI_COLOR_RED      "\x1b[31m"
-#define ANSI_COLOR_GREEN    "\x1b[32m"
-#define ANSI_COLOR_YELLOW   "\x1b[33m"
-#define ANSI_COLOR_BLUE     "\x1b[34m"
-#define ANSI_COLOR_MAGENTA  "\x1b[35m"
-#define ANSI_COLOR_CYAN     "\x1b[36m"
-#define ANSI_COLOR_RESET    "\x1b[0m"
-
 // System Identification
 #define SYSTEM_VERSION "1.0.0"
 #define SYSTEM_NAME "ESP32 Motion Control System"
+
+// Example folder
+#define EXAMPLE_ENABLED false
 
 // Debug and Logging
 #define CONFIG_DEBUG_ENABLED true
 #define CONFIG_LOG_LEVEL 3  // 0=OFF, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG, 5=VERBOSE
 #define CONFIG_SERIAL_BAUD_RATE 115200
 #define CONFIG_MAX_LOG_ENTRIES 50
+
+// Color output for terminal
+#define CONFIG_COLOR_OUTPUT_ENABLED true 
+
+// ANSI Color codes for terminal output - conditional based on CONFIG_COLOR_OUTPUT_ENABLED
+#if CONFIG_COLOR_OUTPUT_ENABLED
+    #define ANSI_COLOR_RED      "\x1b[31m"
+    #define ANSI_COLOR_GREEN    "\x1b[32m"
+    #define ANSI_COLOR_YELLOW   "\x1b[33m"
+    #define ANSI_COLOR_BLUE     "\x1b[34m"
+    #define ANSI_COLOR_MAGENTA  "\x1b[35m"
+    #define ANSI_COLOR_CYAN     "\x1b[36m"
+    #define ANSI_COLOR_RESET    "\x1b[0m"
+#else
+    #define ANSI_COLOR_RED      ""
+    #define ANSI_COLOR_GREEN    ""
+    #define ANSI_COLOR_YELLOW   ""
+    #define ANSI_COLOR_BLUE     ""
+    #define ANSI_COLOR_MAGENTA  ""
+    #define ANSI_COLOR_CYAN     ""
+    #define ANSI_COLOR_RESET    ""
+#endif
 
 // Task Configuration
 #define CONFIG_CONTROL_LOOP_FREQUENCY_HZ 1000      // 1kHz control loop

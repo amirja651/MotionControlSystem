@@ -167,8 +167,13 @@ void Logger::log(LogLevel level, const String& message, uint8_t source) {
 }
 
 void Logger::outputLogEntry(const LogEntry& entry) {
+    String formattedMessage = "";
+
+#if CONFIG_COLOR_OUTPUT_ENABLED
     // Format the log entry
-    String formattedMessage = formatLogEntry(entry);
+    formattedMessage = formatLogEntry(entry);
+
+#endif
 
     // Output to serial if enabled
     if (m_serialOutputEnabled && Serial) {
