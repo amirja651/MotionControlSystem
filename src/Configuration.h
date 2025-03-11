@@ -23,19 +23,7 @@
 #define CONFIG_LOG_LEVEL 3         // 0=OFF, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG, 5=VERBOSE
 #define CONFIG_SERIAL_BAUD_RATE 115200
 #define CONFIG_MAX_LOG_ENTRIES 50
-#define CONFIG_COLOR_OUTPUT_ENABLED true  // Enable/disable colored output
-
-// Module-specific logging flags
-#define CONFIG_LOG_MOTORMANAGER_ENABLED true
-#define CONFIG_LOG_STEPPERDRIVER_ENABLED true
-#define CONFIG_LOG_PIDCONTROLLER_ENABLED true
-#define CONFIG_LOG_ENCODER_ENABLED true
-#define CONFIG_LOG_SAFETYMONITOR_ENABLED true
-#define CONFIG_LOG_SYSTEM_ENABLED true
-#define CONFIG_LOG_COMMANDHANDLER_ENABLED true
-
-// Color output for terminal
-#define CONFIG_COLOR_OUTPUT_ENABLED true
+#define CONFIG_COLOR_OUTPUT_ENABLED true  // Color output for terminal
 
 // ANSI Color codes for terminal output - conditional based on CONFIG_COLOR_OUTPUT_ENABLED
 #if CONFIG_COLOR_OUTPUT_ENABLED
@@ -55,6 +43,14 @@
 #define ANSI_COLOR_CYAN ""
 #define ANSI_COLOR_RESET ""
 #endif
+// Module-specific logging flags
+#define CONFIG_LOG_MOTORMANAGER_ENABLED true
+#define CONFIG_LOG_STEPPERDRIVER_ENABLED true
+#define CONFIG_LOG_PIDCONTROLLER_ENABLED true
+#define CONFIG_LOG_ENCODER_ENABLED true
+#define CONFIG_LOG_SAFETYMONITOR_ENABLED true
+#define CONFIG_LOG_SYSTEM_ENABLED true
+#define CONFIG_LOG_COMMANDHANDLER_ENABLED true
 
 // Task Configuration
 #define CONFIG_CONTROL_LOOP_FREQUENCY_HZ 1000      // 1kHz control loop
