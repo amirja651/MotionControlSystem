@@ -15,6 +15,12 @@
 #include <vector>
 
 #include "../Configuration.h"
+#include "../MotorManager.h"
+#include "../SystemManager.h"
+#include "../core/Motor.h"
+#include "../core/SafetyMonitor.h"
+#include "../utils/EEPROMManager.h"
+#include "../utils/Logger.h"
 
 class SystemManager;
 
@@ -166,3 +172,4 @@ class SerialCommand {
 };
 
 #endif  // SERIAL_COMMAND_H
+        // End of Code

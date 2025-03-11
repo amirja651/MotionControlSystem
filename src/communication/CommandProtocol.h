@@ -12,6 +12,11 @@
 #include <Arduino.h>
 
 #include "../Configuration.h"
+#include "../MotorManager.h"
+#include "../SystemManager.h"
+#include "../core/Motor.h"
+#include "../utils/Logger.h"
+#include "SerialCommand.h"
 
 // Forward declarations
 class SystemManager;
@@ -63,8 +68,10 @@ class CommandProtocol {
      *
      * @param systemManager Pointer to system manager
      * @param serialCommand Pointer to serial command processor
+     * @param logger Pointer to logger instance
      */
-    CommandProtocol(SystemManager *systemManager, SerialCommand *serialCommand);
+    CommandProtocol(SystemManager* systemManager, SerialCommand* serialCommand,
+                    Logger* logger = nullptr);
 
     /**
      * Initialize the command protocol
@@ -85,14 +92,14 @@ class CommandProtocol {
      * @param packet Command packet
      * @return True if command processed successfully, false otherwise
      */
-    bool processCommandPacket(const CommandPacket &packet);
+    bool processCommandPacket(const CommandPacket& packet);
 
     /**
      * Send a response packet
      *
      * @param packet Response packet to send
      */
-    void sendResponse(const ResponsePacket &packet);
+    void sendResponse(const ResponsePacket& packet);
 
     /**
      * Enable/disable binary protocol
@@ -110,8 +117,9 @@ class CommandProtocol {
 
    private:
     // System components
-    SystemManager *m_systemManager;
-    SerialCommand *m_serialCommand;
+    SystemManager* m_systemManager;
+    SerialCommand* m_serialCommand;
+    Logger* m_logger;
 
     // Protocol state
     bool m_binaryProtocolEnabled;
@@ -129,8 +137,8 @@ class CommandProtocol {
      * @param response Response packet
      * @return True if command processed successfully, false otherwise
      */
-    bool processSystemCommand(uint8_t commandId, const uint8_t *data, uint8_t length,
-                              ResponsePacket &response);
+    bool processSystemCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+                              ResponsePacket& response);
 
     /**
      * Process a motion command
@@ -141,8 +149,8 @@ class CommandProtocol {
      * @param response Response packet
      * @return True if command processed successfully, false otherwise
      */
-    bool processMotionCommand(uint8_t commandId, const uint8_t *data, uint8_t length,
-                              ResponsePacket &response);
+    bool processMotionCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+                              ResponsePacket& response);
 
     /**
      * Process a status command
@@ -153,8 +161,8 @@ class CommandProtocol {
      * @param response Response packet
      * @return True if command processed successfully, false otherwise
      */
-    bool processStatusCommand(uint8_t commandId, const uint8_t *data, uint8_t length,
-                              ResponsePacket &response);
+    bool processStatusCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+                              ResponsePacket& response);
 
     /**
      * Process a configuration command
@@ -165,8 +173,8 @@ class CommandProtocol {
      * @param response Response packet
      * @return True if command processed successfully, false otherwise
      */
-    bool processConfigCommand(uint8_t commandId, const uint8_t *data, uint8_t length,
-                              ResponsePacket &response);
+    bool processConfigCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+                              ResponsePacket& response);
 
     /**
      * Process a debug command
@@ -177,8 +185,8 @@ class CommandProtocol {
      * @param response Response packet
      * @return True if command processed successfully, false otherwise
      */
-    bool processDebugCommand(uint8_t commandId, const uint8_t *data, uint8_t length,
-                             ResponsePacket &response);
+    bool processDebugCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+                             ResponsePacket& response);
 
     /**
      * Calculate packet checksum
@@ -187,7 +195,7 @@ class CommandProtocol {
      * @param length Data length
      * @return Checksum value
      */
-    uint8_t calculateChecksum(const uint8_t *data, uint8_t length);
+    uint8_t calculateChecksum(const uint8_t* data, uint8_t length);
 
     /**
      * Find command packet in receive buffer
@@ -195,7 +203,16 @@ class CommandProtocol {
      * @param packet Reference to store command packet
      * @return True if packet found, false otherwise
      */
-    bool findCommandPacket(CommandPacket &packet);
+    bool findCommandPacket(CommandPacket& packet);
+
+    /**
+     * Convert command type to string for logging
+     *
+     * @param type Command type
+     * @return String representation of command type
+     */
+    String commandTypeToString(CommandType type) const;
 };
 
 #endif  // COMMAND_PROTOCOL_H
+        // End of Code

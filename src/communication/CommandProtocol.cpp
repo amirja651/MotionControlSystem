@@ -5,22 +5,26 @@
 
 #include "CommandProtocol.h"
 
-#include "../MotorManager.h"
-#include "../SystemManager.h"
-#include "../core/Motor.h"
-#include "../utils/Logger.h"
-#include "SerialCommand.h"
-
-CommandProtocol::CommandProtocol(SystemManager *systemManager, SerialCommand *serialCommand)
+CommandProtocol::CommandProtocol(SystemManager* systemManager, SerialCommand* serialCommand,
+                                 Logger* logger)
     : m_systemManager(systemManager),
       m_serialCommand(serialCommand),
+      m_logger(logger),
       m_binaryProtocolEnabled(false),
       m_receiveBufferIndex(0) {
     // Clear receive buffer
     memset(m_receiveBuffer, 0, sizeof(m_receiveBuffer));
+
+    if (m_logger) {
+        m_logger->logInfo("Command protocol instance created", LogModule::COMMAND_HANDLER);
+    }
 }
 
 bool CommandProtocol::initialize() {
+    if (m_logger) {
+        m_logger->logInfo("Command protocol initialized", LogModule::COMMAND_HANDLER);
+    }
+
     // Initialization successful
     return true;
 }
@@ -44,6 +48,14 @@ void CommandProtocol::processCommands() {
         // Check for complete packet
         CommandPacket packet;
         if (findCommandPacket(packet)) {
+            if (m_logger) {
+                m_logger->logDebug(
+                    "Command packet found: type=" +
+                        commandTypeToString(static_cast<CommandType>(packet.commandType)) +
+                        ", id=" + String(packet.commandId) + ", length=" + String(packet.length),
+                    LogModule::COMMAND_HANDLER);
+            }
+
             // Process the packet
             processCommandPacket(packet);
 
@@ -63,7 +75,7 @@ void CommandProtocol::processCommands() {
     }
 }
 
-bool CommandProtocol::processCommandPacket(const CommandPacket &packet) {
+bool CommandProtocol::processCommandPacket(const CommandPacket& packet) {
     // Prepare response packet
     ResponsePacket response;
     response.startByte = 0xBB;
@@ -77,38 +89,69 @@ bool CommandProtocol::processCommandPacket(const CommandPacket &packet) {
     // Process command based on type
     switch (static_cast<CommandType>(packet.commandType)) {
         case CommandType::SYSTEM_COMMAND:
+            if (m_logger) {
+                m_logger->logInfo("Processing system command: id=" + String(packet.commandId),
+                                  LogModule::COMMAND_HANDLER);
+            }
             success = processSystemCommand(packet.commandId, packet.data, packet.length, response);
             break;
 
         case CommandType::MOTION_COMMAND:
+            if (m_logger) {
+                m_logger->logInfo("Processing motion command: id=" + String(packet.commandId),
+                                  LogModule::COMMAND_HANDLER);
+            }
             success = processMotionCommand(packet.commandId, packet.data, packet.length, response);
             break;
 
         case CommandType::STATUS_COMMAND:
+            if (m_logger) {
+                m_logger->logDebug("Processing status command: id=" + String(packet.commandId),
+                                   LogModule::COMMAND_HANDLER);
+            }
             success = processStatusCommand(packet.commandId, packet.data, packet.length, response);
             break;
 
         case CommandType::CONFIG_COMMAND:
+            if (m_logger) {
+                m_logger->logInfo("Processing config command: id=" + String(packet.commandId),
+                                  LogModule::COMMAND_HANDLER);
+            }
             success = processConfigCommand(packet.commandId, packet.data, packet.length, response);
             break;
 
         case CommandType::DEBUG_COMMAND:
+            if (m_logger) {
+                m_logger->logInfo("Processing debug command: id=" + String(packet.commandId),
+                                  LogModule::COMMAND_HANDLER);
+            }
             success = processDebugCommand(packet.commandId, packet.data, packet.length, response);
             break;
 
         default:
             // Unknown command type
             response.status = 1;  // General error
+            if (m_logger) {
+                m_logger->logError("Unknown command type: " + String(packet.commandType),
+                                   LogModule::COMMAND_HANDLER);
+            }
             break;
     }
 
     // Set status code
     if (!success) {
         response.status = 1;  // General error
+        if (m_logger) {
+            m_logger->logWarning(
+                "Command processing failed: type=" +
+                    commandTypeToString(static_cast<CommandType>(packet.commandType)) +
+                    ", id=" + String(packet.commandId),
+                LogModule::COMMAND_HANDLER);
+        }
     }
 
     // Calculate checksum
-    uint8_t *responseData = reinterpret_cast<uint8_t *>(&response);
+    uint8_t* responseData = reinterpret_cast<uint8_t*>(&response);
     response.checksum = calculateChecksum(responseData, 4 + response.length);
 
     // Send response
@@ -117,15 +160,22 @@ bool CommandProtocol::processCommandPacket(const CommandPacket &packet) {
     return success;
 }
 
-void CommandProtocol::sendResponse(const ResponsePacket &packet) {
+void CommandProtocol::sendResponse(const ResponsePacket& packet) {
     // Send packet bytes
-    const uint8_t *data = reinterpret_cast<const uint8_t *>(&packet);
+    const uint8_t* data = reinterpret_cast<const uint8_t*>(&packet);
 
     // Calculate total packet size
     uint8_t totalSize = 5 + packet.length;  // Header (4) + data + checksum (1)
 
     // Send all bytes
     Serial.write(data, totalSize);
+
+    if (m_logger) {
+        m_logger->logDebug("Sent response: type=" + String(packet.commandType) + ", id=" +
+                               String(packet.commandId) + ", status=" + String(packet.status) +
+                               ", length=" + String(packet.length),
+                           LogModule::COMMAND_HANDLER);
+    }
 }
 
 void CommandProtocol::enableBinaryProtocol(bool enable) {
@@ -134,14 +184,19 @@ void CommandProtocol::enableBinaryProtocol(bool enable) {
     // Clear receive buffer when enabling/disabling
     m_receiveBufferIndex = 0;
     memset(m_receiveBuffer, 0, sizeof(m_receiveBuffer));
+
+    if (m_logger) {
+        m_logger->logInfo("Binary protocol " + String(enable ? "enabled" : "disabled"),
+                          LogModule::COMMAND_HANDLER);
+    }
 }
 
 bool CommandProtocol::isBinaryProtocolEnabled() const {
     return m_binaryProtocolEnabled;
 }
 
-bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t *data, uint8_t length,
-                                           ResponsePacket &response) {
+bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+                                           ResponsePacket& response) {
     // System commands:
     // 0x01: Get system status
     // 0x02: Reset system
@@ -155,6 +210,10 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t *dat
             // Check if system manager is available
             if (m_systemManager == nullptr) {
                 response.status = 2;  // System not available
+                if (m_logger) {
+                    m_logger->logError("System command 0x01 failed: System manager not available",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
             }
 
@@ -170,6 +229,15 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t *dat
             memcpy(&response.data[2], &uptime, sizeof(uint32_t));
 
             response.length = 6;
+
+            if (m_logger) {
+                m_logger->logDebug(
+                    "System status command: state=" + String(static_cast<int>(state)) +
+                        ", emergency=" + String(m_systemManager->isEmergencyStop()) +
+                        ", uptime=" + String(uptime) + "ms",
+                    LogModule::COMMAND_HANDLER);
+            }
+
             return true;
         }
 
@@ -177,7 +245,15 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t *dat
             // Check if system manager is available
             if (m_systemManager == nullptr) {
                 response.status = 2;  // System not available
+                if (m_logger) {
+                    m_logger->logError("System command 0x02 failed: System manager not available",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
+            }
+
+            if (m_logger) {
+                m_logger->logInfo("System reset command received", LogModule::COMMAND_HANDLER);
             }
 
             // Reset the system
@@ -192,7 +268,16 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t *dat
             // Check if system manager is available
             if (m_systemManager == nullptr) {
                 response.status = 2;  // System not available
+                if (m_logger) {
+                    m_logger->logError("System command 0x03 failed: System manager not available",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
+            }
+
+            if (m_logger) {
+                m_logger->logInfo("Save configuration command received",
+                                  LogModule::COMMAND_HANDLER);
             }
 
             // Save configuration
@@ -202,6 +287,11 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t *dat
             response.data[0] = success ? 1 : 0;
             response.length = 1;
 
+            if (m_logger) {
+                m_logger->logInfo("Save configuration " + String(success ? "success" : "failed"),
+                                  LogModule::COMMAND_HANDLER);
+            }
+
             return success;
         }
 
@@ -209,7 +299,16 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t *dat
             // Check if system manager is available
             if (m_systemManager == nullptr) {
                 response.status = 2;  // System not available
+                if (m_logger) {
+                    m_logger->logError("System command 0x04 failed: System manager not available",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
+            }
+
+            if (m_logger) {
+                m_logger->logInfo("Load configuration command received",
+                                  LogModule::COMMAND_HANDLER);
             }
 
             // Load configuration
@@ -219,6 +318,11 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t *dat
             response.data[0] = success ? 1 : 0;
             response.length = 1;
 
+            if (m_logger) {
+                m_logger->logInfo("Load configuration " + String(success ? "success" : "failed"),
+                                  LogModule::COMMAND_HANDLER);
+            }
+
             return success;
         }
 
@@ -226,7 +330,15 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t *dat
             // Check if system manager is available
             if (m_systemManager == nullptr) {
                 response.status = 2;  // System not available
+                if (m_logger) {
+                    m_logger->logError("System command 0x05 failed: System manager not available",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
+            }
+
+            if (m_logger) {
+                m_logger->logWarning("Emergency stop command received", LogModule::COMMAND_HANDLER);
             }
 
             // Trigger emergency stop
@@ -241,7 +353,16 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t *dat
             // Check if system manager is available
             if (m_systemManager == nullptr) {
                 response.status = 2;  // System not available
+                if (m_logger) {
+                    m_logger->logError("System command 0x06 failed: System manager not available",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
+            }
+
+            if (m_logger) {
+                m_logger->logInfo("Reset emergency stop command received",
+                                  LogModule::COMMAND_HANDLER);
             }
 
             // Reset emergency stop
@@ -251,18 +372,27 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t *dat
             response.data[0] = success ? 1 : 0;
             response.length = 1;
 
+            if (m_logger) {
+                m_logger->logInfo("Reset emergency stop " + String(success ? "success" : "failed"),
+                                  LogModule::COMMAND_HANDLER);
+            }
+
             return success;
         }
 
         default:
             // Unknown command ID
             response.status = 3;  // Unknown command
+            if (m_logger) {
+                m_logger->logWarning("Unknown system command ID: 0x" + String(commandId, HEX),
+                                     LogModule::COMMAND_HANDLER);
+            }
             return false;
     }
 }
 
-bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *data, uint8_t length,
-                                           ResponsePacket &response) {
+bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+                                           ResponsePacket& response) {
     // Motion commands:
     // 0x01: Enable motor
     // 0x02: Disable motor
@@ -276,13 +406,21 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
     // Check if system manager is available
     if (m_systemManager == nullptr) {
         response.status = 2;  // System not available
+        if (m_logger) {
+            m_logger->logError("Motion command failed: System manager not available",
+                               LogModule::COMMAND_HANDLER);
+        }
         return false;
     }
 
     // Get motor manager
-    MotorManager *motorManager = m_systemManager->getMotorManager();
+    MotorManager* motorManager = m_systemManager->getMotorManager();
     if (motorManager == nullptr) {
         response.status = 2;  // Motor manager not available
+        if (m_logger) {
+            m_logger->logError("Motion command failed: Motor manager not available",
+                               LogModule::COMMAND_HANDLER);
+        }
         return false;
     }
 
@@ -291,6 +429,10 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             // Check data length
             if (length < 1) {
                 response.status = 4;  // Invalid parameters
+                if (m_logger) {
+                    m_logger->logError("Enable motor command: Invalid parameters",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
             }
 
@@ -298,10 +440,20 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             uint8_t motorIndex = data[0];
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
+                if (m_logger) {
+                    m_logger->logError(
+                        "Enable motor command: Motor " + String(motorIndex) + " not found",
+                        LogModule::COMMAND_HANDLER);
+                }
                 return false;
+            }
+
+            if (m_logger) {
+                m_logger->logInfo("Enabling motor " + String(motorIndex),
+                                  LogModule::COMMAND_HANDLER);
             }
 
             // Enable motor
@@ -316,6 +468,10 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             // Check data length
             if (length < 1) {
                 response.status = 4;  // Invalid parameters
+                if (m_logger) {
+                    m_logger->logError("Disable motor command: Invalid parameters",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
             }
 
@@ -323,10 +479,20 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             uint8_t motorIndex = data[0];
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
+                if (m_logger) {
+                    m_logger->logError(
+                        "Disable motor command: Motor " + String(motorIndex) + " not found",
+                        LogModule::COMMAND_HANDLER);
+                }
                 return false;
+            }
+
+            if (m_logger) {
+                m_logger->logInfo("Disabling motor " + String(motorIndex),
+                                  LogModule::COMMAND_HANDLER);
             }
 
             // Disable motor
@@ -341,6 +507,11 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             // Check data length
             if (length < 13) {
                 response.status = 4;  // Invalid parameters
+                if (m_logger) {
+                    m_logger->logError("Move to position command: Invalid parameters (length=" +
+                                           String(length) + ", expected at least 13)",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
             }
 
@@ -362,10 +533,23 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             }
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
+                if (m_logger) {
+                    m_logger->logError(
+                        "Move to position command: Motor " + String(motorIndex) + " not found",
+                        LogModule::COMMAND_HANDLER);
+                }
                 return false;
+            }
+
+            if (m_logger) {
+                m_logger->logInfo("Moving motor " + String(motorIndex) + " to position " +
+                                      String(position) + " with velocity=" + String(velocity) +
+                                      ", accel=" + String(acceleration) +
+                                      ", decel=" + String(deceleration),
+                                  LogModule::COMMAND_HANDLER);
             }
 
             // Enable motor if not enabled
@@ -385,6 +569,10 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             // Check data length
             if (length < 9) {
                 response.status = 4;  // Invalid parameters
+                if (m_logger) {
+                    m_logger->logError("Set velocity command: Invalid parameters",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
             }
 
@@ -396,10 +584,22 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             memcpy(&acceleration, &data[5], sizeof(float));
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
+                if (m_logger) {
+                    m_logger->logError(
+                        "Set velocity command: Motor " + String(motorIndex) + " not found",
+                        LogModule::COMMAND_HANDLER);
+                }
                 return false;
+            }
+
+            if (m_logger) {
+                m_logger->logInfo("Setting motor " + String(motorIndex) + " velocity to " +
+                                      String(velocity) + " with acceleration " +
+                                      String(acceleration),
+                                  LogModule::COMMAND_HANDLER);
             }
 
             // Enable motor if not enabled
@@ -419,6 +619,10 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             // Check data length
             if (length < 1) {
                 response.status = 4;  // Invalid parameters
+                if (m_logger) {
+                    m_logger->logError("Stop motor command: Invalid parameters",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
             }
 
@@ -426,10 +630,20 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             uint8_t motorIndex = data[0];
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
+                if (m_logger) {
+                    m_logger->logError(
+                        "Stop motor command: Motor " + String(motorIndex) + " not found",
+                        LogModule::COMMAND_HANDLER);
+                }
                 return false;
+            }
+
+            if (m_logger) {
+                m_logger->logInfo("Stopping motor " + String(motorIndex),
+                                  LogModule::COMMAND_HANDLER);
             }
 
             // Stop motor
@@ -444,6 +658,10 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             // Check data length
             if (length < 1) {
                 response.status = 4;  // Invalid parameters
+                if (m_logger) {
+                    m_logger->logError("Emergency stop motor command: Invalid parameters",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
             }
 
@@ -451,10 +669,20 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             uint8_t motorIndex = data[0];
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
+                if (m_logger) {
+                    m_logger->logError(
+                        "Emergency stop motor command: Motor " + String(motorIndex) + " not found",
+                        LogModule::COMMAND_HANDLER);
+                }
                 return false;
+            }
+
+            if (m_logger) {
+                m_logger->logWarning("Emergency stopping motor " + String(motorIndex),
+                                     LogModule::COMMAND_HANDLER);
             }
 
             // Emergency stop motor
@@ -469,6 +697,10 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             // Check data length
             if (length < 2) {
                 response.status = 4;  // Invalid parameters
+                if (m_logger) {
+                    m_logger->logError("Home motor command: Invalid parameters",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
             }
 
@@ -485,10 +717,21 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             }
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
+                if (m_logger) {
+                    m_logger->logError(
+                        "Home motor command: Motor " + String(motorIndex) + " not found",
+                        LogModule::COMMAND_HANDLER);
+                }
                 return false;
+            }
+
+            if (m_logger) {
+                m_logger->logInfo("Homing motor " + String(motorIndex) + " with direction " +
+                                      String(direction) + " at velocity " + String(velocity),
+                                  LogModule::COMMAND_HANDLER);
             }
 
             // Enable motor if not enabled
@@ -508,6 +751,10 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             // Check data length
             if (length < 5) {
                 response.status = 4;  // Invalid parameters
+                if (m_logger) {
+                    m_logger->logError("Reset position command: Invalid parameters",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
             }
 
@@ -520,10 +767,21 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
             }
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
+                if (m_logger) {
+                    m_logger->logError(
+                        "Reset position command: Motor " + String(motorIndex) + " not found",
+                        LogModule::COMMAND_HANDLER);
+                }
                 return false;
+            }
+
+            if (m_logger) {
+                m_logger->logInfo(
+                    "Resetting motor " + String(motorIndex) + " position to " + String(position),
+                    LogModule::COMMAND_HANDLER);
             }
 
             // Set position
@@ -537,12 +795,16 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t *dat
         default:
             // Unknown command ID
             response.status = 3;  // Unknown command
+            if (m_logger) {
+                m_logger->logWarning("Unknown motion command ID: 0x" + String(commandId, HEX),
+                                     LogModule::COMMAND_HANDLER);
+            }
             return false;
     }
 }
 
-bool CommandProtocol::processStatusCommand(uint8_t commandId, const uint8_t *data, uint8_t length,
-                                           ResponsePacket &response) {
+bool CommandProtocol::processStatusCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+                                           ResponsePacket& response) {
     // Status commands:
     // 0x01: Get motor status
     // 0x02: Get motor position
@@ -553,13 +815,21 @@ bool CommandProtocol::processStatusCommand(uint8_t commandId, const uint8_t *dat
     // Check if system manager is available
     if (m_systemManager == nullptr) {
         response.status = 2;  // System not available
+        if (m_logger) {
+            m_logger->logError("Status command failed: System manager not available",
+                               LogModule::COMMAND_HANDLER);
+        }
         return false;
     }
 
     // Get motor manager
-    MotorManager *motorManager = m_systemManager->getMotorManager();
+    MotorManager* motorManager = m_systemManager->getMotorManager();
     if (motorManager == nullptr) {
         response.status = 2;  // Motor manager not available
+        if (m_logger) {
+            m_logger->logError("Status command failed: Motor manager not available",
+                               LogModule::COMMAND_HANDLER);
+        }
         return false;
     }
 
@@ -568,6 +838,10 @@ bool CommandProtocol::processStatusCommand(uint8_t commandId, const uint8_t *dat
             // Check data length
             if (length < 1) {
                 response.status = 4;  // Invalid parameters
+                if (m_logger) {
+                    m_logger->logError("Get motor status command: Invalid parameters",
+                                       LogModule::COMMAND_HANDLER);
+                }
                 return false;
             }
 
@@ -575,14 +849,19 @@ bool CommandProtocol::processStatusCommand(uint8_t commandId, const uint8_t *dat
             uint8_t motorIndex = data[0];
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
+                if (m_logger) {
+                    m_logger->logError(
+                        "Get motor status command: Motor " + String(motorIndex) + " not found",
+                        LogModule::COMMAND_HANDLER);
+                }
                 return false;
             }
 
             // Get motor state
-            const MotorState &state = motor->getState();
+            const MotorState& state = motor->getState();
 
             // Prepare response data
             response.data[0] = motorIndex;
@@ -609,7 +888,7 @@ bool CommandProtocol::processStatusCommand(uint8_t commandId, const uint8_t *dat
             uint8_t motorIndex = data[0];
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
                 return false;
@@ -637,7 +916,7 @@ bool CommandProtocol::processStatusCommand(uint8_t commandId, const uint8_t *dat
             uint8_t motorIndex = data[0];
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
                 return false;
@@ -669,7 +948,7 @@ bool CommandProtocol::processStatusCommand(uint8_t commandId, const uint8_t *dat
             uint8_t dataIndex = 1;
             for (uint8_t i = 0; i < motorCount; i++) {
                 // Get motor
-                Motor *motor = motorManager->getMotor(i);
+                Motor* motor = motorManager->getMotor(i);
                 if (motor != nullptr) {
                     // Add motor index
                     response.data[dataIndex++] = i;
@@ -713,8 +992,8 @@ bool CommandProtocol::processStatusCommand(uint8_t commandId, const uint8_t *dat
     }
 }
 
-bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t *data, uint8_t length,
-                                           ResponsePacket &response) {
+bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+                                           ResponsePacket& response) {
     // Configuration commands:
     // 0x01: Get PID parameters
     // 0x02: Set PID parameters
@@ -730,7 +1009,7 @@ bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t *dat
     }
 
     // Get motor manager
-    MotorManager *motorManager = m_systemManager->getMotorManager();
+    MotorManager* motorManager = m_systemManager->getMotorManager();
     if (motorManager == nullptr) {
         response.status = 2;  // Motor manager not available
         return false;
@@ -748,14 +1027,14 @@ bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t *dat
             uint8_t motorIndex = data[0];
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
                 return false;
             }
 
             // Get PID controller
-            PIDController &pid = motor->getPIDController();
+            PIDController& pid = motor->getPIDController();
 
             // Prepare response data
             response.data[0] = motorIndex;
@@ -791,14 +1070,14 @@ bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t *dat
             memcpy(&ff, &data[13], sizeof(float));
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
                 return false;
             }
 
             // Set PID parameters
-            PIDController &pid = motor->getPIDController();
+            PIDController& pid = motor->getPIDController();
             pid.setGains(kp, ki, kd, ff);
 
             // No response data
@@ -817,14 +1096,14 @@ bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t *dat
             uint8_t motorIndex = data[0];
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
                 return false;
             }
 
             // Get motor state
-            const MotorState &state = motor->getState();
+            const MotorState& state = motor->getState();
 
             // Prepare response data
             response.data[0] = motorIndex;
@@ -854,7 +1133,7 @@ bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t *dat
             memcpy(&acceleration, &data[5], sizeof(float));
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
                 return false;
@@ -879,7 +1158,7 @@ bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t *dat
             uint8_t motorIndex = data[0];
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
                 return false;
@@ -921,7 +1200,7 @@ bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t *dat
             enabled = data[9];
 
             // Get motor
-            Motor *motor = motorManager->getMotor(motorIndex);
+            Motor* motor = motorManager->getMotor(motorIndex);
             if (motor == nullptr) {
                 response.status = 5;  // Motor not found
                 return false;
@@ -942,8 +1221,8 @@ bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t *dat
     }
 }
 
-bool CommandProtocol::processDebugCommand(uint8_t commandId, const uint8_t *data, uint8_t length,
-                                          ResponsePacket &response) {
+bool CommandProtocol::processDebugCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+                                          ResponsePacket& response) {
     // Debug commands:
     // 0x01: Set log level
     // 0x02: Get log buffer
@@ -958,7 +1237,7 @@ bool CommandProtocol::processDebugCommand(uint8_t commandId, const uint8_t *data
     }
 
     // Get logger
-    Logger *logger = m_systemManager->getLogger();
+    Logger* logger = m_systemManager->getLogger();
     if (logger == nullptr) {
         response.status = 2;  // Logger not available
         return false;
@@ -1003,7 +1282,7 @@ bool CommandProtocol::processDebugCommand(uint8_t commandId, const uint8_t *data
 
             uint8_t dataIndex = 1;
             for (size_t i = 0; i < logCount; i++) {
-                const LogEntry *entry = logger->getLogEntry(i);
+                const LogEntry* entry = logger->getLogEntry(i);
                 if (entry != nullptr) {
                     // Add log level
                     response.data[dataIndex++] = static_cast<uint8_t>(entry->level);
@@ -1060,7 +1339,7 @@ bool CommandProtocol::processDebugCommand(uint8_t commandId, const uint8_t *data
     }
 }
 
-uint8_t CommandProtocol::calculateChecksum(const uint8_t *data, uint8_t length) {
+uint8_t CommandProtocol::calculateChecksum(const uint8_t* data, uint8_t length) {
     uint8_t checksum = 0;
 
     // XOR all bytes
@@ -1071,7 +1350,7 @@ uint8_t CommandProtocol::calculateChecksum(const uint8_t *data, uint8_t length) 
     return checksum;
 }
 
-bool CommandProtocol::findCommandPacket(CommandPacket &packet) {
+bool CommandProtocol::findCommandPacket(CommandPacket& packet) {
     // Search for start byte
     for (uint8_t i = 0; i < m_receiveBufferIndex; i++) {
         if (m_receiveBuffer[i] == 0xAA) {

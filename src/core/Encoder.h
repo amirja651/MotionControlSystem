@@ -25,6 +25,7 @@ class Encoder {
      * @param encBPin Encoder B pin
      * @param pulsesPerRev Encoder pulses per revolution
      * @param invertDirection Whether to invert the direction
+     * @param logger Pointer to logger instance
      */
     Encoder(uint8_t encAPin, uint8_t encBPin, uint16_t pulsesPerRev = CONFIG_ENCODER_DEFAULT_PPR,
             bool invertDirection = false, Logger* logger = nullptr);

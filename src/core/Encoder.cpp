@@ -32,22 +32,26 @@ bool Encoder::initialize() {
     // Validate pins before configuring them
     if (m_encoderAPin > 39 && m_encoderAPin != 0xFF) {
         if (m_logger) {
-            m_logger->logError("Invalid encoder A pin: " + String(m_encoderAPin));
+            m_logger->logError("Invalid encoder A pin: " + String(m_encoderAPin),
+                               LogModule::ENCODER);
         }
         return false;
     }
 
     if (m_encoderBPin > 39 && m_encoderBPin != 0xFF) {
         if (m_logger) {
-            m_logger->logError("Invalid encoder B pin: " + String(m_encoderBPin));
+            m_logger->logError("Invalid encoder B pin: " + String(m_encoderBPin),
+                               LogModule::ENCODER);
         }
         return false;
     }
 
     // If pins are 0xFF, encoder is in open-loop mode
     if (m_encoderAPin == 0xFF || m_encoderBPin == 0xFF) {
-        // No physical encoder, operate in open-loop mode
-        m_logger->logWarning("No physical encoder, operate in open-loop mode");
+        if (m_logger) {
+            m_logger->logWarning("No physical encoder, operate in open-loop mode",
+                                 LogModule::ENCODER);
+        }
         return true;
     }
 
@@ -63,6 +67,12 @@ bool Encoder::initialize() {
     // Initialize timing
     m_lastUpdateTimeUs = micros();
 
+    if (m_logger) {
+        m_logger->logInfo("Encoder initialized with pins A:" + String(m_encoderAPin) +
+                              ", B:" + String(m_encoderBPin) + ", PPR:" + String(m_pulsesPerRev),
+                          LogModule::ENCODER);
+    }
+
     return true;
 }
 
@@ -74,6 +84,10 @@ void Encoder::reset() {
     m_acceleration = 0.0f;
     m_positionBuffer.clear();
     m_velocityBuffer.clear();
+
+    if (m_logger) {
+        m_logger->logDebug("Encoder reset", LogModule::ENCODER);
+    }
 }
 
 void Encoder::setPosition(int32_t position) {
@@ -81,6 +95,10 @@ void Encoder::setPosition(int32_t position) {
     m_filteredPosition = static_cast<float>(position);
     m_positionBuffer.clear();
     m_positionBuffer.push(position);
+
+    if (m_logger) {
+        m_logger->logInfo("Encoder position set to " + String(position), LogModule::ENCODER);
+    }
 }
 
 void Encoder::setVelocity(float velocity) {
@@ -88,6 +106,10 @@ void Encoder::setVelocity(float velocity) {
     m_filteredVelocity = velocity;
     m_velocityBuffer.clear();
     m_velocityBuffer.push(velocity);
+
+    if (m_logger) {
+        m_logger->logInfo("Encoder velocity set to " + String(velocity), LogModule::ENCODER);
+    }
 }
 
 int32_t Encoder::getPosition() const {
@@ -114,15 +136,36 @@ void Encoder::setInterpolationFactor(uint8_t factor) {
     // Only allow valid interpolation factors: 1, 2, 4, or 8
     if (factor == 1 || factor == 2 || factor == 4 || factor == 8) {
         m_interpolationFactor = factor;
+
+        if (m_logger) {
+            m_logger->logInfo("Encoder interpolation factor set to " + String(factor),
+                              LogModule::ENCODER);
+        }
+    } else if (m_logger) {
+        m_logger->logWarning(
+            "Invalid interpolation factor: " + String(factor) + ". Must be 1, 2, 4, or 8.",
+            LogModule::ENCODER);
     }
 }
 
 void Encoder::setVelocityFilterAlpha(float alpha) {
+    float oldAlpha = m_velocityFilterAlpha;
     m_velocityFilterAlpha = MathUtils::constrainValue(alpha, 0.01f, 1.0f);
+
+    if (m_logger && oldAlpha != m_velocityFilterAlpha) {
+        m_logger->logInfo("Encoder velocity filter alpha set to " + String(m_velocityFilterAlpha),
+                          LogModule::ENCODER);
+    }
 }
 
 void Encoder::setPositionFilterAlpha(float alpha) {
+    float oldAlpha = m_positionFilterAlpha;
     m_positionFilterAlpha = MathUtils::constrainValue(alpha, 0.01f, 1.0f);
+
+    if (m_logger && oldAlpha != m_positionFilterAlpha) {
+        m_logger->logInfo("Encoder position filter alpha set to " + String(m_positionFilterAlpha),
+                          LogModule::ENCODER);
+    }
 }
 
 void Encoder::update(uint32_t deltaTimeUs) {
@@ -163,6 +206,15 @@ void Encoder::update(uint32_t deltaTimeUs) {
         // Store position in circular buffer
         int32_t position_copy = m_position;
         m_positionBuffer.push(position_copy);
+
+        // Log periodic updates (once per second) to avoid flooding
+        static uint32_t lastLogTime = 0;
+        if (m_logger && (millis() - lastLogTime > 1000)) {
+            lastLogTime = millis();
+            m_logger->logVerbose("Encoder pos=" + String(m_position) + ", vel=" +
+                                     String(m_filteredVelocity) + ", acc=" + String(m_acceleration),
+                                 LogModule::ENCODER);
+        }
     }
 
     // Auto-reset velocity to zero if no transitions for a while
@@ -171,6 +223,11 @@ void Encoder::update(uint32_t deltaTimeUs) {
         if (fabs(m_velocity) < 0.1f) {
             m_velocity = 0.0f;
             m_filteredVelocity = 0.0f;
+
+            if (m_logger) {
+                m_logger->logDebug("Encoder auto-reset velocity to zero after timeout",
+                                   LogModule::ENCODER);
+            }
         }
     }
 }

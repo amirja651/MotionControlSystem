@@ -15,6 +15,11 @@
 #include <vector>
 
 #include "../Configuration.h"
+#include "../MotorManager.h"
+#include "../SystemManager.h"
+#include "../core/Motor.h"
+#include "../core/SafetyMonitor.h"
+#include "../utils/TaskScheduler.h"
 
 // Forward declarations
 class SystemManager;
@@ -141,3 +146,4 @@ class StatusReporter {
 };
 
 #endif  // STATUS_REPORTER_H
+// End of Code

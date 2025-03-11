@@ -5,13 +5,6 @@
 
 #include "SerialCommand.h"
 
-#include "../MotorManager.h"
-#include "../SystemManager.h"
-#include "../core/Motor.h"
-#include "../core/SafetyMonitor.h"
-#include "../utils/EEPROMManager.h"
-#include "../utils/Logger.h"
-
 SerialCommand::SerialCommand(SystemManager *systemManager)
     : m_systemManager(systemManager), m_commandBufferIndex(0), m_lastCommandTimeMs(0) {
     // Clear command buffer
@@ -131,7 +124,8 @@ bool SerialCommand::executeCommand(const String &command, String &response) {
         return success;
     } else {
         // Command not found
-        response = "\nUnknown command '" + cmdName + "'. Type " ANSI_COLOR_BLUE "'help'" ANSI_COLOR_RESET " for available commands.";
+        response = "\nUnknown command '" + cmdName +
+                   "'. Type " ANSI_COLOR_BLUE "'help'" ANSI_COLOR_RESET " for available commands.";
         return false;
     }
 }

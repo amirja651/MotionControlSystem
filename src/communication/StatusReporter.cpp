@@ -5,12 +5,6 @@
 
 #include "StatusReporter.h"
 
-#include "../MotorManager.h"
-#include "../SystemManager.h"
-#include "../core/Motor.h"
-#include "../core/SafetyMonitor.h"
-#include "../utils/TaskScheduler.h"
-
 StatusReporter::StatusReporter(SystemManager *systemManager, uint8_t updateFrequencyHz)
     : m_systemManager(systemManager),
       m_updateFrequencyHz(updateFrequencyHz > 0 ? updateFrequencyHz
