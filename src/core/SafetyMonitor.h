@@ -262,4 +262,3 @@ class SafetyMonitor {
 };
 
 #endif  // SAFETY_MONITOR_H
-        // End of Code

@@ -138,4 +138,3 @@ class TimerManager {
 };
 
 #endif  // TIMER_MANAGER_H
-        // End of Code

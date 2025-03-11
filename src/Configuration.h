@@ -185,4 +185,3 @@ const MotorConfig DEFAULT_MOTOR_CONFIGS[CONFIG_MAX_MOTORS] = {
 };
 
 #endif  // CONFIGURATION_H
-        // End of Code

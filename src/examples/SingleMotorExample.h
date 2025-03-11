@@ -597,4 +597,3 @@ class SingleMotorExample {
 #endif  // EXAMPLE_ENABLED
 
 #endif  // SINGLE_MOTOR_EXAMPLE_H
-        // End of Code

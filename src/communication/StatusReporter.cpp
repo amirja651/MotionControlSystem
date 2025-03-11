@@ -4,6 +4,7 @@
  */
 
 #include "StatusReporter.h"
+#include "../SystemManager.h" // Include the complete definition here
 
 StatusReporter::StatusReporter(SystemManager *systemManager, uint8_t updateFrequencyHz)
     : m_systemManager(systemManager),

@@ -229,4 +229,3 @@ class CircularBuffer {
 };
 
 #endif  // CIRCULAR_BUFFER_H
-        // End of Code

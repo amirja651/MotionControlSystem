@@ -197,4 +197,3 @@ class TaskScheduler {
 };
 
 #endif  // TASK_SCHEDULER_H
-        // End of Code

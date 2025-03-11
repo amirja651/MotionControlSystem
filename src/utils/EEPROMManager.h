@@ -261,4 +261,3 @@ class EEPROMManager {
 };
 
 #endif  // EEPROM_MANAGER_H
-        // End of Code

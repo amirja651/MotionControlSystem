@@ -172,4 +172,3 @@ class SerialCommand {
 };
 
 #endif  // SERIAL_COMMAND_H
-        // End of Code

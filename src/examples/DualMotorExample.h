@@ -949,4 +949,3 @@ class DualMotorExample {
 #endif  // EXAMPLE_ENABLED
 
 #endif  // DUAL_MOTOR_EXAMPLE_H
-        // End of Code

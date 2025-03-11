@@ -207,4 +207,3 @@ class Encoder {
 };
 
 #endif  // ENCODER_H
-        // End of Code

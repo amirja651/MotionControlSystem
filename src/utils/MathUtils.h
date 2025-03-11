@@ -298,4 +298,3 @@ class MathUtils {
 };
 
 #endif  // MATH_UTILS_H
-        // End of Code

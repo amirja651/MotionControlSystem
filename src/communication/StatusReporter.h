@@ -16,7 +16,6 @@
 
 #include "../Configuration.h"
 #include "../MotorManager.h"
-#include "../SystemManager.h"
 #include "../core/Motor.h"
 #include "../core/SafetyMonitor.h"
 #include "../utils/TaskScheduler.h"

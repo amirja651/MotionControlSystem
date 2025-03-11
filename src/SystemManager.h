@@ -19,6 +19,9 @@
 #include "utils/Logger.h"
 #include "utils/TaskScheduler.h"
 
+ // Forward declaration
+class StatusReporter;
+
 /**
  * System state enumeration
  */
@@ -263,4 +266,3 @@ class SystemManager {
 };
 
 #endif  // SYSTEM_MANAGER_H
-        // End of Code

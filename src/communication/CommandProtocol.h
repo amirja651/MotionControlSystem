@@ -215,4 +215,3 @@ class CommandProtocol {
 };
 
 #endif  // COMMAND_PROTOCOL_H
-        // End of Code
