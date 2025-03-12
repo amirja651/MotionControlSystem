@@ -19,7 +19,7 @@
 #include "utils/Logger.h"
 #include "utils/TaskScheduler.h"
 
- // Forward declaration
+// Forward declaration
 class StatusReporter;
 
 /**
@@ -220,22 +220,21 @@ class SystemManager {
     int getMotorPositionsAddr();
 
    private:
-    // Other members...
     // System components
-    MotorManager* m_motorManager;
-    SafetyMonitor* m_safetyMonitor;
-    Logger* m_logger;
-    TaskScheduler* m_taskScheduler;
+    MotorManager*   m_motorManager;
+    SafetyMonitor*  m_safetyMonitor;
+    Logger*         m_logger;
+    TaskScheduler*  m_taskScheduler;
     StatusReporter* m_statusReporter;
-    EEPROMManager* m_eepromManager;
+    EEPROMManager*  m_eepromManager;
 
     // System state
     SystemState m_systemState;
-    uint32_t m_startTimeMs;
+    uint32_t    m_startTimeMs;
 
     // System metrics
-    float m_cpuUsageCore0;
-    float m_cpuUsageCore1;
+    float    m_cpuUsageCore0;
+    float    m_cpuUsageCore1;
     uint32_t m_freeMemory;
     uint32_t m_lastMetricsUpdateMs;
 

@@ -35,10 +35,10 @@ enum class PinMode {
  * Pin allocation structure
  */
 struct PinAllocation {
-    uint8_t pin;   // GPIO pin number
-    PinMode mode;  // Pin mode
-    String owner;  // Component that owns the pin
-    bool inUse;    // Whether pin is currently in use
+    uint8_t pin;    // GPIO pin number
+    PinMode mode;   // Pin mode
+    String  owner;  // Component that owns the pin
+    bool    inUse;  // Whether pin is currently in use
 };
 
 /**
@@ -138,7 +138,7 @@ class GPIOManager {
 
     // Add logger member
     Logger* m_logger;
-    
+
     /**
      * Destructor
      */

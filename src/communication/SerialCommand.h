@@ -33,10 +33,10 @@ using CommandHandler = std::function<bool(const String &params, String &response
  * Command definition structure
  */
 struct Command {
-    String name;             // Command name
-    String params;           // Parameter format
-    String description;      // Command description
-    CommandHandler handler;  // Command handler function
+    String         name;         // Command name
+    String         params;       // Parameter format
+    String         description;  // Command description
+    CommandHandler handler;      // Command handler function
 };
 
 /**
@@ -81,7 +81,9 @@ class SerialCommand {
      * @param handler Command handler function
      * @return True if command added successfully, false otherwise
      */
-    bool addCommand(const String &name, const String &params, const String &description,
+    bool addCommand(const String  &name,
+                    const String  &params,
+                    const String  &description,
                     CommandHandler handler);
 
     /**
@@ -105,7 +107,7 @@ class SerialCommand {
     SystemManager *m_systemManager;
 
     // Command buffer
-    char m_commandBuffer[CONFIG_COMMAND_BUFFER_SIZE];
+    char   m_commandBuffer[CONFIG_COMMAND_BUFFER_SIZE];
     size_t m_commandBufferIndex;
 
     // Command list

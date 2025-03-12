@@ -28,21 +28,21 @@ enum class ProfileType {
  * Trajectory state data
  */
 struct TrajectoryState {
-    int32_t initialPosition;    // Initial position
-    int32_t targetPosition;     // Target position
-    float initialVelocity;      // Initial velocity
-    float targetVelocity;       // Target velocity
-    float currentPosition;      // Current position
-    float currentVelocity;      // Current velocity
-    float currentAcceleration;  // Current acceleration
-    float maxVelocity;          // Maximum velocity
-    float maxAcceleration;      // Maximum acceleration
-    float maxDeceleration;      // Maximum deceleration
-    float maxJerk;              // Maximum jerk (for S-curve)
-    float profileDuration;      // Total duration of the profile
-    float elapsedTime;          // Elapsed time since start
-    bool isComplete;            // Whether profile is complete
-    ProfileType profileType;    // Type of profile
+    int32_t     initialPosition;      // Initial position
+    int32_t     targetPosition;       // Target position
+    float       initialVelocity;      // Initial velocity
+    float       targetVelocity;       // Target velocity
+    float       currentPosition;      // Current position
+    float       currentVelocity;      // Current velocity
+    float       currentAcceleration;  // Current acceleration
+    float       maxVelocity;          // Maximum velocity
+    float       maxAcceleration;      // Maximum acceleration
+    float       maxDeceleration;      // Maximum deceleration
+    float       maxJerk;              // Maximum jerk (for S-curve)
+    float       profileDuration;      // Total duration of the profile
+    float       elapsedTime;          // Elapsed time since start
+    bool        isComplete;           // Whether profile is complete
+    ProfileType profileType;          // Type of profile
 };
 
 /**
@@ -59,10 +59,11 @@ class TrajectoryPlanner {
      * @param maxJerk Default maximum jerk
      * @param logger Pointer to logger instance
      */
-    TrajectoryPlanner(float maxVelocity = CONFIG_DEFAULT_MAX_VELOCITY,
-                      float maxAcceleration = CONFIG_DEFAULT_ACCELERATION,
-                      float maxDeceleration = CONFIG_DEFAULT_DECELERATION,
-                      float maxJerk = CONFIG_DEFAULT_MAX_JERK, Logger* logger = nullptr);
+    TrajectoryPlanner(float   maxVelocity     = CONFIG_DEFAULT_MAX_VELOCITY,
+                      float   maxAcceleration = CONFIG_DEFAULT_ACCELERATION,
+                      float   maxDeceleration = CONFIG_DEFAULT_DECELERATION,
+                      float   maxJerk         = CONFIG_DEFAULT_MAX_JERK,
+                      Logger* logger          = nullptr);
 
     /**
      * Initialize the trajectory planner
@@ -84,10 +85,14 @@ class TrajectoryPlanner {
      * @param profileType Type of profile to generate
      * @return True if planning successful, false otherwise
      */
-    bool planPositionMove(int32_t currentPosition, int32_t targetPosition,
-                          float currentVelocity = 0.0f, float maxVelocity = 0.0f,
-                          float maxAcceleration = 0.0f, float maxDeceleration = 0.0f,
-                          float maxJerk = 0.0f, ProfileType profileType = ProfileType::TRAPEZOIDAL);
+    bool planPositionMove(int32_t     currentPosition,
+                          int32_t     targetPosition,
+                          float       currentVelocity = 0.0f,
+                          float       maxVelocity     = 0.0f,
+                          float       maxAcceleration = 0.0f,
+                          float       maxDeceleration = 0.0f,
+                          float       maxJerk         = 0.0f,
+                          ProfileType profileType     = ProfileType::TRAPEZOIDAL);
 
     /**
      * Plan a position move with constraints
@@ -102,8 +107,11 @@ class TrajectoryPlanner {
      * @param profileType Type of profile to generate
      * @return True if planning successful, false otherwise
      */
-    bool planVelocityMove(float currentVelocity, float targetVelocity, float maxAcceleration = 0.0f,
-                          float maxJerk = 0.0f, ProfileType profileType = ProfileType::TRAPEZOIDAL);
+    bool planVelocityMove(float       currentVelocity,
+                          float       targetVelocity,
+                          float       maxAcceleration = 0.0f,
+                          float       maxJerk         = 0.0f,
+                          ProfileType profileType     = ProfileType::TRAPEZOIDAL);
 
     /**
      * Update the trajectory state
@@ -209,8 +217,11 @@ class TrajectoryPlanner {
      * @param maxDeceleration Maximum deceleration
      * @return Duration of the profile in seconds
      */
-    float calculateTrapezoidalProfile(float distance, float initialVelocity, float targetVelocity,
-                                      float maxVelocity, float maxAcceleration,
+    float calculateTrapezoidalProfile(float distance,
+                                      float initialVelocity,
+                                      float targetVelocity,
+                                      float maxVelocity,
+                                      float maxAcceleration,
                                       float maxDeceleration);
 
     /**
@@ -225,8 +236,12 @@ class TrajectoryPlanner {
      * @param maxJerk Maximum jerk
      * @return Duration of the profile in seconds
      */
-    float calculateSCurveProfile(float distance, float initialVelocity, float targetVelocity,
-                                 float maxVelocity, float maxAcceleration, float maxDeceleration,
+    float calculateSCurveProfile(float distance,
+                                 float initialVelocity,
+                                 float targetVelocity,
+                                 float maxVelocity,
+                                 float maxAcceleration,
+                                 float maxDeceleration,
                                  float maxJerk);
 
     /**

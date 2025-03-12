@@ -13,8 +13,12 @@ static void IRAM_ATTR stepperTimerISR() {
     s_activeDriver->handleTimerInterrupt();
 }
 
-StepperDriver::StepperDriver(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin, bool invertDir,
-                             bool invertEnable, Logger* logger)
+StepperDriver::StepperDriver(uint8_t stepPin,
+                             uint8_t dirPin,
+                             uint8_t enablePin,
+                             bool    invertDir,
+                             bool    invertEnable,
+                             Logger* logger)
     : m_stepPin(stepPin),
       m_dirPin(dirPin),
       m_enablePin(enablePin),
@@ -90,9 +94,9 @@ bool StepperDriver::initialize() {
     s_activeDriver = this;
 
     if (m_logger) {
-        m_logger->logInfo("Stepper driver initialized with step pin: " + String(m_stepPin) +
-                              ", dir pin: " + String(m_dirPin) +
-                              ", microstepping: " + microstepModeToString(m_microstepMode),
+        m_logger->logInfo("Stepper driver initialized with step pin: " + String(m_stepPin)
+                              + ", dir pin: " + String(m_dirPin)
+                              + ", microstepping: " + microstepModeToString(m_microstepMode),
                           LogModule::STEPPER_DRIVER);
     }
 
@@ -168,8 +172,8 @@ void StepperDriver::setSpeed(float speed) {
     }
 
     if (m_logger) {
-        m_logger->logDebug("Speed set to " + String(m_speed) + " steps/s" +
-                               " (interval: " + String(m_stepIntervalUs) + "us)",
+        m_logger->logDebug("Speed set to " + String(m_speed) + " steps/s"
+                               + " (interval: " + String(m_stepIntervalUs) + "us)",
                            LogModule::STEPPER_DRIVER);
     }
 }
@@ -226,8 +230,8 @@ bool StepperDriver::moveTo(int32_t position) {
     m_targetPosition = position;
 
     if (m_logger) {
-        m_logger->logInfo("Moving to position " + String(position) + " (current: " +
-                              String(m_position) + ", delta: " + String(stepsToMove) + ")",
+        m_logger->logInfo("Moving to position " + String(position) + " (current: "
+                              + String(m_position) + ", delta: " + String(stepsToMove) + ")",
                           LogModule::STEPPER_DRIVER);
     }
 
@@ -255,7 +259,7 @@ void StepperDriver::stop(bool emergency) {
     stopTimer();
 
     // Reset movement state
-    m_isMoving = false;
+    m_isMoving  = false;
     m_stepsToGo = 0;
 
     if (m_logger) {
@@ -280,7 +284,7 @@ int32_t StepperDriver::getCurrentPosition() const {
 }
 
 bool StepperDriver::setCurrentPosition(int32_t position) {
-    m_position = position;
+    m_position       = position;
     m_targetPosition = position;  // Reset target to current position
 
     if (m_logger) {
@@ -333,7 +337,7 @@ bool StepperDriver::setConfig(const String& config) {
 
         if (microstepsEnd > microstepsStart) {
             String microstepsStr = config.substring(microstepsStart, microstepsEnd);
-            int microsteps = microstepsStr.toInt();
+            int    microsteps    = microstepsStr.toInt();
 
             // Set microstepping mode
             if (microsteps == 1)
@@ -361,7 +365,7 @@ bool StepperDriver::setConfig(const String& config) {
 
         if (maxSpeedEnd > maxSpeedStart) {
             String maxSpeedStr = config.substring(maxSpeedStart, maxSpeedEnd);
-            float maxSpeed = maxSpeedStr.toFloat();
+            float  maxSpeed    = maxSpeedStr.toFloat();
 
             if (maxSpeed > 0) {
                 setMaxStepsPerSecond(maxSpeed);
@@ -487,9 +491,9 @@ uint32_t StepperDriver::calculateStepInterval(float speed) {
     // Enforce minimum step interval
     if (intervalUs < CONFIG_MIN_STEP_INTERVAL_US) {
         if (m_logger) {
-            m_logger->logWarning("Step interval " + String(intervalUs) +
-                                     "us below minimum, setting to " +
-                                     String(CONFIG_MIN_STEP_INTERVAL_US) + "us",
+            m_logger->logWarning("Step interval " + String(intervalUs)
+                                     + "us below minimum, setting to "
+                                     + String(CONFIG_MIN_STEP_INTERVAL_US) + "us",
                                  LogModule::STEPPER_DRIVER);
         }
         intervalUs = CONFIG_MIN_STEP_INTERVAL_US;
@@ -519,7 +523,8 @@ bool StepperDriver::startTimer(uint32_t intervalUs) {
     }
 
     // Register the timer callback
-    bool success = m_timerManager->startTimer(CONFIG_STEP_TIMER, intervalUs,
+    bool success = m_timerManager->startTimer(CONFIG_STEP_TIMER,
+                                              intervalUs,
                                               true,  // Auto-reload
                                               stepperTimerISR);
 

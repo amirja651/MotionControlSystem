@@ -1,4 +1,6 @@
 {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "xaver.clang-format",
     "files.associations": {
         "functional": "cpp",
         "cmath": "cpp",

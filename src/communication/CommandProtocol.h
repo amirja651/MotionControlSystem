@@ -30,7 +30,7 @@ enum class CommandType : uint8_t {
     MOTION_COMMAND = 0x02,  // Motion control commands
     STATUS_COMMAND = 0x03,  // Status request commands
     CONFIG_COMMAND = 0x04,  // Configuration commands
-    DEBUG_COMMAND = 0x05    // Debug commands
+    DEBUG_COMMAND  = 0x05   // Debug commands
 };
 
 /**
@@ -70,8 +70,9 @@ class CommandProtocol {
      * @param serialCommand Pointer to serial command processor
      * @param logger Pointer to logger instance
      */
-    CommandProtocol(SystemManager* systemManager, SerialCommand* serialCommand,
-                    Logger* logger = nullptr);
+    CommandProtocol(SystemManager* systemManager,
+                    SerialCommand* serialCommand,
+                    Logger*        logger = nullptr);
 
     /**
      * Initialize the command protocol
@@ -119,7 +120,7 @@ class CommandProtocol {
     // System components
     SystemManager* m_systemManager;
     SerialCommand* m_serialCommand;
-    Logger* m_logger;
+    Logger*        m_logger;
 
     // Protocol state
     bool m_binaryProtocolEnabled;
@@ -137,7 +138,9 @@ class CommandProtocol {
      * @param response Response packet
      * @return True if command processed successfully, false otherwise
      */
-    bool processSystemCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+    bool processSystemCommand(uint8_t         commandId,
+                              const uint8_t*  data,
+                              uint8_t         length,
                               ResponsePacket& response);
 
     /**
@@ -149,7 +152,9 @@ class CommandProtocol {
      * @param response Response packet
      * @return True if command processed successfully, false otherwise
      */
-    bool processMotionCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+    bool processMotionCommand(uint8_t         commandId,
+                              const uint8_t*  data,
+                              uint8_t         length,
                               ResponsePacket& response);
 
     /**
@@ -161,7 +166,9 @@ class CommandProtocol {
      * @param response Response packet
      * @return True if command processed successfully, false otherwise
      */
-    bool processStatusCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+    bool processStatusCommand(uint8_t         commandId,
+                              const uint8_t*  data,
+                              uint8_t         length,
                               ResponsePacket& response);
 
     /**
@@ -173,7 +180,9 @@ class CommandProtocol {
      * @param response Response packet
      * @return True if command processed successfully, false otherwise
      */
-    bool processConfigCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+    bool processConfigCommand(uint8_t         commandId,
+                              const uint8_t*  data,
+                              uint8_t         length,
                               ResponsePacket& response);
 
     /**
@@ -185,7 +194,9 @@ class CommandProtocol {
      * @param response Response packet
      * @return True if command processed successfully, false otherwise
      */
-    bool processDebugCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+    bool processDebugCommand(uint8_t         commandId,
+                             const uint8_t*  data,
+                             uint8_t         length,
                              ResponsePacket& response);
 
     /**

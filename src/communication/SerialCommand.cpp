@@ -43,7 +43,7 @@ void SerialCommand::processCommands() {
 
                 // Execute the command
                 String response;
-                bool success = executeCommand(String(m_commandBuffer), response);
+                bool   success = executeCommand(String(m_commandBuffer), response);
 
                 // Print response
                 if (response.length() > 0) {
@@ -74,22 +74,24 @@ void SerialCommand::processCommands() {
     }
 }
 
-bool SerialCommand::addCommand(const String &name, const String &params, const String &description,
+bool SerialCommand::addCommand(const String  &name,
+                               const String  &params,
+                               const String  &description,
                                CommandHandler handler) {
     // Check if command already exists
     auto it = findCommand(name);
     if (it != m_commands.end()) {
         // Command already exists, replace it
-        it->params = params;
+        it->params      = params;
         it->description = description;
-        it->handler = handler;
+        it->handler     = handler;
     } else {
         // Add new command
         Command cmd;
-        cmd.name = name;
-        cmd.params = params;
+        cmd.name        = name;
+        cmd.params      = params;
         cmd.description = description;
-        cmd.handler = handler;
+        cmd.handler     = handler;
         m_commands.push_back(cmd);
     }
 
@@ -140,73 +142,105 @@ bool SerialCommand::executeCommand(const String &command, String &response) {
 void SerialCommand::registerBuiltInCommands() {
     // Add all built-in commands
     addCommand(
-        "help", "[command]", "Display help information",
+        "help",
+        "[command]",
+        "Display help information",
         std::bind(&SerialCommand::handleHelp, this, std::placeholders::_1, std::placeholders::_2));
 
-    addCommand("status", "", "Display system status",
-               std::bind(&SerialCommand::handleStatus, this, std::placeholders::_1,
-                         std::placeholders::_2));
+    addCommand(
+        "status",
+        "",
+        "Display system status",
+        std::bind(
+            &SerialCommand::handleStatus, this, std::placeholders::_1, std::placeholders::_2));
 
     addCommand(
-        "motor", "<index> [enable|disable]", "Get or set motor state",
+        "motor",
+        "<index> [enable|disable]",
+        "Get or set motor state",
         std::bind(&SerialCommand::handleMotor, this, std::placeholders::_1, std::placeholders::_2));
 
     addCommand(
-        "move", "<index> <position> [velocity] [accel]", "Move motor to position",
+        "move",
+        "<index> <position> [velocity] [accel]",
+        "Move motor to position",
         std::bind(&SerialCommand::handleMove, this, std::placeholders::_1, std::placeholders::_2));
 
     addCommand(
-        "stop", "[index] [emergency]", "Stop one or all motors",
+        "stop",
+        "[index] [emergency]",
+        "Stop one or all motors",
         std::bind(&SerialCommand::handleStop, this, std::placeholders::_1, std::placeholders::_2));
 
     addCommand(
-        "home", "<index> [direction]", "Home a motor",
+        "home",
+        "<index> [direction]",
+        "Home a motor",
         std::bind(&SerialCommand::handleHome, this, std::placeholders::_1, std::placeholders::_2));
 
     addCommand(
-        "pid", "<index> [kp] [ki] [kd] [ff]", "Get or set PID parameters",
+        "pid",
+        "<index> [kp] [ki] [kd] [ff]",
+        "Get or set PID parameters",
         std::bind(&SerialCommand::handlePID, this, std::placeholders::_1, std::placeholders::_2));
 
     addCommand(
-        "reset", "[config]", "Reset system or configuration",
+        "reset",
+        "[config]",
+        "Reset system or configuration",
         std::bind(&SerialCommand::handleReset, this, std::placeholders::_1, std::placeholders::_2));
 
     addCommand(
-        "save", "", "Save configuration to EEPROM",
+        "save",
+        "",
+        "Save configuration to EEPROM",
         std::bind(&SerialCommand::handleSave, this, std::placeholders::_1, std::placeholders::_2));
 
     addCommand(
-        "load", "", "Load configuration from EEPROM",
+        "load",
+        "",
+        "Load configuration from EEPROM",
         std::bind(&SerialCommand::handleLoad, this, std::placeholders::_1, std::placeholders::_2));
 
     addCommand(
-        "estop", "[reset]", "Trigger or reset emergency stop",
+        "estop",
+        "[reset]",
+        "Trigger or reset emergency stop",
         std::bind(&SerialCommand::handleEStop, this, std::placeholders::_1, std::placeholders::_2));
 
     addCommand(
-        "debug", "<level>", "Set debug log level",
+        "debug",
+        "<level>",
+        "Set debug log level",
         std::bind(&SerialCommand::handleDebug, this, std::placeholders::_1, std::placeholders::_2));
 
-    addCommand("shutdown", "", "Shutdown system normally and save positions",
-               std::bind(&SerialCommand::handleShutdown, this, std::placeholders::_1,
+    addCommand(
+        "shutdown",
+        "",
+        "Shutdown system normally and save positions",
+        std::bind(
+            &SerialCommand::handleShutdown, this, std::placeholders::_1, std::placeholders::_2));
+
+    addCommand("status_output",
+               "<on|off>",
+               "Enable or disable status JSON output",
+               std::bind(&SerialCommand::handleStatusOutput,
+                         this,
+                         std::placeholders::_1,
                          std::placeholders::_2));
 
-    addCommand("status_output", "<on|off>", "Enable or disable status JSON output",
-               std::bind(&SerialCommand::handleStatusOutput, this, std::placeholders::_1,
-                         std::placeholders::_2));
-
-    addCommand("gpio_state", "<pin>", "Show GPIO pin state",
-               [](const String &params, String &response) {
-                   int pin = params.toInt();
-                   if (pin >= 0 && pin <= 39) {
-                       pinMode(pin, INPUT);
-                       int state = digitalRead(pin);
-                       response = "Pin " + String(pin) + " state: " + String(state);
-                       return true;
-                   }
-                   response = "Invalid pin number";
-                   return false;
-               });
+    addCommand(
+        "gpio_state", "<pin>", "Show GPIO pin state", [](const String &params, String &response) {
+            int pin = params.toInt();
+            if (pin >= 0 && pin <= 39) {
+                pinMode(pin, INPUT);
+                int state = digitalRead(pin);
+                response  = "Pin " + String(pin) + " state: " + String(state);
+                return true;
+            }
+            response = "Invalid pin number";
+            return false;
+        });
 }
 
 void SerialCommand::parseCommand(const String &commandString, String &command, String &params) {
@@ -216,11 +250,11 @@ void SerialCommand::parseCommand(const String &commandString, String &command, S
     if (spaceIndex < 0) {
         // No space, entire string is command
         command = commandString;
-        params = "";
+        params  = "";
     } else {
         // Split command and parameters
         command = commandString.substring(0, spaceIndex);
-        params = commandString.substring(spaceIndex + 1);
+        params  = commandString.substring(spaceIndex + 1);
         params.trim();  // Remove leading/trailing whitespace
     }
 }
@@ -277,7 +311,7 @@ bool SerialCommand::handleStatus(const String &params, String &response) {
 
     // Get system state
     SystemState state = m_systemManager->getSystemState();
-    String stateStr;
+    String      stateStr;
 
     switch (state) {
         case SystemState::INITIALIZING:
@@ -307,8 +341,8 @@ bool SerialCommand::handleStatus(const String &params, String &response) {
     response = "System Status:\n";
     response += "  State: " + stateStr + "\n";
     response += "  Uptime: " + String(m_systemManager->getUptimeMs() / 1000) + " s\n";
-    response += "  CPU: " + String(m_systemManager->getCPUUsage(0), 1) + "% / " +
-                String(m_systemManager->getCPUUsage(1), 1) + "%\n";
+    response += "  CPU: " + String(m_systemManager->getCPUUsage(0), 1) + "% / "
+                + String(m_systemManager->getCPUUsage(1), 1) + "%\n";
     response += "  Memory: " + String(m_systemManager->getFreeMemory() / 1024) + " KB free\n";
 
     // Motor status
@@ -333,7 +367,7 @@ bool SerialCommand::handleStatus(const String &params, String &response) {
     SafetyMonitor *safetyMonitor = m_systemManager->getSafetyMonitor();
     if (safetyMonitor != nullptr) {
         SystemSafetyStatus safetyStatus = safetyMonitor->getStatus();
-        String safetyStr;
+        String             safetyStr;
 
         switch (safetyStatus) {
             case SystemSafetyStatus::NORMAL:
@@ -377,17 +411,17 @@ bool SerialCommand::handleMotor(const String &params, String &response) {
     }
 
     // Parse parameters
-    int spaceIndex = params.indexOf(' ');
+    int    spaceIndex = params.indexOf(' ');
     String indexStr, command;
 
     if (spaceIndex < 0) {
         // No command, just index
         indexStr = params;
-        command = "";
+        command  = "";
     } else {
         // Split index and command
         indexStr = params.substring(0, spaceIndex);
-        command = params.substring(spaceIndex + 1);
+        command  = params.substring(spaceIndex + 1);
         command.trim();
     }
 
@@ -461,7 +495,7 @@ bool SerialCommand::handleMove(const String &params, String &response) {
     }
 
     String indexStr = paramsStr.substring(0, spaceIndex);
-    paramsStr = paramsStr.substring(spaceIndex + 1);
+    paramsStr       = paramsStr.substring(spaceIndex + 1);
     paramsStr.trim();
 
     spaceIndex = paramsStr.indexOf(' ');
@@ -473,31 +507,31 @@ bool SerialCommand::handleMove(const String &params, String &response) {
         // Just position
         positionStr = paramsStr;
         velocityStr = "";
-        accelStr = "";
+        accelStr    = "";
     } else {
         // Position and more
         positionStr = paramsStr.substring(0, spaceIndex);
-        paramsStr = paramsStr.substring(spaceIndex + 1);
+        paramsStr   = paramsStr.substring(spaceIndex + 1);
         paramsStr.trim();
 
         spaceIndex = paramsStr.indexOf(' ');
         if (spaceIndex < 0) {
             // Position and velocity only
             velocityStr = paramsStr;
-            accelStr = "";
+            accelStr    = "";
         } else {
             // Position, velocity, and accel
             velocityStr = paramsStr.substring(0, spaceIndex);
-            accelStr = paramsStr.substring(spaceIndex + 1);
+            accelStr    = paramsStr.substring(spaceIndex + 1);
             accelStr.trim();
         }
     }
 
     // Convert parameters to values
-    int motorIndex = indexStr.toInt();
-    int32_t position = positionStr.toInt();
-    float velocity = velocityStr.length() > 0 ? velocityStr.toFloat() : 0.0f;
-    float accel = accelStr.length() > 0 ? accelStr.toFloat() : 0.0f;
+    int     motorIndex = indexStr.toInt();
+    int32_t position   = positionStr.toInt();
+    float   velocity   = velocityStr.length() > 0 ? velocityStr.toFloat() : 0.0f;
+    float   accel      = accelStr.length() > 0 ? accelStr.toFloat() : 0.0f;
 
     // Get motor
     Motor *motor = motorManager->getMotor(motorIndex);
@@ -517,8 +551,8 @@ bool SerialCommand::handleMove(const String &params, String &response) {
         motor->moveToPosition(position, velocity, accel, accel, 0.0f);
     } else if (velocity > 0.0f) {
         // Use moveToPosition with specified velocity and default acceleration
-        motor->moveToPosition(position, velocity, CONFIG_DEFAULT_ACCELERATION,
-                              CONFIG_DEFAULT_DECELERATION, 0.0f);
+        motor->moveToPosition(
+            position, velocity, CONFIG_DEFAULT_ACCELERATION, CONFIG_DEFAULT_DECELERATION, 0.0f);
     } else {
         // Use setTargetPosition with default velocity and acceleration
         motor->setTargetPosition(position);
@@ -555,7 +589,7 @@ bool SerialCommand::handleStop(const String &params, String &response) {
         if (emergency) {
             // Remove "emergency" from params
             int emergencyIndex = paramsStr.lastIndexOf("emergency");
-            paramsStr = paramsStr.substring(0, emergencyIndex);
+            paramsStr          = paramsStr.substring(0, emergencyIndex);
             paramsStr.trim();
         }
 
@@ -601,17 +635,17 @@ bool SerialCommand::handleHome(const String &params, String &response) {
     String paramsStr = params;
     paramsStr.trim();
 
-    int spaceIndex = paramsStr.indexOf(' ');
+    int    spaceIndex = paramsStr.indexOf(' ');
     String indexStr;
     String directionStr;
 
     if (spaceIndex < 0) {
         // Just index
-        indexStr = paramsStr;
+        indexStr     = paramsStr;
         directionStr = "1";  // Default to positive direction
     } else {
         // Index and direction
-        indexStr = paramsStr.substring(0, spaceIndex);
+        indexStr     = paramsStr.substring(0, spaceIndex);
         directionStr = paramsStr.substring(spaceIndex + 1);
         directionStr.trim();
     }
@@ -622,8 +656,8 @@ bool SerialCommand::handleHome(const String &params, String &response) {
         return false;
     }
 
-    int motorIndex = indexStr.toInt();
-    int8_t direction = directionStr.length() > 0 ? directionStr.toInt() : 1;
+    int    motorIndex = indexStr.toInt();
+    int8_t direction  = directionStr.length() > 0 ? directionStr.toInt() : 1;
 
     // Ensure direction is -1 or 1
     direction = direction < 0 ? -1 : 1;
@@ -643,8 +677,8 @@ bool SerialCommand::handleHome(const String &params, String &response) {
     // Start homing
     motor->startHoming(direction, CONFIG_DEFAULT_MAX_VELOCITY / 2.0f);
 
-    response = "Homing motor " + indexStr + " in " + (direction > 0 ? "positive" : "negative") +
-               " direction";
+    response = "Homing motor " + indexStr + " in " + (direction > 0 ? "positive" : "negative")
+               + " direction";
 
     return true;
 }
@@ -666,17 +700,17 @@ bool SerialCommand::handlePID(const String &params, String &response) {
     paramsStr.trim();
 
     // Split parameters
-    int spaceIndex = paramsStr.indexOf(' ');
+    int    spaceIndex = paramsStr.indexOf(' ');
     String indexStr;
     String remainingParams;
 
     if (spaceIndex < 0) {
         // Just index
-        indexStr = paramsStr;
+        indexStr        = paramsStr;
         remainingParams = "";
     } else {
         // Index and PID values
-        indexStr = paramsStr.substring(0, spaceIndex);
+        indexStr        = paramsStr.substring(0, spaceIndex);
         remainingParams = paramsStr.substring(spaceIndex + 1);
         remainingParams.trim();
     }
@@ -712,9 +746,9 @@ bool SerialCommand::handlePID(const String &params, String &response) {
 
         // Extract values from parameters
         // Format: "kp ki kd ff"
-        char *str = (char *)remainingParams.c_str();
+        char *str   = (char *)remainingParams.c_str();
         char *token = strtok(str, " ");
-        int i = 0;
+        int   i     = 0;
 
         while (token != NULL && i < 4) {
             switch (i) {
@@ -738,8 +772,8 @@ bool SerialCommand::handlePID(const String &params, String &response) {
         // Set PID parameters
         pid.setGains(kp, ki, kd, ff);
 
-        response = "Set motor " + indexStr + " PID to Kp=" + String(kp) + ", Ki=" + String(ki) +
-                   ", Kd=" + String(kd) + ", FF=" + String(ff);
+        response = "Set motor " + indexStr + " PID to Kp=" + String(kp) + ", Ki=" + String(ki)
+                   + ", Kd=" + String(kd) + ", FF=" + String(ff);
     }
 
     return true;
@@ -859,7 +893,7 @@ bool SerialCommand::handleDebug(const String &params, String &response) {
     if (paramsStr.length() == 0) {
         // Show current log level
         LogLevel level = logger->getLogLevel();
-        response = "Current log level: " + Logger::logLevelToString(level);
+        response       = "Current log level: " + Logger::logLevelToString(level);
         return true;
     } else {
         // Set log level

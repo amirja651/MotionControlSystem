@@ -50,7 +50,7 @@ SystemSafetyStatus SafetyMonitor::checkSafety() {
     // Update check time
     uint32_t currentTimeMs = millis();
     uint32_t elapsedTimeMs = currentTimeMs - m_lastCheckTimeMs;
-    m_lastCheckTimeMs = currentTimeMs;
+    m_lastCheckTimeMs      = currentTimeMs;
 
     // If emergency stop is already active, don't need to check further
     if (m_emergencyStopActive) {
@@ -68,22 +68,22 @@ SystemSafetyStatus SafetyMonitor::checkSafety() {
     if (motorSafetyCode != SafetyCode::NONE) {
         if (motorSafetyCode <= SafetyCode::POWER_SUPPLY_FLUCTUATION) {
             // Warning
-            m_status = SystemSafetyStatus::WARNING;
+            m_status   = SystemSafetyStatus::WARNING;
             m_lastCode = motorSafetyCode;
             m_warningCount++;
 
             logSafetyEvent(m_status, motorSafetyCode);
         } else {
             // Error
-            m_status = SystemSafetyStatus::ERROR;
+            m_status   = SystemSafetyStatus::ERROR;
             m_lastCode = motorSafetyCode;
             m_errorCount++;
 
             logSafetyEvent(m_status, motorSafetyCode);
 
             // For critical errors, trigger emergency stop
-            if (motorSafetyCode == SafetyCode::POSITION_ERROR ||
-                motorSafetyCode == SafetyCode::LIMIT_SWITCH_TRIGGERED) {
+            if (motorSafetyCode == SafetyCode::POSITION_ERROR
+                || motorSafetyCode == SafetyCode::LIMIT_SWITCH_TRIGGERED) {
                 triggerEmergencyStop(motorSafetyCode);
             }
         }
@@ -96,22 +96,22 @@ SystemSafetyStatus SafetyMonitor::checkSafety() {
     if (systemSafetyCode != SafetyCode::NONE) {
         if (systemSafetyCode <= SafetyCode::POWER_SUPPLY_FLUCTUATION) {
             // Warning
-            m_status = SystemSafetyStatus::WARNING;
+            m_status   = SystemSafetyStatus::WARNING;
             m_lastCode = systemSafetyCode;
             m_warningCount++;
 
             logSafetyEvent(m_status, systemSafetyCode);
         } else {
             // Error
-            m_status = SystemSafetyStatus::ERROR;
+            m_status   = SystemSafetyStatus::ERROR;
             m_lastCode = systemSafetyCode;
             m_errorCount++;
 
             logSafetyEvent(m_status, systemSafetyCode);
 
             // For critical errors, trigger emergency stop
-            if (systemSafetyCode == SafetyCode::CRITICAL_TEMPERATURE ||
-                systemSafetyCode == SafetyCode::POWER_FAILURE) {
+            if (systemSafetyCode == SafetyCode::CRITICAL_TEMPERATURE
+                || systemSafetyCode == SafetyCode::POWER_FAILURE) {
                 triggerEmergencyStop(systemSafetyCode);
             }
         }
@@ -121,7 +121,7 @@ SystemSafetyStatus SafetyMonitor::checkSafety() {
 
     // If we get here, everything is normal
     if (m_status != SystemSafetyStatus::NORMAL) {
-        m_status = SystemSafetyStatus::NORMAL;
+        m_status   = SystemSafetyStatus::NORMAL;
         m_lastCode = SafetyCode::NONE;
 
         // Log return to normal
@@ -143,7 +143,7 @@ void SafetyMonitor::triggerEmergencyStop(SafetyCode reason) {
     m_emergencyStopActive = true;
 
     // Set status and code
-    m_status = SystemSafetyStatus::EMERGENCY_STOP;
+    m_status   = SystemSafetyStatus::EMERGENCY_STOP;
     m_lastCode = reason;
 
     // Update statistics
@@ -174,7 +174,7 @@ bool SafetyMonitor::resetEmergencyStop() {
     m_emergencyStopActive = false;
 
     // Set status back to normal
-    m_status = SystemSafetyStatus::NORMAL;
+    m_status   = SystemSafetyStatus::NORMAL;
     m_lastCode = SafetyCode::NONE;
 
     // Log reset
@@ -198,8 +198,8 @@ SafetyCode SafetyMonitor::getLastSafetyCode() const {
 }
 
 void SafetyMonitor::setEmergencyStopPin(uint8_t pin, uint8_t activeLevel) {
-    m_emergencyStopPin = pin;
-    m_emergencyStopActiveLevel = activeLevel;
+    m_emergencyStopPin           = pin;
+    m_emergencyStopActiveLevel   = activeLevel;
     m_emergencyStopPinConfigured = true;
 
     // Configure pin
@@ -210,36 +210,38 @@ void SafetyMonitor::setEmergencyStopPin(uint8_t pin, uint8_t activeLevel) {
 
 void SafetyMonitor::setPositionTolerances(uint32_t warningThreshold, uint32_t errorThreshold) {
     m_positionWarningThreshold = warningThreshold;
-    m_positionErrorThreshold = errorThreshold;
+    m_positionErrorThreshold   = errorThreshold;
 }
 
 void SafetyMonitor::setVelocityTolerances(float warningThreshold, float errorThreshold) {
     m_velocityWarningThreshold = warningThreshold;
-    m_velocityErrorThreshold = errorThreshold;
+    m_velocityErrorThreshold   = errorThreshold;
 }
 
 void SafetyMonitor::setTemperatureTolerances(float warningThreshold, float errorThreshold) {
     m_temperatureWarningThreshold = warningThreshold;
-    m_temperatureErrorThreshold = errorThreshold;
+    m_temperatureErrorThreshold   = errorThreshold;
 }
 
-void SafetyMonitor::setVoltageTolerances(float minVoltage, float maxVoltage,
+void SafetyMonitor::setVoltageTolerances(float minVoltage,
+                                         float maxVoltage,
                                          float warningThreshold) {
-    m_minVoltage = minVoltage;
-    m_maxVoltage = maxVoltage;
+    m_minVoltage              = minVoltage;
+    m_maxVoltage              = maxVoltage;
     m_voltageWarningThreshold = warningThreshold;
 }
 
-void SafetyMonitor::getSafetyStats(uint32_t& warningCount, uint32_t& errorCount,
+void SafetyMonitor::getSafetyStats(uint32_t& warningCount,
+                                   uint32_t& errorCount,
                                    uint32_t& emergencyStopCount) {
-    warningCount = m_warningCount;
-    errorCount = m_errorCount;
+    warningCount       = m_warningCount;
+    errorCount         = m_errorCount;
     emergencyStopCount = m_emergencyStopCount;
 }
 
 void SafetyMonitor::clearSafetyStats() {
-    m_warningCount = 0;
-    m_errorCount = 0;
+    m_warningCount       = 0;
+    m_errorCount         = 0;
     m_emergencyStopCount = 0;
 }
 
@@ -299,8 +301,8 @@ SafetyCode SafetyMonitor::checkMotorSafety() {
     // Check for position deviations
     for (uint8_t i = 0; i < m_motorManager->getMotorCount(); i++) {
         Motor* motor = m_motorManager->getMotor(i);
-        if (motor != nullptr && motor->isEnabled() &&
-            motor->getControlMode() == MotorControlMode::POSITION) {
+        if (motor != nullptr && motor->isEnabled()
+            && motor->getControlMode() == MotorControlMode::POSITION) {
             int32_t positionError = abs(motor->getCurrentPosition() - motor->getTargetPosition());
 
             if (positionError > m_positionErrorThreshold) {
@@ -314,8 +316,8 @@ SafetyCode SafetyMonitor::checkMotorSafety() {
     // Check for velocity deviations
     for (uint8_t i = 0; i < m_motorManager->getMotorCount(); i++) {
         Motor* motor = m_motorManager->getMotor(i);
-        if (motor != nullptr && motor->isEnabled() &&
-            motor->getControlMode() == MotorControlMode::VELOCITY) {
+        if (motor != nullptr && motor->isEnabled()
+            && motor->getControlMode() == MotorControlMode::VELOCITY) {
             float velocityError = fabs(motor->getCurrentVelocity() - motor->getTargetVelocity());
 
             if (velocityError > m_velocityErrorThreshold) {
@@ -494,8 +496,8 @@ float SafetyMonitor::readVoltageSensor() {
     // Allocate analog input pin if not already allocated
     if (!gpioManager->isPinAvailable(CONFIG_VOLTAGE_SENSE_PIN)) {
         // Attempt to allocate pin for analog input
-        if (!gpioManager->allocatePin(CONFIG_VOLTAGE_SENSE_PIN, PinMode::ANALOG_INPUT_PIN,
-                                      "VoltageMonitoring")) {
+        if (!gpioManager->allocatePin(
+                CONFIG_VOLTAGE_SENSE_PIN, PinMode::ANALOG_INPUT_PIN, "VoltageMonitoring")) {
             if (m_logger) {
                 m_logger->logError("Failed to allocate voltage sense pin");
             }
@@ -516,8 +518,8 @@ float SafetyMonitor::readVoltageSensor() {
 
     // Optional: Log voltage reading for debugging
     if (m_logger) {
-        m_logger->logDebug("Voltage Sensor: Raw=" + String(rawValue) +
-                           ", Voltage=" + String(voltage, 2) + "V");
+        m_logger->logDebug("Voltage Sensor: Raw=" + String(rawValue)
+                           + ", Voltage=" + String(voltage, 2) + "V");
     }
 
     return voltage;

@@ -4,7 +4,7 @@
  */
 
 #include "StatusReporter.h"
-#include "../SystemManager.h" // Include the complete definition here
+#include "../SystemManager.h"  // Include the complete definition here
 
 StatusReporter::StatusReporter(SystemManager *systemManager, uint8_t updateFrequencyHz)
     : m_systemManager(systemManager),
@@ -41,11 +41,11 @@ void StatusReporter::setUpdateFrequency(float frequencyHz) {
     if (frequencyHz < 1.0f && frequencyHz > 0.0f) {
         // For frequencies less than 1Hz, convert to equivalent count
         // For example, 0.5Hz would update every 2 seconds
-        m_updateFrequencyHz = 1.0f; // Keep at 1Hz
-        m_updateSkipCount = round(1.0f / frequencyHz); // But skip updates
+        m_updateFrequencyHz = 1.0f;                       // Keep at 1Hz
+        m_updateSkipCount   = round(1.0f / frequencyHz);  // But skip updates
     } else {
         m_updateFrequencyHz = frequencyHz > 0.0f ? frequencyHz : CONFIG_STATUS_UPDATE_FREQUENCY_HZ;
-        m_updateSkipCount = 1; // Don't skip
+        m_updateSkipCount   = 1;  // Don't skip
     }
 }
 
@@ -61,7 +61,7 @@ void StatusReporter::updateStatus() {
             m_updateCounter++;
             if (m_updateCounter >= m_updateSkipCount) {
                 m_updateCounter = 0;
-                
+
                 // Collect current status data
                 collectStatusData();
 
@@ -73,7 +73,7 @@ void StatusReporter::updateStatus() {
                     Serial.println(generateStatusJson());
                 }
             }
-            
+
             // Update last update time regardless of skip
             m_lastUpdateMs = currentTimeMs;
         }
@@ -145,25 +145,25 @@ void StatusReporter::collectStatusData() {
     m_status.timestamp = millis();
 
     // System state
-    m_status.systemState = static_cast<uint8_t>(m_systemManager->getSystemState());
+    m_status.systemState   = static_cast<uint8_t>(m_systemManager->getSystemState());
     m_status.emergencyStop = m_systemManager->isEmergencyStop();
-    m_status.uptimeMs = m_systemManager->getUptimeMs();
+    m_status.uptimeMs      = m_systemManager->getUptimeMs();
 
     // CPU and memory
     m_status.cpuUsageCore0 = m_systemManager->getCPUUsage(0);
     m_status.cpuUsageCore1 = m_systemManager->getCPUUsage(1);
-    m_status.freeMemory = m_systemManager->getFreeMemory();
+    m_status.freeMemory    = m_systemManager->getFreeMemory();
 
     // Control loop stats
     TaskScheduler *taskScheduler = m_systemManager->getTaskScheduler();
     if (taskScheduler != nullptr) {
         uint32_t controlTaskCount, auxiliaryTaskCount, totalMissedDeadlines,
             averageControlLoopTimeUs;
-        taskScheduler->getSchedulerStats(controlTaskCount, auxiliaryTaskCount, totalMissedDeadlines,
-                                         averageControlLoopTimeUs);
+        taskScheduler->getSchedulerStats(
+            controlTaskCount, auxiliaryTaskCount, totalMissedDeadlines, averageControlLoopTimeUs);
 
         m_status.controlLoopTimeUs = averageControlLoopTimeUs;
-        m_status.missedDeadlines = totalMissedDeadlines;
+        m_status.missedDeadlines   = totalMissedDeadlines;
     }
 
     // Motor data
@@ -182,14 +182,14 @@ void StatusReporter::collectStatusData() {
             if (motor != nullptr) {
                 const MotorState &motorState = motor->getState();
 
-                m_status.motorPositions[i] = motorState.currentPosition;
+                m_status.motorPositions[i]  = motorState.currentPosition;
                 m_status.motorVelocities[i] = motorState.currentVelocity;
-                m_status.motorStates[i] = static_cast<uint8_t>(motorState.status);
+                m_status.motorStates[i]     = static_cast<uint8_t>(motorState.status);
             } else {
                 // Motor not available
-                m_status.motorPositions[i] = 0;
+                m_status.motorPositions[i]  = 0;
                 m_status.motorVelocities[i] = 0.0f;
-                m_status.motorStates[i] = 0;
+                m_status.motorStates[i]     = 0;
             }
         }
     } else {

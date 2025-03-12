@@ -20,12 +20,12 @@
  * Microstepping modes
  */
 enum class MicrostepMode {
-    FULL_STEP = 1,          // 1 microstep per full step
-    HALF_STEP = 2,          // 2 microsteps per full step
-    QUARTER_STEP = 4,       // 4 microsteps per full step
-    EIGHTH_STEP = 8,        // 8 microsteps per full step
-    SIXTEENTH_STEP = 16,    // 16 microsteps per full step
-    THIRTYSECOND_STEP = 32  // 32 microsteps per full step
+    FULL_STEP         = 1,   // 1 microstep per full step
+    HALF_STEP         = 2,   // 2 microsteps per full step
+    QUARTER_STEP      = 4,   // 4 microsteps per full step
+    EIGHTH_STEP       = 8,   // 8 microsteps per full step
+    SIXTEENTH_STEP    = 16,  // 16 microsteps per full step
+    THIRTYSECOND_STEP = 32   // 32 microsteps per full step
 };
 
 /**
@@ -43,8 +43,12 @@ class StepperDriver : public DriverInterface {
      * @param invertEnable Whether to invert enable pin logic
      * @param logger Pointer to logger instance
      */
-    StepperDriver(uint8_t stepPin, uint8_t dirPin, uint8_t enablePin, bool invertDir = false,
-                  bool invertEnable = false, Logger* logger = nullptr);
+    StepperDriver(uint8_t stepPin,
+                  uint8_t dirPin,
+                  uint8_t enablePin,
+                  bool    invertDir    = false,
+                  bool    invertEnable = false,
+                  Logger* logger       = nullptr);
 
     /**
      * Destructor
@@ -218,30 +222,30 @@ class StepperDriver : public DriverInterface {
     uint8_t m_stepPin;
     uint8_t m_dirPin;
     uint8_t m_enablePin;
-    bool m_invertDir;
-    bool m_invertEnable;
+    bool    m_invertDir;
+    bool    m_invertEnable;
 
     // Driver state
-    bool m_enabled;
-    bool m_direction;          // Current direction (true = forward, false = reverse)
-    float m_speed;             // Current speed in steps per second
+    bool    m_enabled;
+    bool    m_direction;       // Current direction (true = forward, false = reverse)
+    float   m_speed;           // Current speed in steps per second
     int32_t m_position;        // Current position in steps
     int32_t m_targetPosition;  // Target position in steps
-    bool m_isMoving;           // Whether motor is currently moving
+    bool    m_isMoving;        // Whether motor is currently moving
 
     // Microstepping
     MicrostepMode m_microstepMode;
-    uint8_t m_microsteps;  // Number of microsteps per full step
+    uint8_t       m_microsteps;  // Number of microsteps per full step
 
     // Speed control
-    float m_maxStepsPerSecond;
-    uint32_t m_stepIntervalUs;     // Interval between steps in microseconds
-    uint32_t m_lastStepTimeUs;     // Time of last step in microseconds
-    volatile int32_t m_stepsToGo;  // Steps remaining to move
+    float            m_maxStepsPerSecond;
+    uint32_t         m_stepIntervalUs;  // Interval between steps in microseconds
+    uint32_t         m_lastStepTimeUs;  // Time of last step in microseconds
+    volatile int32_t m_stepsToGo;       // Steps remaining to move
 
     // Timer control
     TimerManager* m_timerManager;
-    bool m_usingTimer;
+    bool          m_usingTimer;
 
     // Logger instance
     Logger* m_logger;

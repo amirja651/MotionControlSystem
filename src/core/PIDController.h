@@ -33,8 +33,12 @@ class PIDController {
      * @param dt Control loop time step in seconds
      * @param logger Pointer to logger instance
      */
-    PIDController(float kp = 0.0f, float ki = 0.0f, float kd = 0.0f, float ff = 0.0f,
-                  float dt = 0.001f, Logger* logger = nullptr);
+    PIDController(float   kp     = 0.0f,
+                  float   ki     = 0.0f,
+                  float   kd     = 0.0f,
+                  float   ff     = 0.0f,
+                  float   dt     = 0.001f,
+                  Logger* logger = nullptr);
 
     /**
      * Initialize the PID controller
@@ -149,7 +153,7 @@ class PIDController {
     float m_ff;  // Feed-forward gain
 
     // Adaptive gain parameters
-    bool m_adaptiveGainsEnabled;     // Whether adaptive gains are enabled
+    bool  m_adaptiveGainsEnabled;    // Whether adaptive gains are enabled
     float m_adaptiveErrorThreshold;  // Error threshold for gain adaptation
     float m_adaptiveRate;            // Rate of gain adaptation
     float m_kpBase;                  // Base proportional gain

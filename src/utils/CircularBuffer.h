@@ -23,9 +23,9 @@ class CircularBuffer {
     // Static assertion to ensure SIZE is a power of 2
     static_assert((SIZE & (SIZE - 1)) == 0, "CircularBuffer SIZE must be a power of 2");
 
-    T m_buffer[SIZE];  // Data storage
-    size_t m_head;     // Head index (where to write next)
-    size_t m_count;    // Number of items in buffer
+    T      m_buffer[SIZE];  // Data storage
+    size_t m_head;          // Head index (where to write next)
+    size_t m_count;         // Number of items in buffer
 
     // Fast modulo for powers of 2
     inline size_t modulo(size_t index) const {
@@ -45,7 +45,7 @@ class CircularBuffer {
      * Reset the buffer to empty state
      */
     void clear() {
-        m_head = 0;
+        m_head  = 0;
         m_count = 0;
         // Clear buffer contents to prevent stale data
         memset(m_buffer, 0, sizeof(m_buffer));
@@ -126,7 +126,7 @@ class CircularBuffer {
         }
 
         // Calculate the actual buffer index
-        size_t startIndex = (m_count == SIZE) ? m_head : 0;
+        size_t startIndex  = (m_count == SIZE) ? m_head : 0;
         size_t actualIndex = modulo(startIndex + index);
         return m_buffer[actualIndex];
     }

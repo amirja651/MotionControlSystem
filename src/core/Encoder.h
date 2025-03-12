@@ -27,8 +27,11 @@ class Encoder {
      * @param invertDirection Whether to invert the direction
      * @param logger Pointer to logger instance
      */
-    Encoder(uint8_t encAPin, uint8_t encBPin, uint16_t pulsesPerRev = CONFIG_ENCODER_DEFAULT_PPR,
-            bool invertDirection = false, Logger* logger = nullptr);
+    Encoder(uint8_t  encAPin,
+            uint8_t  encBPin,
+            uint16_t pulsesPerRev    = CONFIG_ENCODER_DEFAULT_PPR,
+            bool     invertDirection = false,
+            Logger*  logger          = nullptr);
 
     /**
      * Initialize the encoder
@@ -148,12 +151,12 @@ class Encoder {
 
     // Encoder specifications
     uint16_t m_pulsesPerRev;
-    uint8_t m_interpolationFactor;
-    bool m_invertDirection;
+    uint8_t  m_interpolationFactor;
+    bool     m_invertDirection;
 
     // Current state
-    volatile int32_t m_position;
-    volatile uint8_t m_stateAB;       // Current A/B state (bits 0-1)
+    volatile int32_t  m_position;
+    volatile uint8_t  m_stateAB;      // Current A/B state (bits 0-1)
     volatile uint32_t m_transitions;  // Total transitions count for diagnostics
 
     // Position and velocity tracking
@@ -173,7 +176,7 @@ class Encoder {
 
     // Circular buffers for filtering
     CircularBuffer<int32_t, CONFIG_ENCODER_BUFFER_SIZE> m_positionBuffer;
-    CircularBuffer<float, CONFIG_ENCODER_BUFFER_SIZE> m_velocityBuffer;
+    CircularBuffer<float, CONFIG_ENCODER_BUFFER_SIZE>   m_velocityBuffer;
 
     // Direction state for velocity calculation
     int8_t m_direction;

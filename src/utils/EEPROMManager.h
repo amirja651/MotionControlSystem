@@ -19,16 +19,16 @@
  * EEPROM address map for system parameters
  */
 enum EEPROMAddresses {
-    ADDR_MAGIC_MARKER = 0,           // 2 bytes - magic marker for validation
-    ADDR_VERSION = 2,                // 1 byte - configuration version
-    ADDR_MOTOR_CONFIG_START = 4,     // Start of motor configuration blocks
-    ADDR_MOTOR_CONFIG_SIZE = 64,     // Size of each motor configuration block
+    ADDR_MAGIC_MARKER        = 0,    // 2 bytes - magic marker for validation
+    ADDR_VERSION             = 2,    // 1 byte - configuration version
+    ADDR_MOTOR_CONFIG_START  = 4,    // Start of motor configuration blocks
+    ADDR_MOTOR_CONFIG_SIZE   = 64,   // Size of each motor configuration block
     ADDR_SYSTEM_CONFIG_START = 260,  // Start of system configuration block
-    ADDR_SYSTEM_CONFIG_SIZE = 64,    // Size of system configuration block
+    ADDR_SYSTEM_CONFIG_SIZE  = 64,   // Size of system configuration block
     ADDR_SAFETY_CONFIG_START = 324,  // Start of safety configuration block
-    ADDR_SAFETY_CONFIG_SIZE = 32,    // Size of safety configuration block
-    ADDR_USER_DATA_START = 356,      // Start of user data area
-    ADDR_USER_DATA_SIZE = 128        // Size of user data area
+    ADDR_SAFETY_CONFIG_SIZE  = 32,   // Size of safety configuration block
+    ADDR_USER_DATA_START     = 356,  // Start of user data area
+    ADDR_USER_DATA_SIZE      = 128   // Size of user data area
 };
 
 /**
@@ -106,8 +106,11 @@ class EEPROMManager {
      * @param jerk Jerk limit
      * @return True if parameters loaded successfully, false otherwise
      */
-    bool loadProfileParameters(uint8_t motorIndex, float& maxVelocity, float& acceleration,
-                               float& deceleration, float& jerk);
+    bool loadProfileParameters(uint8_t motorIndex,
+                               float&  maxVelocity,
+                               float&  acceleration,
+                               float&  deceleration,
+                               float&  jerk);
 
     /**
      * Save motor profile parameters
@@ -119,8 +122,8 @@ class EEPROMManager {
      * @param jerk Jerk limit
      * @return True if parameters saved successfully, false otherwise
      */
-    bool saveProfileParameters(uint8_t motorIndex, float maxVelocity, float acceleration,
-                               float deceleration, float jerk);
+    bool saveProfileParameters(
+        uint8_t motorIndex, float maxVelocity, float acceleration, float deceleration, float jerk);
 
     /**
      * Load motor soft limits
@@ -142,8 +145,10 @@ class EEPROMManager {
      * @param enabled Whether soft limits are enabled
      * @return True if limits saved successfully, false otherwise
      */
-    virtual bool saveSoftLimits(uint8_t motorIndex, int32_t minLimit, int32_t maxLimit,
-                                bool enabled);
+    virtual bool saveSoftLimits(uint8_t motorIndex,
+                                int32_t minLimit,
+                                int32_t maxLimit,
+                                bool    enabled);
 
     /**
      * Load system configuration
@@ -173,8 +178,9 @@ class EEPROMManager {
      * @param maxTemperature Maximum temperature
      * @return True if configuration loaded successfully, false otherwise
      */
-    bool loadSafetyConfig(uint32_t& positionErrorThreshold, float& velocityErrorThreshold,
-                          float& maxTemperature);
+    bool loadSafetyConfig(uint32_t& positionErrorThreshold,
+                          float&    velocityErrorThreshold,
+                          float&    maxTemperature);
 
     /**
      * Save safety configuration
@@ -184,8 +190,9 @@ class EEPROMManager {
      * @param maxTemperature Maximum temperature
      * @return True if configuration saved successfully, false otherwise
      */
-    bool saveSafetyConfig(uint32_t positionErrorThreshold, float velocityErrorThreshold,
-                          float maxTemperature);
+    bool saveSafetyConfig(uint32_t positionErrorThreshold,
+                          float    velocityErrorThreshold,
+                          float    maxTemperature);
 
     /**
      * Save user data to a specific EEPROM address
@@ -212,8 +219,8 @@ class EEPROMManager {
     Logger* m_logger;
 
     // EEPROM state
-    bool m_initialized;
-    bool m_configValid;
+    bool    m_initialized;
+    bool    m_configValid;
     uint8_t m_configVersion;
 
     /**

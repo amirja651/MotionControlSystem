@@ -88,7 +88,8 @@ class MathUtils {
      * @param acceleration Acceleration/deceleration rate
      * @return Time in seconds
      */
-    static float calculateTrapezoidalProfileDuration(float distance, float maxVelocity,
+    static float calculateTrapezoidalProfileDuration(float distance,
+                                                     float maxVelocity,
                                                      float acceleration) {
         // Calculate the distance required to accelerate to max velocity and decelerate to stop
         float accelDistance = maxVelocity * maxVelocity / acceleration;
@@ -127,8 +128,8 @@ class MathUtils {
      * @param acceleration Acceleration/deceleration rate
      * @return Position at the specified time
      */
-    static float calculateTrapezoidalPosition(float time, float totalTime, float distance,
-                                              float maxVelocity, float acceleration) {
+    static float calculateTrapezoidalPosition(
+        float time, float totalTime, float distance, float maxVelocity, float acceleration) {
         if (time <= 0.0f) {
             return 0.0f;
         }
@@ -148,7 +149,7 @@ class MathUtils {
 
         if (constTime < 0.0f) {
             // Triangle profile (acceleration directly followed by deceleration)
-            float peakTime = totalTime / 2.0f;
+            float peakTime     = totalTime / 2.0f;
             float peakVelocity = peakTime * acceleration;
 
             if (time <= peakTime) {
@@ -166,8 +167,8 @@ class MathUtils {
                 return 0.5f * acceleration * time * time;
             } else if (time <= accelTime + constTime) {
                 // Constant velocity phase
-                return 0.5f * acceleration * accelTime * accelTime +
-                       maxVelocity * (time - accelTime);
+                return 0.5f * acceleration * accelTime * accelTime
+                       + maxVelocity * (time - accelTime);
             } else {
                 // Deceleration phase
                 float timeFromDecel = time - (accelTime + constTime);
@@ -186,8 +187,8 @@ class MathUtils {
      * @param acceleration Acceleration/deceleration rate
      * @return Velocity at the specified time
      */
-    static float calculateTrapezoidalVelocity(float time, float totalTime, float distance,
-                                              float maxVelocity, float acceleration) {
+    static float calculateTrapezoidalVelocity(
+        float time, float totalTime, float distance, float maxVelocity, float acceleration) {
         if (time <= 0.0f || time >= totalTime) {
             return 0.0f;
         }
@@ -238,8 +239,12 @@ class MathUtils {
      * @param maxJerk Maximum jerk
      * @return Position at the specified time
      */
-    static float calculateSCurvePosition(float time, float totalTime, float distance,
-                                         float maxVelocity, float maxAcceleration, float maxJerk) {
+    static float calculateSCurvePosition(float time,
+                                         float totalTime,
+                                         float distance,
+                                         float maxVelocity,
+                                         float maxAcceleration,
+                                         float maxJerk) {
         // Simplified S-curve implementation
         // This is a very basic approximation - a full implementation would be much more complex
 

@@ -65,19 +65,19 @@ enum class MotorError {
  * Motor configuration structure
  */
 struct MotorState {
-    int32_t targetPosition;     // Target position in encoder counts
-    int32_t currentPosition;    // Current position in encoder counts
-    float targetVelocity;       // Target velocity in counts/s
-    float currentVelocity;      // Current velocity in counts/s
-    float targetAcceleration;   // Target acceleration in counts/s²
-    float currentAcceleration;  // Current acceleration in counts/s²
-    float controlOutput;        // Current control output
-    MotorStatus status;         // Current motor status
-    MotorError error;           // Current error code
-    bool limitMinTriggered;     // Min limit switch state
-    bool limitMaxTriggered;     // Max limit switch state
-    bool isHomed;               // Homing status
-    uint32_t lastUpdateTimeUs;  // Last update time
+    int32_t     targetPosition;       // Target position in encoder counts
+    int32_t     currentPosition;      // Current position in encoder counts
+    float       targetVelocity;       // Target velocity in counts/s
+    float       currentVelocity;      // Current velocity in counts/s
+    float       targetAcceleration;   // Target acceleration in counts/s²
+    float       currentAcceleration;  // Current acceleration in counts/s²
+    float       controlOutput;        // Current control output
+    MotorStatus status;               // Current motor status
+    MotorError  error;                // Current error code
+    bool        limitMinTriggered;    // Min limit switch state
+    bool        limitMaxTriggered;    // Max limit switch state
+    bool        isHomed;              // Homing status
+    uint32_t    lastUpdateTimeUs;     // Last update time
 };
 
 /**
@@ -159,8 +159,11 @@ class Motor {
      * @param deceleration Deceleration for the move
      * @param jerk Jerk limit (if supported)
      */
-    void moveToPosition(int32_t position, float maxVelocity, float acceleration, float deceleration,
-                        float jerk = 0.0f);
+    void moveToPosition(int32_t position,
+                        float   maxVelocity,
+                        float   acceleration,
+                        float   deceleration,
+                        float   jerk = 0.0f);
 
     /**
      * Set target velocity
@@ -356,10 +359,10 @@ class Motor {
     bool m_invertEnable;  // Flag to invert enable pin logic
 
     // Motor components
-    Encoder m_encoder;
-    PIDController m_controller;
+    Encoder           m_encoder;
+    PIDController     m_controller;
     TrajectoryPlanner m_trajectoryPlanner;
-    DriverInterface* m_driver;
+    DriverInterface*  m_driver;
 
     /**
      * Logger instance
@@ -367,31 +370,31 @@ class Motor {
     Logger* m_logger;
 
     // Motor state
-    MotorState m_state;
+    MotorState       m_state;
     MotorControlMode m_controlMode;
 
     // Control parameters
     uint32_t m_controlIntervalUs;
     uint32_t m_trajectoryIntervalUs;
-    float m_positionTolerance;
-    float m_velocityTolerance;
+    float    m_positionTolerance;
+    float    m_velocityTolerance;
 
     // Safety parameters
-    bool m_softLimitsEnabled;
+    bool    m_softLimitsEnabled;
     int32_t m_softLimitMin;
     int32_t m_softLimitMax;
-    bool m_limitSwitchesEnabled;
-    bool m_invertLimitMin;
-    bool m_invertLimitMax;
-    bool m_emergencyStopActive;
+    bool    m_limitSwitchesEnabled;
+    bool    m_invertLimitMin;
+    bool    m_invertLimitMax;
+    bool    m_emergencyStopActive;
 
     // Pin states
     bool m_limitMinState;
     bool m_limitMaxState;
 
     // Additional state tracking
-    uint32_t m_lastControlUpdateUs;
-    uint32_t m_lastTrajectoryUpdateUs;
+    uint32_t                 m_lastControlUpdateUs;
+    uint32_t                 m_lastTrajectoryUpdateUs;
     CircularBuffer<float, 8> m_controlOutputBuffer;
 
     /**

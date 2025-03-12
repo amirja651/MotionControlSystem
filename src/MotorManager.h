@@ -33,17 +33,19 @@ class MotorManager {
 
     // In the existing class implementation, update log calls to use the module-specific logger:
 
-     // Example (these would be in MotorManager.cpp):
-     // From:
-     // m_logger->logInfo("Motor Manager created with " + String(m_maxMotors) + " motors capacity");
-     // To:
-     // m_logger->logInfo("Motor Manager created with " + String(m_maxMotors) + " motors capacity", LogModule::MOTOR_MANAGER);
- 
-     // Another example:
-     // From:
-     // m_logger->logError("Cannot add motor: maximum motor count reached");
-     // To:
-     // m_logger->logError("Cannot add motor: maximum motor count reached", LogModule::MOTOR_MANAGER);
+    // Example (these would be in MotorManager.cpp):
+    // From:
+    // m_logger->logInfo("Motor Manager created with " + String(m_maxMotors) + " motors capacity");
+    // To:
+    // m_logger->logInfo("Motor Manager created with " + String(m_maxMotors) + " motors capacity",
+    // LogModule::MOTOR_MANAGER);
+
+    // Another example:
+    // From:
+    // m_logger->logError("Cannot add motor: maximum motor count reached");
+    // To:
+    // m_logger->logError("Cannot add motor: maximum motor count reached",
+    // LogModule::MOTOR_MANAGER);
 
     /**
      * Destructor
@@ -122,9 +124,12 @@ class MotorManager {
      * @param deceleration Deceleration rate
      * @return True if successful, false otherwise
      */
-    bool moveMultipleMotors(const int32_t* positions, const uint8_t* motorIndices,
-                            uint8_t motorCount, float maxVelocity, float acceleration,
-                            float deceleration);
+    bool moveMultipleMotors(const int32_t* positions,
+                            const uint8_t* motorIndices,
+                            uint8_t        motorCount,
+                            float          maxVelocity,
+                            float          acceleration,
+                            float          deceleration);
 
     /**
      * Check if all specified motors have completed their movements
@@ -146,9 +151,12 @@ class MotorManager {
      * @param deceleration Deceleration rate
      * @return Duration of the synchronized move in seconds, or 0.0 if failed
      */
-    float calculateSynchronizedMove(const int32_t* positions, const uint8_t* motorIndices,
-                                    uint8_t motorCount, float maxVelocity, float acceleration,
-                                    float deceleration);
+    float calculateSynchronizedMove(const int32_t* positions,
+                                    const uint8_t* motorIndices,
+                                    uint8_t        motorCount,
+                                    float          maxVelocity,
+                                    float          acceleration,
+                                    float          deceleration);
 
     /**
      * Check for any errors across all motors

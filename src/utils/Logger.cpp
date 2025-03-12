@@ -17,7 +17,7 @@ Logger::Logger()
       m_bufferIndex(0) {
     // Initialize module levels
     for (size_t i = 0; i < static_cast<size_t>(LogModule::MAX_MODULES); i++) {
-        m_moduleLevels[i] = m_globalLogLevel;
+        m_moduleLevels[i]  = m_globalLogLevel;
         m_moduleEnabled[i] = true;
     }
 
@@ -98,9 +98,13 @@ bool Logger::initializeTask(const LoggerTaskParams& taskParams) {
     }
 
     // Create task
-    BaseType_t result =
-        xTaskCreatePinnedToCore(loggerTask, "LoggerTask", m_taskParams.taskStackSize, this,
-                                m_taskParams.taskPriority, &m_taskHandle, m_taskParams.taskCoreId);
+    BaseType_t result = xTaskCreatePinnedToCore(loggerTask,
+                                                "LoggerTask",
+                                                m_taskParams.taskStackSize,
+                                                this,
+                                                m_taskParams.taskPriority,
+                                                &m_taskHandle,
+                                                m_taskParams.taskCoreId);
 
     if (result != pdPASS) {
         // Clean up queue if task creation failed
@@ -114,8 +118,8 @@ bool Logger::initializeTask(const LoggerTaskParams& taskParams) {
 }
 
 void Logger::loggerTask(void* pvParameters) {
-    Logger* logger = static_cast<Logger*>(pvParameters);
-    LogEntry* entry = nullptr;
+    Logger*    logger   = static_cast<Logger*>(pvParameters);
+    LogEntry*  entry    = nullptr;
     TickType_t waitTime = pdMS_TO_TICKS(100);  // 100ms wait time
 
     for (;;) {
@@ -157,8 +161,8 @@ void Logger::setModuleLogLevel(LogModule module, LogLevel level) {
     size_t moduleIndex = static_cast<size_t>(module);
     if (moduleIndex < static_cast<size_t>(LogModule::MAX_MODULES)) {
         m_moduleLevels[moduleIndex] = level;
-        logInfo("Module " + moduleToString(module) + " log level set to " +
-                logLevelToString(level));
+        logInfo("Module " + moduleToString(module) + " log level set to "
+                + logLevelToString(level));
     }
 }
 
@@ -174,8 +178,8 @@ void Logger::enableModuleLogging(LogModule module, bool enable) {
     size_t moduleIndex = static_cast<size_t>(module);
     if (moduleIndex < static_cast<size_t>(LogModule::MAX_MODULES)) {
         m_moduleEnabled[moduleIndex] = enable;
-        logInfo("Module " + moduleToString(module) + " logging " +
-                (enable ? "enabled" : "disabled"));
+        logInfo("Module " + moduleToString(module) + " logging "
+                + (enable ? "enabled" : "disabled"));
     }
 }
 
@@ -299,18 +303,17 @@ void Logger::log(LogLevel level, const String& message, LogModule module) {
 
     // Check module log level and enabled status
     size_t moduleIndex = static_cast<size_t>(module);
-    if (moduleIndex >= static_cast<size_t>(LogModule::MAX_MODULES) ||
-        !m_moduleEnabled[moduleIndex] || level == LogLevel::OFF ||
-        level > m_moduleLevels[moduleIndex]) {
+    if (moduleIndex >= static_cast<size_t>(LogModule::MAX_MODULES) || !m_moduleEnabled[moduleIndex]
+        || level == LogLevel::OFF || level > m_moduleLevels[moduleIndex]) {
         return;
     }
 
     // Create a log entry (dynamically allocated for queue)
-    LogEntry* entry = new LogEntry();
+    LogEntry* entry  = new LogEntry();
     entry->timestamp = millis();
-    entry->level = level;
-    entry->module = module;
-    entry->message = message;
+    entry->level     = level;
+    entry->module    = module;
+    entry->message   = message;
 
     // If critical (error), output immediately regardless of task
     if (level == LogLevel::ERROR) {
@@ -413,8 +416,9 @@ String Logger::formatLogEntry(const LogEntry& entry) const {
     formatted += resetCode;  // Reset color at the end
 
     // Remove any existing newlines at the end (to prevent double newlines)
-    while (formatted.length() > 0 && (formatted.charAt(formatted.length() - 1) == '\n' ||
-                                      formatted.charAt(formatted.length() - 1) == '\r')) {
+    while (formatted.length() > 0
+           && (formatted.charAt(formatted.length() - 1) == '\n'
+               || formatted.charAt(formatted.length() - 1) == '\r')) {
         formatted.remove(formatted.length() - 1);
     }
 

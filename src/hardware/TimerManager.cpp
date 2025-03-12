@@ -51,10 +51,10 @@ TimerManager* TimerManager::getInstance(Logger* logger) {
 TimerManager::TimerManager(Logger* logger) : m_logger(logger), m_timerGroup(TIMER_GROUP_0) {
     // Initialize timer state
     for (int i = 0; i < 2; i++) {
-        m_timerRunning[i] = false;
+        m_timerRunning[i]    = false;
         m_timerIntervalUs[i] = 0;
         m_timerAutoReload[i] = false;
-        m_timerCallbacks[i] = nullptr;
+        m_timerCallbacks[i]  = nullptr;
     }
 
     // Set timer indices
@@ -76,7 +76,9 @@ TimerManager::~TimerManager() {
     }
 }
 
-bool TimerManager::startTimer(uint8_t timerIndex, uint32_t intervalUs, bool autoReload,
+bool TimerManager::startTimer(uint8_t       timerIndex,
+                              uint32_t      intervalUs,
+                              bool          autoReload,
                               TimerCallback callback) {
     // Validate parameters
     if (timerIndex > 1 || intervalUs == 0 || callback == nullptr) {
@@ -94,7 +96,7 @@ bool TimerManager::startTimer(uint8_t timerIndex, uint32_t intervalUs, bool auto
     // Store timer parameters
     m_timerIntervalUs[timerIndex] = intervalUs;
     m_timerAutoReload[timerIndex] = autoReload;
-    m_timerCallbacks[timerIndex] = callback;
+    m_timerCallbacks[timerIndex]  = callback;
 
     // Configure the timer hardware
     if (!configureTimer(timerIndex, intervalUs, autoReload)) {
@@ -112,9 +114,9 @@ bool TimerManager::startTimer(uint8_t timerIndex, uint32_t intervalUs, bool auto
     m_timerRunning[timerIndex] = true;
 
     if (m_logger) {
-        m_logger->logInfo("Timer " + String(timerIndex) + " started with interval " +
-                              String(intervalUs) +
-                              "us, autoReload=" + String(autoReload ? "true" : "false"),
+        m_logger->logInfo("Timer " + String(timerIndex) + " started with interval "
+                              + String(intervalUs)
+                              + "us, autoReload=" + String(autoReload ? "true" : "false"),
                           LogModule::SYSTEM);
     }
 
@@ -184,13 +186,13 @@ bool TimerManager::setTimerInterval(uint8_t timerIndex, uint32_t intervalUs) {
         stopTimer(timerIndex);
 
         // Restart the timer with the new interval
-        bool result = startTimer(timerIndex, intervalUs, m_timerAutoReload[timerIndex],
-                                 m_timerCallbacks[timerIndex]);
+        bool result = startTimer(
+            timerIndex, intervalUs, m_timerAutoReload[timerIndex], m_timerCallbacks[timerIndex]);
 
         if (m_logger) {
             if (result) {
-                m_logger->logInfo("Timer " + String(timerIndex) + " interval updated to " +
-                                      String(intervalUs) + "us",
+                m_logger->logInfo("Timer " + String(timerIndex) + " interval updated to "
+                                      + String(intervalUs) + "us",
                                   LogModule::SYSTEM);
             } else {
                 m_logger->logError("Failed to update timer " + String(timerIndex) + " interval",
@@ -202,8 +204,8 @@ bool TimerManager::setTimerInterval(uint8_t timerIndex, uint32_t intervalUs) {
     }
 
     if (m_logger) {
-        m_logger->logInfo("Timer " + String(timerIndex) + " interval set to " + String(intervalUs) +
-                              "us (timer not running)",
+        m_logger->logInfo("Timer " + String(timerIndex) + " interval set to " + String(intervalUs)
+                              + "us (timer not running)",
                           LogModule::SYSTEM);
     }
 
@@ -243,12 +245,12 @@ bool TimerManager::configureTimer(uint8_t timerIndex, uint32_t intervalUs, bool 
 
     // Timer configuration
     timer_config_t config = {
-        .alarm_en = TIMER_ALARM_EN,                                              // Enable alarm
-        .counter_en = TIMER_PAUSE,                                               // Start paused
-        .intr_type = TIMER_INTR_LEVEL,                                           // Level interrupt
+        .alarm_en    = TIMER_ALARM_EN,                                           // Enable alarm
+        .counter_en  = TIMER_PAUSE,                                              // Start paused
+        .intr_type   = TIMER_INTR_LEVEL,                                         // Level interrupt
         .counter_dir = TIMER_COUNT_UP,                                           // Count up
         .auto_reload = autoReload ? TIMER_AUTORELOAD_EN : TIMER_AUTORELOAD_DIS,  // Auto-reload
-        .divider = 1                                                             // 80MHz (APB_CLK)
+        .divider     = 1                                                         // 80MHz (APB_CLK)
     };
 
     // Initialize timer
@@ -272,11 +274,11 @@ bool TimerManager::configureTimer(uint8_t timerIndex, uint32_t intervalUs, bool 
 
     // Register interrupt handler
     if (timerIndex == 0) {
-        result = timer_isr_register(m_timerGroup, m_timerIdx[timerIndex], timer0ISR, nullptr,
-                                    ESP_INTR_FLAG_IRAM, nullptr);
+        result = timer_isr_register(
+            m_timerGroup, m_timerIdx[timerIndex], timer0ISR, nullptr, ESP_INTR_FLAG_IRAM, nullptr);
     } else {
-        result = timer_isr_register(m_timerGroup, m_timerIdx[timerIndex], timer1ISR, nullptr,
-                                    ESP_INTR_FLAG_IRAM, nullptr);
+        result = timer_isr_register(
+            m_timerGroup, m_timerIdx[timerIndex], timer1ISR, nullptr, ESP_INTR_FLAG_IRAM, nullptr);
     }
 
     if (result != ESP_OK) {
@@ -288,9 +290,9 @@ bool TimerManager::configureTimer(uint8_t timerIndex, uint32_t intervalUs, bool 
     }
 
     if (m_logger) {
-        m_logger->logDebug("Timer " + String(timerIndex) +
-                               " configured: interval=" + String(intervalUs) +
-                               "us, autoReload=" + String(autoReload ? "true" : "false"),
+        m_logger->logDebug("Timer " + String(timerIndex)
+                               + " configured: interval=" + String(intervalUs)
+                               + "us, autoReload=" + String(autoReload ? "true" : "false"),
                            LogModule::SYSTEM);
     }
 

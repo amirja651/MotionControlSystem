@@ -5,8 +5,9 @@
 
 #include "CommandProtocol.h"
 
-CommandProtocol::CommandProtocol(SystemManager* systemManager, SerialCommand* serialCommand,
-                                 Logger* logger)
+CommandProtocol::CommandProtocol(SystemManager* systemManager,
+                                 SerialCommand* serialCommand,
+                                 Logger*        logger)
     : m_systemManager(systemManager),
       m_serialCommand(serialCommand),
       m_logger(logger),
@@ -50,9 +51,9 @@ void CommandProtocol::processCommands() {
         if (findCommandPacket(packet)) {
             if (m_logger) {
                 m_logger->logDebug(
-                    "Command packet found: type=" +
-                        commandTypeToString(static_cast<CommandType>(packet.commandType)) +
-                        ", id=" + String(packet.commandId) + ", length=" + String(packet.length),
+                    "Command packet found: type="
+                        + commandTypeToString(static_cast<CommandType>(packet.commandType))
+                        + ", id=" + String(packet.commandId) + ", length=" + String(packet.length),
                     LogModule::COMMAND_HANDLER);
             }
 
@@ -64,7 +65,8 @@ void CommandProtocol::processCommands() {
 
             if (packetSize < m_receiveBufferIndex) {
                 // Shift remaining data to start of buffer
-                memmove(m_receiveBuffer, m_receiveBuffer + packetSize,
+                memmove(m_receiveBuffer,
+                        m_receiveBuffer + packetSize,
                         m_receiveBufferIndex - packetSize);
                 m_receiveBufferIndex -= packetSize;
             } else {
@@ -78,11 +80,11 @@ void CommandProtocol::processCommands() {
 bool CommandProtocol::processCommandPacket(const CommandPacket& packet) {
     // Prepare response packet
     ResponsePacket response;
-    response.startByte = 0xBB;
+    response.startByte   = 0xBB;
     response.commandType = packet.commandType;
-    response.commandId = packet.commandId;
-    response.status = 0;  // Success by default
-    response.length = 0;
+    response.commandId   = packet.commandId;
+    response.status      = 0;  // Success by default
+    response.length      = 0;
 
     bool success = false;
 
@@ -143,16 +145,16 @@ bool CommandProtocol::processCommandPacket(const CommandPacket& packet) {
         response.status = 1;  // General error
         if (m_logger) {
             m_logger->logWarning(
-                "Command processing failed: type=" +
-                    commandTypeToString(static_cast<CommandType>(packet.commandType)) +
-                    ", id=" + String(packet.commandId),
+                "Command processing failed: type="
+                    + commandTypeToString(static_cast<CommandType>(packet.commandType))
+                    + ", id=" + String(packet.commandId),
                 LogModule::COMMAND_HANDLER);
         }
     }
 
     // Calculate checksum
     uint8_t* responseData = reinterpret_cast<uint8_t*>(&response);
-    response.checksum = calculateChecksum(responseData, 4 + response.length);
+    response.checksum     = calculateChecksum(responseData, 4 + response.length);
 
     // Send response
     sendResponse(response);
@@ -171,10 +173,10 @@ void CommandProtocol::sendResponse(const ResponsePacket& packet) {
     Serial.write(data, totalSize);
 
     if (m_logger) {
-        m_logger->logDebug("Sent response: type=" + String(packet.commandType) + ", id=" +
-                               String(packet.commandId) + ", status=" + String(packet.status) +
-                               ", length=" + String(packet.length),
-                           LogModule::COMMAND_HANDLER);
+        m_logger->logDebug(
+            "Sent response: type=" + String(packet.commandType) + ", id=" + String(packet.commandId)
+                + ", status=" + String(packet.status) + ", length=" + String(packet.length),
+            LogModule::COMMAND_HANDLER);
     }
 }
 
@@ -195,7 +197,9 @@ bool CommandProtocol::isBinaryProtocolEnabled() const {
     return m_binaryProtocolEnabled;
 }
 
-bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+bool CommandProtocol::processSystemCommand(uint8_t         commandId,
+                                           const uint8_t*  data,
+                                           uint8_t         length,
                                            ResponsePacket& response) {
     // System commands:
     // 0x01: Get system status
@@ -231,11 +235,10 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t* dat
             response.length = 6;
 
             if (m_logger) {
-                m_logger->logDebug(
-                    "System status command: state=" + String(static_cast<int>(state)) +
-                        ", emergency=" + String(m_systemManager->isEmergencyStop()) +
-                        ", uptime=" + String(uptime) + "ms",
-                    LogModule::COMMAND_HANDLER);
+                m_logger->logDebug("System status command: state=" + String(static_cast<int>(state))
+                                       + ", emergency=" + String(m_systemManager->isEmergencyStop())
+                                       + ", uptime=" + String(uptime) + "ms",
+                                   LogModule::COMMAND_HANDLER);
             }
 
             return true;
@@ -285,7 +288,7 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t* dat
 
             // Response data: success flag
             response.data[0] = success ? 1 : 0;
-            response.length = 1;
+            response.length  = 1;
 
             if (m_logger) {
                 m_logger->logInfo("Save configuration " + String(success ? "success" : "failed"),
@@ -316,7 +319,7 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t* dat
 
             // Response data: success flag
             response.data[0] = success ? 1 : 0;
-            response.length = 1;
+            response.length  = 1;
 
             if (m_logger) {
                 m_logger->logInfo("Load configuration " + String(success ? "success" : "failed"),
@@ -370,7 +373,7 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t* dat
 
             // Response data: success flag
             response.data[0] = success ? 1 : 0;
-            response.length = 1;
+            response.length  = 1;
 
             if (m_logger) {
                 m_logger->logInfo("Reset emergency stop " + String(success ? "success" : "failed"),
@@ -391,7 +394,9 @@ bool CommandProtocol::processSystemCommand(uint8_t commandId, const uint8_t* dat
     }
 }
 
-bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+bool CommandProtocol::processMotionCommand(uint8_t         commandId,
+                                           const uint8_t*  data,
+                                           uint8_t         length,
                                            ResponsePacket& response) {
     // Motion commands:
     // 0x01: Enable motor
@@ -508,8 +513,8 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t* dat
             if (length < 13) {
                 response.status = 4;  // Invalid parameters
                 if (m_logger) {
-                    m_logger->logError("Move to position command: Invalid parameters (length=" +
-                                           String(length) + ", expected at least 13)",
+                    m_logger->logError("Move to position command: Invalid parameters (length="
+                                           + String(length) + ", expected at least 13)",
                                        LogModule::COMMAND_HANDLER);
                 }
                 return false;
@@ -545,10 +550,10 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t* dat
             }
 
             if (m_logger) {
-                m_logger->logInfo("Moving motor " + String(motorIndex) + " to position " +
-                                      String(position) + " with velocity=" + String(velocity) +
-                                      ", accel=" + String(acceleration) +
-                                      ", decel=" + String(deceleration),
+                m_logger->logInfo("Moving motor " + String(motorIndex) + " to position "
+                                      + String(position) + " with velocity=" + String(velocity)
+                                      + ", accel=" + String(acceleration)
+                                      + ", decel=" + String(deceleration),
                                   LogModule::COMMAND_HANDLER);
             }
 
@@ -596,9 +601,9 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t* dat
             }
 
             if (m_logger) {
-                m_logger->logInfo("Setting motor " + String(motorIndex) + " velocity to " +
-                                      String(velocity) + " with acceleration " +
-                                      String(acceleration),
+                m_logger->logInfo("Setting motor " + String(motorIndex) + " velocity to "
+                                      + String(velocity) + " with acceleration "
+                                      + String(acceleration),
                                   LogModule::COMMAND_HANDLER);
             }
 
@@ -706,7 +711,7 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t* dat
 
             // Get parameters
             uint8_t motorIndex = data[0];
-            int8_t direction = static_cast<int8_t>(data[1]);
+            int8_t  direction  = static_cast<int8_t>(data[1]);
 
             // Default velocity
             float velocity = CONFIG_DEFAULT_MAX_VELOCITY / 2.0f;
@@ -729,8 +734,8 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t* dat
             }
 
             if (m_logger) {
-                m_logger->logInfo("Homing motor " + String(motorIndex) + " with direction " +
-                                      String(direction) + " at velocity " + String(velocity),
+                m_logger->logInfo("Homing motor " + String(motorIndex) + " with direction "
+                                      + String(direction) + " at velocity " + String(velocity),
                                   LogModule::COMMAND_HANDLER);
             }
 
@@ -803,7 +808,9 @@ bool CommandProtocol::processMotionCommand(uint8_t commandId, const uint8_t* dat
     }
 }
 
-bool CommandProtocol::processStatusCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+bool CommandProtocol::processStatusCommand(uint8_t         commandId,
+                                           const uint8_t*  data,
+                                           uint8_t         length,
                                            ResponsePacket& response) {
     // Status commands:
     // 0x01: Get motor status
@@ -992,7 +999,9 @@ bool CommandProtocol::processStatusCommand(uint8_t commandId, const uint8_t* dat
     }
 }
 
-bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+bool CommandProtocol::processConfigCommand(uint8_t         commandId,
+                                           const uint8_t*  data,
+                                           uint8_t         length,
                                            ResponsePacket& response) {
     // Configuration commands:
     // 0x01: Get PID parameters
@@ -1108,7 +1117,7 @@ bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t* dat
             // Prepare response data
             response.data[0] = motorIndex;
 
-            float maxVelocity = state.targetVelocity;
+            float maxVelocity  = state.targetVelocity;
             float acceleration = state.targetAcceleration;
 
             memcpy(&response.data[1], &maxVelocity, sizeof(float));
@@ -1172,7 +1181,7 @@ bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t* dat
 
             int32_t minLimit = -1000000;
             int32_t maxLimit = 1000000;
-            uint8_t enabled = 1;
+            uint8_t enabled  = 1;
 
             memcpy(&response.data[1], &minLimit, sizeof(int32_t));
             memcpy(&response.data[5], &maxLimit, sizeof(int32_t));
@@ -1221,7 +1230,9 @@ bool CommandProtocol::processConfigCommand(uint8_t commandId, const uint8_t* dat
     }
 }
 
-bool CommandProtocol::processDebugCommand(uint8_t commandId, const uint8_t* data, uint8_t length,
+bool CommandProtocol::processDebugCommand(uint8_t         commandId,
+                                          const uint8_t*  data,
+                                          uint8_t         length,
                                           ResponsePacket& response) {
     // Debug commands:
     // 0x01: Set log level
@@ -1361,8 +1372,8 @@ bool CommandProtocol::findCommandPacket(CommandPacket& packet) {
 
             // Parse header
             uint8_t commandType = m_receiveBuffer[i + 1];
-            uint8_t commandId = m_receiveBuffer[i + 2];
-            uint8_t length = m_receiveBuffer[i + 3];
+            uint8_t commandId   = m_receiveBuffer[i + 2];
+            uint8_t length      = m_receiveBuffer[i + 3];
 
             // Check if we have enough bytes for complete packet
             if (i + 4 + length + 1 > m_receiveBufferIndex) {
@@ -1380,11 +1391,11 @@ bool CommandProtocol::findCommandPacket(CommandPacket& packet) {
 
             if (checksum == calculatedChecksum) {
                 // Valid packet
-                packet.startByte = 0xAA;
+                packet.startByte   = 0xAA;
                 packet.commandType = commandType;
-                packet.commandId = commandId;
-                packet.length = length;
-                packet.checksum = checksum;
+                packet.commandId   = commandId;
+                packet.length      = length;
+                packet.checksum    = checksum;
 
                 return true;
             }

@@ -94,12 +94,18 @@ bool EEPROMManager::resetToDefaults() {
     // Reset motor configurations
     for (uint8_t i = 0; i < CONFIG_MAX_MOTORS; i++) {
         // PID parameters
-        savePIDParameters(i, CONFIG_DEFAULT_PID_KP, CONFIG_DEFAULT_PID_KI, CONFIG_DEFAULT_PID_KD,
+        savePIDParameters(i,
+                          CONFIG_DEFAULT_PID_KP,
+                          CONFIG_DEFAULT_PID_KI,
+                          CONFIG_DEFAULT_PID_KD,
                           CONFIG_DEFAULT_PID_FF);
 
         // Profile parameters
-        saveProfileParameters(i, CONFIG_DEFAULT_MAX_VELOCITY, CONFIG_DEFAULT_ACCELERATION,
-                              CONFIG_DEFAULT_DECELERATION, CONFIG_DEFAULT_MAX_JERK);
+        saveProfileParameters(i,
+                              CONFIG_DEFAULT_MAX_VELOCITY,
+                              CONFIG_DEFAULT_ACCELERATION,
+                              CONFIG_DEFAULT_DECELERATION,
+                              CONFIG_DEFAULT_MAX_JERK);
 
         // Soft limits
         saveSoftLimits(i, -1000000, 1000000, true);
@@ -113,7 +119,8 @@ bool EEPROMManager::resetToDefaults() {
     saveSystemConfig(CONFIG_LOG_LEVEL, CONFIG_DEBUG_ENABLED, CONFIG_STATUS_UPDATE_FREQUENCY_HZ);
 
     // Reset safety configuration
-    saveSafetyConfig(CONFIG_SAFETY_POSITION_TOLERANCE, CONFIG_SAFETY_VELOCITY_TOLERANCE,
+    saveSafetyConfig(CONFIG_SAFETY_POSITION_TOLERANCE,
+                     CONFIG_SAFETY_VELOCITY_TOLERANCE,
                      CONFIG_SAFETY_MAX_TEMPERATURE_C);
 
     // Commit changes to EEPROM
@@ -124,8 +131,8 @@ bool EEPROMManager::resetToDefaults() {
     return success;
 }
 
-bool EEPROMManager::loadPIDParameters(uint8_t motorIndex, float& kp, float& ki, float& kd,
-                                      float& ff) {
+bool EEPROMManager::loadPIDParameters(
+    uint8_t motorIndex, float& kp, float& ki, float& kd, float& ff) {
     if (!m_initialized || !m_configValid || !isValidMotorIndex(motorIndex)) {
         if (m_logger) {
             m_logger->logWarning(
@@ -142,9 +149,9 @@ bool EEPROMManager::loadPIDParameters(uint8_t motorIndex, float& kp, float& ki, 
     readValue(baseAddr + 3 * sizeof(float), ff);
 
     if (m_logger) {
-        m_logger->logDebug("Loaded PID parameters for motor " + String(motorIndex) +
-                               ": Kp=" + String(kp) + ", Ki=" + String(ki) + ", Kd=" + String(kd) +
-                               ", Ff=" + String(ff),
+        m_logger->logDebug("Loaded PID parameters for motor " + String(motorIndex)
+                               + ": Kp=" + String(kp) + ", Ki=" + String(ki) + ", Kd=" + String(kd)
+                               + ", Ff=" + String(ff),
                            LogModule::SYSTEM);
     }
 
@@ -168,17 +175,17 @@ bool EEPROMManager::savePIDParameters(uint8_t motorIndex, float kp, float ki, fl
     writeValue(baseAddr + 3 * sizeof(float), ff);
 
     if (m_logger) {
-        m_logger->logInfo("Saved PID parameters for motor " + String(motorIndex) +
-                              ": Kp=" + String(kp) + ", Ki=" + String(ki) + ", Kd=" + String(kd) +
-                              ", Ff=" + String(ff),
+        m_logger->logInfo("Saved PID parameters for motor " + String(motorIndex)
+                              + ": Kp=" + String(kp) + ", Ki=" + String(ki) + ", Kd=" + String(kd)
+                              + ", Ff=" + String(ff),
                           LogModule::SYSTEM);
     }
 
     return true;
 }
 
-bool EEPROMManager::loadProfileParameters(uint8_t motorIndex, float& maxVelocity,
-                                          float& acceleration, float& deceleration, float& jerk) {
+bool EEPROMManager::loadProfileParameters(
+    uint8_t motorIndex, float& maxVelocity, float& acceleration, float& deceleration, float& jerk) {
     if (!m_initialized || !m_configValid || !isValidMotorIndex(motorIndex)) {
         return false;
     }
@@ -193,8 +200,8 @@ bool EEPROMManager::loadProfileParameters(uint8_t motorIndex, float& maxVelocity
     return true;
 }
 
-bool EEPROMManager::saveProfileParameters(uint8_t motorIndex, float maxVelocity, float acceleration,
-                                          float deceleration, float jerk) {
+bool EEPROMManager::saveProfileParameters(
+    uint8_t motorIndex, float maxVelocity, float acceleration, float deceleration, float jerk) {
     if (!m_initialized || !isValidMotorIndex(motorIndex)) {
         return false;
     }
@@ -209,8 +216,10 @@ bool EEPROMManager::saveProfileParameters(uint8_t motorIndex, float maxVelocity,
     return true;
 }
 
-bool EEPROMManager::loadSoftLimits(uint8_t motorIndex, int32_t& minLimit, int32_t& maxLimit,
-                                   bool& enabled) {
+bool EEPROMManager::loadSoftLimits(uint8_t  motorIndex,
+                                   int32_t& minLimit,
+                                   int32_t& maxLimit,
+                                   bool&    enabled) {
     if (!m_initialized || !m_configValid || !isValidMotorIndex(motorIndex)) {
         return false;
     }
@@ -227,8 +236,10 @@ bool EEPROMManager::loadSoftLimits(uint8_t motorIndex, int32_t& minLimit, int32_
     return true;
 }
 
-bool EEPROMManager::saveSoftLimits(uint8_t motorIndex, int32_t minLimit, int32_t maxLimit,
-                                   bool enabled) {
+bool EEPROMManager::saveSoftLimits(uint8_t motorIndex,
+                                   int32_t minLimit,
+                                   int32_t maxLimit,
+                                   bool    enabled) {
     if (!m_initialized || !isValidMotorIndex(motorIndex)) {
         return false;
     }
@@ -244,7 +255,8 @@ bool EEPROMManager::saveSoftLimits(uint8_t motorIndex, int32_t minLimit, int32_t
     return true;
 }
 
-bool EEPROMManager::loadSystemConfig(uint8_t& logLevel, bool& debugEnabled,
+bool EEPROMManager::loadSystemConfig(uint8_t& logLevel,
+                                     bool&    debugEnabled,
                                      uint8_t& statusUpdateFrequency) {
     if (!m_initialized || !m_configValid) {
         return false;
@@ -262,7 +274,8 @@ bool EEPROMManager::loadSystemConfig(uint8_t& logLevel, bool& debugEnabled,
     return true;
 }
 
-bool EEPROMManager::saveSystemConfig(uint8_t logLevel, bool debugEnabled,
+bool EEPROMManager::saveSystemConfig(uint8_t logLevel,
+                                     bool    debugEnabled,
                                      uint8_t statusUpdateFrequency) {
     if (!m_initialized) {
         return false;
@@ -280,7 +293,8 @@ bool EEPROMManager::saveSystemConfig(uint8_t logLevel, bool debugEnabled,
 }
 
 bool EEPROMManager::loadSafetyConfig(uint32_t& positionErrorThreshold,
-                                     float& velocityErrorThreshold, float& maxTemperature) {
+                                     float&    velocityErrorThreshold,
+                                     float&    maxTemperature) {
     if (!m_initialized || !m_configValid) {
         return false;
     }
@@ -293,8 +307,9 @@ bool EEPROMManager::loadSafetyConfig(uint32_t& positionErrorThreshold,
     return true;
 }
 
-bool EEPROMManager::saveSafetyConfig(uint32_t positionErrorThreshold, float velocityErrorThreshold,
-                                     float maxTemperature) {
+bool EEPROMManager::saveSafetyConfig(uint32_t positionErrorThreshold,
+                                     float    velocityErrorThreshold,
+                                     float    maxTemperature) {
     if (!m_initialized) {
         return false;
     }

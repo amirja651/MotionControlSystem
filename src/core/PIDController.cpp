@@ -37,25 +37,22 @@ void PIDController::initialize() {
     reset();
 
     if (m_logger) {
-        m_logger->logInfo(String("PID controller initialized with gains: ") + 
-                                "Kp=" + String(m_kp) +
-                              ", Ki=" + String(m_ki) + 
-                              ", Kd=" + String(m_kd) +
-                              ", Ff=" + String(m_ff) + 
-                              ", dt=" + String(m_dtSeconds) + "s",
+        m_logger->logInfo(String("PID controller initialized with gains: ") + "Kp=" + String(m_kp)
+                              + ", Ki=" + String(m_ki) + ", Kd=" + String(m_kd)
+                              + ", Ff=" + String(m_ff) + ", dt=" + String(m_dtSeconds) + "s",
                           LogModule::PID_CONTROLLER);
     }
 }
 
 void PIDController::reset() {
-    m_lastError = 0.0f;
-    m_integralTerm = 0.0f;
+    m_lastError           = 0.0f;
+    m_integralTerm        = 0.0f;
     m_lastProcessVariable = 0.0f;
-    m_filteredDerivative = 0.0f;
-    m_proportionalTerm = 0.0f;
-    m_derivativeTerm = 0.0f;
-    m_feedForwardTerm = 0.0f;
-    m_lastOutput = 0.0f;
+    m_filteredDerivative  = 0.0f;
+    m_proportionalTerm    = 0.0f;
+    m_derivativeTerm      = 0.0f;
+    m_feedForwardTerm     = 0.0f;
+    m_lastOutput          = 0.0f;
     m_errorBuffer.clear();
 
     if (m_logger) {
@@ -91,8 +88,8 @@ float PIDController::compute(float setpoint, float processVariable, float feedfo
         float derivative = (processVariable - m_lastProcessVariable) / m_dtSeconds;
 
         // Apply low-pass filter to derivative
-        m_filteredDerivative = m_filteredDerivative * (1.0f - m_derivativeFilterAlpha) +
-                               derivative * m_derivativeFilterAlpha;
+        m_filteredDerivative = m_filteredDerivative * (1.0f - m_derivativeFilterAlpha)
+                               + derivative * m_derivativeFilterAlpha;
 
         // Calculate derivative term (negative because we want derivative of PV, not error)
         m_derivativeTerm = -m_kd * m_filteredDerivative;
@@ -110,18 +107,18 @@ float PIDController::compute(float setpoint, float processVariable, float feedfo
     output = applyOutputLimits(output);
 
     // Update state variables
-    m_lastError = error;
+    m_lastError           = error;
     m_lastProcessVariable = processVariable;
-    m_lastOutput = output;
+    m_lastOutput          = output;
 
     // Log PID calculation periodically to avoid flooding
     static uint32_t lastLogTime = 0;
     if (m_logger && (millis() - lastLogTime > 500)) {  // Log every 500ms
         lastLogTime = millis();
-        m_logger->logDebug("PID: SP=" + String(setpoint) + ", PV=" + String(processVariable) +
-                               ", Err=" + String(error) + ", P=" + String(m_proportionalTerm) +
-                               ", I=" + String(m_integralTerm) + ", D=" + String(m_derivativeTerm) +
-                               ", FF=" + String(m_feedForwardTerm) + ", Out=" + String(output),
+        m_logger->logDebug("PID: SP=" + String(setpoint) + ", PV=" + String(processVariable)
+                               + ", Err=" + String(error) + ", P=" + String(m_proportionalTerm)
+                               + ", I=" + String(m_integralTerm) + ", D=" + String(m_derivativeTerm)
+                               + ", FF=" + String(m_feedForwardTerm) + ", Out=" + String(output),
                            LogModule::PID_CONTROLLER);
     }
 
@@ -140,14 +137,14 @@ void PIDController::setGains(float kp, float ki, float kd, float ff) {
     m_kdBase = kd;
 
     if (m_logger) {
-        m_logger->logInfo("PID gains set: Kp=" + String(kp) + ", Ki=" + String(ki) +
-                              ", Kd=" + String(kd) + ", Ff=" + String(ff),
+        m_logger->logInfo("PID gains set: Kp=" + String(kp) + ", Ki=" + String(ki)
+                              + ", Kd=" + String(kd) + ", Ff=" + String(ff),
                           LogModule::PID_CONTROLLER);
     }
 }
 
 void PIDController::setKp(float kp) {
-    m_kp = kp;
+    m_kp     = kp;
     m_kpBase = kp;
 
     if (m_logger) {
@@ -156,7 +153,7 @@ void PIDController::setKp(float kp) {
 }
 
 void PIDController::setKi(float ki) {
-    m_ki = ki;
+    m_ki     = ki;
     m_kiBase = ki;
 
     if (m_logger) {
@@ -165,7 +162,7 @@ void PIDController::setKi(float ki) {
 }
 
 void PIDController::setKd(float kd) {
-    m_kd = kd;
+    m_kd     = kd;
     m_kdBase = kd;
 
     if (m_logger) {
@@ -232,12 +229,12 @@ void PIDController::enableAdaptiveGains(bool enable) {
 
 void PIDController::setAdaptiveGainParameters(float errorThreshold, float adaptationRate) {
     m_adaptiveErrorThreshold = errorThreshold > 0.0f ? errorThreshold : 1.0f;
-    m_adaptiveRate = MathUtils::constrainValue(adaptationRate, 0.0f, 1.0f);
+    m_adaptiveRate           = MathUtils::constrainValue(adaptationRate, 0.0f, 1.0f);
 
     if (m_logger) {
         m_logger->logInfo(
-            "PID adaptive gain parameters set: errorThreshold=" + String(m_adaptiveErrorThreshold) +
-                ", adaptationRate=" + String(m_adaptiveRate),
+            "PID adaptive gain parameters set: errorThreshold=" + String(m_adaptiveErrorThreshold)
+                + ", adaptationRate=" + String(m_adaptiveRate),
             LogModule::PID_CONTROLLER);
     }
 }
@@ -268,13 +265,13 @@ float PIDController::getLastOutput() const {
 
 void PIDController::updateAdaptiveGains(float error) {
     // Calculate error ratio (how much error exceeds threshold)
-    float absError = fabs(error);
+    float absError   = fabs(error);
     float errorRatio = absError / m_adaptiveErrorThreshold;
 
     if (errorRatio > 1.0f) {
         // Large error: increase P, decrease I
         float adaptFactor = 1.0f + (errorRatio - 1.0f) * m_adaptiveRate;
-        adaptFactor = MathUtils::constrainValue(adaptFactor, 1.0f, 2.0f);
+        adaptFactor       = MathUtils::constrainValue(adaptFactor, 1.0f, 2.0f);
 
         m_kp = m_kpBase * adaptFactor;
         m_ki = m_kiBase / adaptFactor;
@@ -287,9 +284,9 @@ void PIDController::updateAdaptiveGains(float error) {
         }
 
         if (m_logger && errorRatio > 2.0f) {
-            m_logger->logDebug("PID adaptive gains adjusted: errorRatio=" + String(errorRatio) +
-                                   ", adaptFactor=" + String(adaptFactor) + ", Kp=" + String(m_kp) +
-                                   ", Ki=" + String(m_ki) + ", Kd=" + String(m_kd),
+            m_logger->logDebug("PID adaptive gains adjusted: errorRatio=" + String(errorRatio)
+                                   + ", adaptFactor=" + String(adaptFactor) + ", Kp=" + String(m_kp)
+                                   + ", Ki=" + String(m_ki) + ", Kd=" + String(m_kd),
                                LogModule::PID_CONTROLLER);
         }
     } else {
@@ -305,8 +302,8 @@ void PIDController::applyAntiWindup() {
     if (m_integralTerm > m_antiWindupLimit || m_integralTerm < -m_antiWindupLimit) {
         // Log anti-windup activation
         if (m_logger) {
-            m_logger->logDebug("PID anti-windup activated: integralTerm=" + String(m_integralTerm) +
-                                   " constrained to +/-" + String(m_antiWindupLimit),
+            m_logger->logDebug("PID anti-windup activated: integralTerm=" + String(m_integralTerm)
+                                   + " constrained to +/-" + String(m_antiWindupLimit),
                                LogModule::PID_CONTROLLER);
         }
     }
@@ -321,8 +318,8 @@ float PIDController::applyOutputLimits(float output) {
     if (output > m_maxOutput || output < m_minOutput) {
         // Log output limiting
         if (m_logger) {
-            m_logger->logDebug("PID output limited: " + String(output) + " constrained to [" +
-                                   String(m_minOutput) + ", " + String(m_maxOutput) + "]",
+            m_logger->logDebug("PID output limited: " + String(output) + " constrained to ["
+                                   + String(m_minOutput) + ", " + String(m_maxOutput) + "]",
                                LogModule::PID_CONTROLLER);
         }
     }

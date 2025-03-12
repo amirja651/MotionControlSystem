@@ -43,7 +43,9 @@ class TimerManager {
      * @param callback Callback function to call on timer expiry
      * @return True if timer started successfully, false otherwise
      */
-    bool startTimer(uint8_t timerIndex, uint32_t intervalUs, bool autoReload,
+    bool startTimer(uint8_t       timerIndex,
+                    uint32_t      intervalUs,
+                    bool          autoReload,
                     TimerCallback callback);
 
     /**
@@ -117,14 +119,14 @@ class TimerManager {
     static TimerManager* s_instance;
 
     // Timer state
-    bool m_timerRunning[2];
-    uint32_t m_timerIntervalUs[2];
-    bool m_timerAutoReload[2];
+    bool          m_timerRunning[2];
+    uint32_t      m_timerIntervalUs[2];
+    bool          m_timerAutoReload[2];
     TimerCallback m_timerCallbacks[2];
 
     // Timer configuration
     timer_group_t m_timerGroup;
-    timer_idx_t m_timerIdx[2];
+    timer_idx_t   m_timerIdx[2];
 
     /**
      * Configure timer hardware

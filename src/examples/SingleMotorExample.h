@@ -108,9 +108,9 @@ class SingleMotorExample {
     SystemManager* m_systemManager;
 
     // Application state
-    bool m_initialized;
+    bool     m_initialized;
     uint32_t m_lastUpdateTimeMs;
-    uint8_t m_motorIndex;
+    uint8_t  m_motorIndex;
 
     /**
      * Configure motor for this application
@@ -119,15 +119,15 @@ class SingleMotorExample {
      */
     void configureMotor(MotorManager* motorManager) {
         // Single motor configuration
-        MotorConfig motorConfig = DEFAULT_MOTOR_CONFIGS[0];
-        motorConfig.maxVelocity = 3000.0f;       // 3000 steps/second
+        MotorConfig motorConfig     = DEFAULT_MOTOR_CONFIGS[0];
+        motorConfig.maxVelocity     = 3000.0f;   // 3000 steps/second
         motorConfig.maxAcceleration = 10000.0f;  // 10000 steps/second²
         motorConfig.maxDeceleration = 12000.0f;  // 12000 steps/second²
-        motorConfig.maxJerk = 50000.0f;          // 50000 steps/second³
-        motorConfig.pidKp = 0.8f;                // P gain for position control
-        motorConfig.pidKi = 0.15f;               // I gain for steady-state error
-        motorConfig.pidKd = 0.05f;               // D gain for dampening
-        motorConfig.pidFf = 0.1f;                // Feed-forward for velocity tracking
+        motorConfig.maxJerk         = 50000.0f;  // 50000 steps/second³
+        motorConfig.pidKp           = 0.8f;      // P gain for position control
+        motorConfig.pidKi           = 0.15f;     // I gain for steady-state error
+        motorConfig.pidKd           = 0.05f;     // D gain for dampening
+        motorConfig.pidFf           = 0.1f;      // Feed-forward for velocity tracking
 
         // Add motor to manager
         motorManager->addMotor(motorConfig);
@@ -169,22 +169,27 @@ class SingleMotorExample {
 
         // Add custom commands for single motor control
         serialCommand->addCommand(
-            "home", "[direction]", "Home the motor",
+            "home",
+            "[direction]",
+            "Home the motor",
             [this](const String& params, String& response) { return homeMotor(params, response); });
 
-        serialCommand->addCommand("move_rel", "<distance> [speed]",
+        serialCommand->addCommand("move_rel",
+                                  "<distance> [speed]",
                                   "Move motor by relative distance",
                                   [this](const String& params, String& response) {
                                       return moveRelative(params, response);
                                   });
 
-        serialCommand->addCommand("move_to", "<position> [speed]",
+        serialCommand->addCommand("move_to",
+                                  "<position> [speed]",
                                   "Move motor to absolute position",
                                   [this](const String& params, String& response) {
                                       return moveAbsolute(params, response);
                                   });
 
-        serialCommand->addCommand("oscillate", "<amplitude> <frequency> [cycles]",
+        serialCommand->addCommand("oscillate",
+                                  "<amplitude> <frequency> [cycles]",
                                   "Oscillate motor",
                                   [this](const String& params, String& response) {
                                       return oscillateMotor(params, response);
@@ -235,7 +240,7 @@ class SingleMotorExample {
         if (safetyMonitor->isEmergencyStop()) {
             // Emergency stop condition
             static uint32_t lastAttemptMs = 0;
-            uint32_t currentTimeMs = millis();
+            uint32_t        currentTimeMs = millis();
 
             // Try to reset emergency stop every 5 seconds
             if (currentTimeMs - lastAttemptMs >= 5000) {
@@ -359,17 +364,17 @@ class SingleMotorExample {
         paramsStr.trim();
 
         // Split parameters
-        int spaceIndex = paramsStr.indexOf(' ');
+        int    spaceIndex = paramsStr.indexOf(' ');
         String distanceStr, speedStr;
 
         if (spaceIndex < 0) {
             // Just distance
             distanceStr = paramsStr;
-            speedStr = "1000";  // Default speed
+            speedStr    = "1000";  // Default speed
         } else {
             // Distance and speed
             distanceStr = paramsStr.substring(0, spaceIndex);
-            speedStr = paramsStr.substring(spaceIndex + 1);
+            speedStr    = paramsStr.substring(spaceIndex + 1);
             speedStr.trim();
         }
 
@@ -380,7 +385,7 @@ class SingleMotorExample {
         }
 
         int32_t distance = distanceStr.toInt();
-        float speed = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
+        float   speed    = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
 
         // Enable motor if not enabled
         if (!motor->isEnabled()) {
@@ -427,17 +432,17 @@ class SingleMotorExample {
         paramsStr.trim();
 
         // Split parameters
-        int spaceIndex = paramsStr.indexOf(' ');
+        int    spaceIndex = paramsStr.indexOf(' ');
         String positionStr, speedStr;
 
         if (spaceIndex < 0) {
             // Just position
             positionStr = paramsStr;
-            speedStr = "1000";  // Default speed
+            speedStr    = "1000";  // Default speed
         } else {
             // Position and speed
             positionStr = paramsStr.substring(0, spaceIndex);
-            speedStr = paramsStr.substring(spaceIndex + 1);
+            speedStr    = paramsStr.substring(spaceIndex + 1);
             speedStr.trim();
         }
 
@@ -448,7 +453,7 @@ class SingleMotorExample {
         }
 
         int32_t position = positionStr.toInt();
-        float speed = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
+        float   speed    = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
 
         // Enable motor if not enabled
         if (!motor->isEnabled()) {
@@ -496,20 +501,20 @@ class SingleMotorExample {
         }
 
         String amplitudeStr = paramsStr.substring(0, firstSpaceIndex);
-        paramsStr = paramsStr.substring(firstSpaceIndex + 1);
+        paramsStr           = paramsStr.substring(firstSpaceIndex + 1);
         paramsStr.trim();
 
-        int secondSpaceIndex = paramsStr.indexOf(' ');
+        int    secondSpaceIndex = paramsStr.indexOf(' ');
         String frequencyStr, cyclesStr;
 
         if (secondSpaceIndex < 0) {
             // Just frequency, no cycles
             frequencyStr = paramsStr;
-            cyclesStr = "5";  // Default 5 cycles
+            cyclesStr    = "5";  // Default 5 cycles
         } else {
             // Frequency and cycles
             frequencyStr = paramsStr.substring(0, secondSpaceIndex);
-            cyclesStr = paramsStr.substring(secondSpaceIndex + 1);
+            cyclesStr    = paramsStr.substring(secondSpaceIndex + 1);
             cyclesStr.trim();
         }
 
@@ -520,8 +525,8 @@ class SingleMotorExample {
         }
 
         int32_t amplitude = amplitudeStr.toInt();
-        float frequency = frequencyStr.toFloat();
-        int cycles = cyclesStr.length() > 0 ? cyclesStr.toInt() : 5;
+        float   frequency = frequencyStr.toFloat();
+        int     cycles    = cyclesStr.length() > 0 ? cyclesStr.toInt() : 5;
 
         if (amplitude <= 0 || frequency <= 0.0f || cycles <= 0) {
             response = "Invalid parameters. Amplitude, frequency and cycles must be positive";
@@ -540,8 +545,8 @@ class SingleMotorExample {
         float speed = 2.0f * frequency * amplitude;  // Speed needed for given frequency
         float accel = speed * 10.0f;                 // High acceleration for sinusoidal motion
 
-        response = "Oscillating motor with amplitude " + amplitudeStr + ", frequency " +
-                   frequencyStr + "Hz, " + cyclesStr + " cycles";
+        response = "Oscillating motor with amplitude " + amplitudeStr + ", frequency "
+                   + frequencyStr + "Hz, " + cyclesStr + " cycles";
 
         // Execute oscillation in a separate task to avoid blocking
         TaskScheduler* scheduler = m_systemManager->getTaskScheduler();
@@ -550,7 +555,8 @@ class SingleMotorExample {
                 [this, motor, centerPosition, amplitude, speed, accel, cycles]() {
                     executeOscillation(motor, centerPosition, amplitude, speed, accel, cycles);
                 },
-                0, TaskTimingMode::ADAPTIVE);
+                0,
+                TaskTimingMode::ADAPTIVE);
         } else {
             // Manual oscillation execution (will block)
             executeOscillation(motor, centerPosition, amplitude, speed, accel, cycles);
@@ -569,8 +575,8 @@ class SingleMotorExample {
      * @param accel Motion acceleration
      * @param cycles Number of cycles
      */
-    void executeOscillation(Motor* motor, int32_t centerPos, int32_t amplitude, float speed,
-                            float accel, int cycles) {
+    void executeOscillation(
+        Motor* motor, int32_t centerPos, int32_t amplitude, float speed, float accel, int cycles) {
         for (int i = 0; i < cycles; i++) {
             // Move to positive peak
             motor->moveToPosition(centerPos + amplitude, speed, accel, accel);

@@ -108,10 +108,10 @@ class DualMotorExample {
     SystemManager* m_systemManager;
 
     // Application state
-    bool m_initialized;
+    bool     m_initialized;
     uint32_t m_lastUpdateTimeMs;
-    uint8_t m_xAxisIndex;
-    uint8_t m_yAxisIndex;
+    uint8_t  m_xAxisIndex;
+    uint8_t  m_yAxisIndex;
 
     /**
      * Configure motors for this application
@@ -120,31 +120,31 @@ class DualMotorExample {
      */
     void configureMotors(MotorManager* motorManager) {
         // X-axis motor configuration
-        MotorConfig xAxisConfig = DEFAULT_MOTOR_CONFIGS[0];
-        xAxisConfig.maxVelocity = 4000.0f;       // 4000 steps/second
+        MotorConfig xAxisConfig     = DEFAULT_MOTOR_CONFIGS[0];
+        xAxisConfig.maxVelocity     = 4000.0f;   // 4000 steps/second
         xAxisConfig.maxAcceleration = 15000.0f;  // 15000 steps/second²
         xAxisConfig.maxDeceleration = 20000.0f;  // 20000 steps/second²
-        xAxisConfig.maxJerk = 80000.0f;          // 80000 steps/second³
-        xAxisConfig.pidKp = 0.7f;                // P gain for position control
-        xAxisConfig.pidKi = 0.1f;                // I gain for steady-state error
-        xAxisConfig.pidKd = 0.05f;               // D gain for dampening
-        xAxisConfig.pidFf = 0.08f;               // Feed-forward for velocity tracking
-        xAxisConfig.encoderPPR = 2000;           // 2000 pulses per revolution encoder
+        xAxisConfig.maxJerk         = 80000.0f;  // 80000 steps/second³
+        xAxisConfig.pidKp           = 0.7f;      // P gain for position control
+        xAxisConfig.pidKi           = 0.1f;      // I gain for steady-state error
+        xAxisConfig.pidKd           = 0.05f;     // D gain for dampening
+        xAxisConfig.pidFf           = 0.08f;     // Feed-forward for velocity tracking
+        xAxisConfig.encoderPPR      = 2000;      // 2000 pulses per revolution encoder
 
         // Add X-axis motor
         motorManager->addMotor(xAxisConfig);
 
         // Y-axis motor configuration
-        MotorConfig yAxisConfig = DEFAULT_MOTOR_CONFIGS[1];
-        yAxisConfig.maxVelocity = 3500.0f;       // 3500 steps/second
+        MotorConfig yAxisConfig     = DEFAULT_MOTOR_CONFIGS[1];
+        yAxisConfig.maxVelocity     = 3500.0f;   // 3500 steps/second
         yAxisConfig.maxAcceleration = 12000.0f;  // 12000 steps/second²
         yAxisConfig.maxDeceleration = 15000.0f;  // 15000 steps/second²
-        yAxisConfig.maxJerk = 60000.0f;          // 60000 steps/second³
-        yAxisConfig.pidKp = 0.65f;               // P gain for position control
-        yAxisConfig.pidKi = 0.12f;               // I gain for steady-state error
-        yAxisConfig.pidKd = 0.04f;               // D gain for dampening
-        yAxisConfig.pidFf = 0.075f;              // Feed-forward for velocity tracking
-        yAxisConfig.encoderPPR = 2000;           // 2000 pulses per revolution encoder
+        yAxisConfig.maxJerk         = 60000.0f;  // 60000 steps/second³
+        yAxisConfig.pidKp           = 0.65f;     // P gain for position control
+        yAxisConfig.pidKi           = 0.12f;     // I gain for steady-state error
+        yAxisConfig.pidKd           = 0.04f;     // D gain for dampening
+        yAxisConfig.pidFf           = 0.075f;    // Feed-forward for velocity tracking
+        yAxisConfig.encoderPPR      = 2000;      // 2000 pulses per revolution encoder
 
         // Add Y-axis motor
         motorManager->addMotor(yAxisConfig);
@@ -189,33 +189,43 @@ class DualMotorExample {
         serialCommand->initialize();
 
         // Add custom commands for dual motor control
-        serialCommand->addCommand("home_all", "[direction]", "Home all axes",
+        serialCommand->addCommand("home_all",
+                                  "[direction]",
+                                  "Home all axes",
                                   [this](const String& params, String& response) {
                                       return homeAllAxes(params, response);
                                   });
 
         serialCommand->addCommand(
-            "home_axis", "<axis> [direction]", "Home specific axis (x or y)",
+            "home_axis",
+            "<axis> [direction]",
+            "Home specific axis (x or y)",
             [this](const String& params, String& response) { return homeAxis(params, response); });
 
-        serialCommand->addCommand("move_to", "<x> <y> [speed]", "Move to absolute position",
+        serialCommand->addCommand("move_to",
+                                  "<x> <y> [speed]",
+                                  "Move to absolute position",
                                   [this](const String& params, String& response) {
                                       return moveToPosition(params, response);
                                   });
 
-        serialCommand->addCommand("rectangle", "<width> <height> [speed]",
+        serialCommand->addCommand("rectangle",
+                                  "<width> <height> [speed]",
                                   "Move in rectangular pattern",
                                   [this](const String& params, String& response) {
                                       return moveRectanglePattern(params, response);
                                   });
 
-        serialCommand->addCommand("circle", "<radius> [speed] [segments]",
+        serialCommand->addCommand("circle",
+                                  "<radius> [speed] [segments]",
                                   "Move in circular pattern",
                                   [this](const String& params, String& response) {
                                       return moveCirclePattern(params, response);
                                   });
 
-        serialCommand->addCommand("diagonal", "<distance> [speed]", "Move diagonally",
+        serialCommand->addCommand("diagonal",
+                                  "<distance> [speed]",
+                                  "Move diagonally",
                                   [this](const String& params, String& response) {
                                       return moveDiagonal(params, response);
                                   });
@@ -265,7 +275,7 @@ class DualMotorExample {
         if (safetyMonitor->isEmergencyStop()) {
             // Emergency stop condition
             static uint32_t lastAttemptMs = 0;
-            uint32_t currentTimeMs = millis();
+            uint32_t        currentTimeMs = millis();
 
             // Try to reset emergency stop every 5 seconds
             if (currentTimeMs - lastAttemptMs >= 5000) {
@@ -419,16 +429,16 @@ class DualMotorExample {
         paramsStr.trim();
 
         // Split parameters
-        int spaceIndex = paramsStr.indexOf(' ');
+        int    spaceIndex = paramsStr.indexOf(' ');
         String axisStr, directionStr;
 
         if (spaceIndex < 0) {
             // Just axis
-            axisStr = paramsStr;
+            axisStr      = paramsStr;
             directionStr = "1";  // Default to positive direction
         } else {
             // Axis and direction
-            axisStr = paramsStr.substring(0, spaceIndex);
+            axisStr      = paramsStr.substring(0, spaceIndex);
             directionStr = paramsStr.substring(spaceIndex + 1);
             directionStr.trim();
         }
@@ -473,8 +483,8 @@ class DualMotorExample {
         // Start homing
         motor->startHoming(direction, CONFIG_DEFAULT_MAX_VELOCITY / 2.0f);
 
-        response = "Homing " + axisStr + " axis in " +
-                   String(direction > 0 ? "positive" : "negative") + " direction";
+        response = "Homing " + axisStr + " axis in "
+                   + String(direction > 0 ? "positive" : "negative") + " direction";
         return true;
     }
 
@@ -515,20 +525,20 @@ class DualMotorExample {
 
         // Extract X position
         String xPosStr = paramsStr.substring(0, firstSpaceIndex);
-        paramsStr = paramsStr.substring(firstSpaceIndex + 1);
+        paramsStr      = paramsStr.substring(firstSpaceIndex + 1);
         paramsStr.trim();
 
         // Find second space
-        int secondSpaceIndex = paramsStr.indexOf(' ');
+        int    secondSpaceIndex = paramsStr.indexOf(' ');
         String yPosStr, speedStr;
 
         if (secondSpaceIndex < 0) {
             // Just Y position, no speed
-            yPosStr = paramsStr;
+            yPosStr  = paramsStr;
             speedStr = "1000";  // Default speed
         } else {
             // Y position and speed
-            yPosStr = paramsStr.substring(0, secondSpaceIndex);
+            yPosStr  = paramsStr.substring(0, secondSpaceIndex);
             speedStr = paramsStr.substring(secondSpaceIndex + 1);
             speedStr.trim();
         }
@@ -539,9 +549,9 @@ class DualMotorExample {
             return false;
         }
 
-        int32_t xPos = xPosStr.toInt();
-        int32_t yPos = yPosStr.toInt();
-        float speed = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
+        int32_t xPos  = xPosStr.toInt();
+        int32_t yPos  = yPosStr.toInt();
+        float   speed = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
 
         // Enable motors if not enabled
         if (!xMotor->isEnabled()) {
@@ -554,10 +564,10 @@ class DualMotorExample {
 
         // Move to target positions with synchronized motion
         uint8_t motorIndices[2] = {m_xAxisIndex, m_yAxisIndex};
-        int32_t positions[2] = {xPos, yPos};
+        int32_t positions[2]    = {xPos, yPos};
 
-        motorManager->moveMultipleMotors(positions, motorIndices, 2, speed, speed * 2.0f,
-                                         speed * 2.0f);
+        motorManager->moveMultipleMotors(
+            positions, motorIndices, 2, speed, speed * 2.0f, speed * 2.0f);
 
         response = "Moving to position X:" + xPosStr + ", Y:" + yPosStr + " at speed " + speedStr;
         return true;
@@ -600,21 +610,21 @@ class DualMotorExample {
 
         // Extract width
         String widthStr = paramsStr.substring(0, firstSpaceIndex);
-        paramsStr = paramsStr.substring(firstSpaceIndex + 1);
+        paramsStr       = paramsStr.substring(firstSpaceIndex + 1);
         paramsStr.trim();
 
         // Find second space
-        int secondSpaceIndex = paramsStr.indexOf(' ');
+        int    secondSpaceIndex = paramsStr.indexOf(' ');
         String heightStr, speedStr;
 
         if (secondSpaceIndex < 0) {
             // Just height, no speed
             heightStr = paramsStr;
-            speedStr = "1000";  // Default speed
+            speedStr  = "1000";  // Default speed
         } else {
             // Height and speed
             heightStr = paramsStr.substring(0, secondSpaceIndex);
-            speedStr = paramsStr.substring(secondSpaceIndex + 1);
+            speedStr  = paramsStr.substring(secondSpaceIndex + 1);
             speedStr.trim();
         }
 
@@ -624,9 +634,9 @@ class DualMotorExample {
             return false;
         }
 
-        int32_t width = widthStr.toInt();
+        int32_t width  = widthStr.toInt();
         int32_t height = heightStr.toInt();
-        float speed = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
+        float   speed  = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
 
         if (width <= 0 || height <= 0) {
             response = "Width and height must be positive";
@@ -656,8 +666,8 @@ class DualMotorExample {
         int32_t x4 = xStart;
         int32_t y4 = yStart + height;
 
-        response = "Moving in rectangle pattern of width " + widthStr + ", height " + heightStr +
-                   " at speed " + speedStr;
+        response = "Moving in rectangle pattern of width " + widthStr + ", height " + heightStr
+                   + " at speed " + speedStr;
 
         // Execute rectangle motion in a separate task to avoid blocking
         TaskScheduler* scheduler = m_systemManager->getTaskScheduler();
@@ -666,7 +676,8 @@ class DualMotorExample {
                 [this, xMotor, yMotor, x1, y1, x2, y2, x3, y3, x4, y4, speed]() {
                     executeRectangleMotion(xMotor, yMotor, x1, y1, x2, y2, x3, y3, x4, y4, speed);
                 },
-                0, TaskTimingMode::ADAPTIVE);
+                0,
+                TaskTimingMode::ADAPTIVE);
         } else {
             // Manual execution (will block)
             executeRectangleMotion(xMotor, yMotor, x1, y1, x2, y2, x3, y3, x4, y4, speed);
@@ -678,9 +689,17 @@ class DualMotorExample {
     /**
      * Execute rectangle motion
      */
-    void executeRectangleMotion(Motor* xMotor, Motor* yMotor, int32_t x1, int32_t y1, int32_t x2,
-                                int32_t y2, int32_t x3, int32_t y3, int32_t x4, int32_t y4,
-                                float speed) {
+    void executeRectangleMotion(Motor*  xMotor,
+                                Motor*  yMotor,
+                                int32_t x1,
+                                int32_t y1,
+                                int32_t x2,
+                                int32_t y2,
+                                int32_t x3,
+                                int32_t y3,
+                                int32_t x4,
+                                int32_t y4,
+                                float   speed) {
         float accel = speed * 2.0f;
 
         // Move to first corner (if not already there)
@@ -749,14 +768,14 @@ class DualMotorExample {
         paramsStr.trim();
 
         // Split parameters
-        int firstSpaceIndex = paramsStr.indexOf(' ');
+        int    firstSpaceIndex = paramsStr.indexOf(' ');
         String radiusStr, speedStr, segmentsStr;
 
         if (firstSpaceIndex < 0) {
             // Just radius
-            radiusStr = paramsStr;
-            speedStr = "1000";   // Default speed
-            segmentsStr = "36";  // Default 36 segments (10° per segment)
+            radiusStr   = paramsStr;
+            speedStr    = "1000";  // Default speed
+            segmentsStr = "36";    // Default 36 segments (10° per segment)
         } else {
             // Radius and more
             radiusStr = paramsStr.substring(0, firstSpaceIndex);
@@ -766,11 +785,11 @@ class DualMotorExample {
             int secondSpaceIndex = paramsStr.indexOf(' ');
             if (secondSpaceIndex < 0) {
                 // Radius and speed only
-                speedStr = paramsStr;
+                speedStr    = paramsStr;
                 segmentsStr = "36";  // Default 36 segments
             } else {
                 // Radius, speed, and segments
-                speedStr = paramsStr.substring(0, secondSpaceIndex);
+                speedStr    = paramsStr.substring(0, secondSpaceIndex);
                 segmentsStr = paramsStr.substring(secondSpaceIndex + 1);
                 segmentsStr.trim();
             }
@@ -782,9 +801,9 @@ class DualMotorExample {
             return false;
         }
 
-        int32_t radius = radiusStr.toInt();
-        float speed = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
-        int segments = segmentsStr.length() > 0 ? segmentsStr.toInt() : 36;
+        int32_t radius   = radiusStr.toInt();
+        float   speed    = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
+        int     segments = segmentsStr.length() > 0 ? segmentsStr.toInt() : 36;
 
         if (radius <= 0 || segments < 6) {
             response = "Radius must be positive and segments must be at least 6";
@@ -804,8 +823,8 @@ class DualMotorExample {
         int32_t xCenter = xMotor->getCurrentPosition();
         int32_t yCenter = yMotor->getCurrentPosition();
 
-        response = "Moving in circular pattern with radius " + radiusStr + " at speed " + speedStr +
-                   " using " + segmentsStr + " segments";
+        response = "Moving in circular pattern with radius " + radiusStr + " at speed " + speedStr
+                   + " using " + segmentsStr + " segments";
 
         // Execute circle motion in a separate task to avoid blocking
         TaskScheduler* scheduler = m_systemManager->getTaskScheduler();
@@ -814,7 +833,8 @@ class DualMotorExample {
                 [this, xMotor, yMotor, xCenter, yCenter, radius, speed, segments]() {
                     executeCircleMotion(xMotor, yMotor, xCenter, yCenter, radius, speed, segments);
                 },
-                0, TaskTimingMode::ADAPTIVE);
+                0,
+                TaskTimingMode::ADAPTIVE);
         } else {
             // Manual execution (will block)
             executeCircleMotion(xMotor, yMotor, xCenter, yCenter, radius, speed, segments);
@@ -826,8 +846,13 @@ class DualMotorExample {
     /**
      * Execute circular motion
      */
-    void executeCircleMotion(Motor* xMotor, Motor* yMotor, int32_t xCenter, int32_t yCenter,
-                             int32_t radius, float speed, int segments) {
+    void executeCircleMotion(Motor*  xMotor,
+                             Motor*  yMotor,
+                             int32_t xCenter,
+                             int32_t yCenter,
+                             int32_t radius,
+                             float   speed,
+                             int     segments) {
         float accel = speed * 2.0f;
 
         // First move to starting point on circle
@@ -894,17 +919,17 @@ class DualMotorExample {
         paramsStr.trim();
 
         // Split parameters
-        int spaceIndex = paramsStr.indexOf(' ');
+        int    spaceIndex = paramsStr.indexOf(' ');
         String distanceStr, speedStr;
 
         if (spaceIndex < 0) {
             // Just distance
             distanceStr = paramsStr;
-            speedStr = "1000";  // Default speed
+            speedStr    = "1000";  // Default speed
         } else {
             // Distance and speed
             distanceStr = paramsStr.substring(0, spaceIndex);
-            speedStr = paramsStr.substring(spaceIndex + 1);
+            speedStr    = paramsStr.substring(spaceIndex + 1);
             speedStr.trim();
         }
 
@@ -915,7 +940,7 @@ class DualMotorExample {
         }
 
         int32_t distance = distanceStr.toInt();
-        float speed = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
+        float   speed    = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
 
         // Enable motors if not enabled
         if (!xMotor->isEnabled()) {
@@ -936,10 +961,10 @@ class DualMotorExample {
 
         // Move to target positions with synchronized motion
         uint8_t motorIndices[2] = {m_xAxisIndex, m_yAxisIndex};
-        int32_t positions[2] = {xTarget, yTarget};
+        int32_t positions[2]    = {xTarget, yTarget};
 
-        motorManager->moveMultipleMotors(positions, motorIndices, 2, speed, speed * 2.0f,
-                                         speed * 2.0f);
+        motorManager->moveMultipleMotors(
+            positions, motorIndices, 2, speed, speed * 2.0f, speed * 2.0f);
 
         response = "Moving diagonally by " + distanceStr + " steps at speed " + speedStr;
         return true;

@@ -27,19 +27,19 @@ class SystemManager;
  * Status report structure
  */
 struct SystemStatus {
-    uint32_t timestamp;                         // Timestamp in milliseconds
-    uint8_t systemState;                        // System state
-    bool emergencyStop;                         // Emergency stop status
-    uint8_t motorCount;                         // Number of motors
-    int32_t motorPositions[CONFIG_MAX_MOTORS];  // Motor positions
-    float motorVelocities[CONFIG_MAX_MOTORS];   // Motor velocities
-    uint8_t motorStates[CONFIG_MAX_MOTORS];     // Motor states
-    float cpuUsageCore0;                        // CPU usage for Core 0
-    float cpuUsageCore1;                        // CPU usage for Core 1
-    uint32_t freeMemory;                        // Free memory in bytes
-    uint32_t uptimeMs;                          // System uptime in milliseconds
-    float controlLoopTimeUs;                    // Control loop execution time
-    uint32_t missedDeadlines;                   // Number of missed control loop deadlines
+    uint32_t timestamp;                           // Timestamp in milliseconds
+    uint8_t  systemState;                         // System state
+    bool     emergencyStop;                       // Emergency stop status
+    uint8_t  motorCount;                          // Number of motors
+    int32_t  motorPositions[CONFIG_MAX_MOTORS];   // Motor positions
+    float    motorVelocities[CONFIG_MAX_MOTORS];  // Motor velocities
+    uint8_t  motorStates[CONFIG_MAX_MOTORS];      // Motor states
+    float    cpuUsageCore0;                       // CPU usage for Core 0
+    float    cpuUsageCore1;                       // CPU usage for Core 1
+    uint32_t freeMemory;                          // Free memory in bytes
+    uint32_t uptimeMs;                            // System uptime in milliseconds
+    float    controlLoopTimeUs;                   // Control loop execution time
+    uint32_t missedDeadlines;                     // Number of missed control loop deadlines
 };
 
 /**
@@ -59,7 +59,7 @@ class StatusReporter {
      * @param updateFrequencyHz Status update frequency in Hz
      */
     StatusReporter(SystemManager *systemManager,
-                   uint8_t updateFrequencyHz = CONFIG_STATUS_UPDATE_FREQUENCY_HZ);
+                   uint8_t        updateFrequencyHz = CONFIG_STATUS_UPDATE_FREQUENCY_HZ);
 
     /**
      * Initialize the status reporter
@@ -126,12 +126,12 @@ class StatusReporter {
 
     // Status reporting state
     SystemStatus m_status;
-    uint8_t m_updateFrequencyHz;
-    uint32_t m_lastUpdateMs;
-    bool m_serialOutputEnabled;
+    uint8_t      m_updateFrequencyHz;
+    uint32_t     m_lastUpdateMs;
+    bool         m_serialOutputEnabled;
 
     uint32_t m_updateSkipCount = 1;
-    uint32_t m_updateCounter = 0;
+    uint32_t m_updateCounter   = 0;
 
     // Status callbacks
     std::vector<StatusUpdateCallback> m_statusCallbacks;

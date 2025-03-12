@@ -6,11 +6,11 @@
 #include "SystemManager.h"
 
 SystemManager::SystemManager()
-    : m_motorManager(nullptr),
+    : m_statusReporter(nullptr),
       m_safetyMonitor(nullptr),
-      m_logger(nullptr),
+      m_motorManager(nullptr),
       m_taskScheduler(nullptr),
-      m_statusReporter(nullptr),
+      m_logger(nullptr),
       m_eepromManager(nullptr),
       m_systemState(SystemState::INITIALIZING),
       m_startTimeMs(0),
@@ -26,8 +26,8 @@ SystemManager::~SystemManager() {
     // Clean up resources
     delete m_statusReporter;
     delete m_safetyMonitor;
-    delete m_taskScheduler;
     delete m_motorManager;
+    delete m_taskScheduler;
     delete m_logger;
     delete m_eepromManager;
 }
@@ -141,24 +141,24 @@ void SystemManager::setSystemState(SystemState state) {
 
         case SystemState::READY:
             // Can transition to RUNNING, ERROR, or EMERGENCY_STOP
-            if (state == SystemState::RUNNING || state == SystemState::ERROR ||
-                state == SystemState::EMERGENCY_STOP) {
+            if (state == SystemState::RUNNING || state == SystemState::ERROR
+                || state == SystemState::EMERGENCY_STOP) {
                 m_systemState = state;
             }
             break;
 
         case SystemState::RUNNING:
             // Can transition to READY, ERROR, or EMERGENCY_STOP
-            if (state == SystemState::READY || state == SystemState::ERROR ||
-                state == SystemState::EMERGENCY_STOP) {
+            if (state == SystemState::READY || state == SystemState::ERROR
+                || state == SystemState::EMERGENCY_STOP) {
                 m_systemState = state;
             }
             break;
 
         case SystemState::ERROR:
             // Can transition to READY, EMERGENCY_STOP, or SHUTDOWN
-            if (state == SystemState::READY || state == SystemState::EMERGENCY_STOP ||
-                state == SystemState::SHUTDOWN) {
+            if (state == SystemState::READY || state == SystemState::EMERGENCY_STOP
+                || state == SystemState::SHUTDOWN) {
                 m_systemState = state;
             }
             break;
@@ -204,6 +204,9 @@ void SystemManager::triggerEmergencyStop(SafetyCode reason) {
 
 bool SystemManager::resetEmergencyStop() {
     if (m_safetyMonitor == nullptr) {
+        m_logger->logError(
+            "Failed to reset emergency stop because the Safety monitor is not initialized.",
+            LogModule::SYSTEM);
         return false;
     }
 
@@ -229,6 +232,9 @@ bool SystemManager::isEmergencyStop() const {
 
 bool SystemManager::saveSystemConfiguration() {
     if (m_eepromManager == nullptr) {
+        m_logger->logError(
+            "Failed to save system configuration because the EEPROM manager is not initialized.",
+            LogModule::SYSTEM);
         return false;
     }
 
@@ -253,6 +259,9 @@ bool SystemManager::saveSystemConfiguration() {
 
 bool SystemManager::loadSystemConfiguration() {
     if (m_eepromManager == nullptr) {
+        m_logger->logError(
+            "Failed to load system configuration because the EEPROM manager is not initialized.",
+            LogModule::SYSTEM);
         return false;
     }
 
@@ -357,8 +366,10 @@ float SystemManager::calculateCPUUsage(uint8_t core) {
     float usage = (1.0f - ratio) * 100.0f;
 
     // Clamp to valid range
-    if (usage < 0.0f) usage = 0.0f;
-    if (usage > 100.0f) usage = 100.0f;
+    if (usage < 0.0f)
+        usage = 0.0f;
+    if (usage > 100.0f)
+        usage = 100.0f;
 
     return usage;
 }
@@ -374,7 +385,17 @@ uint32_t SystemManager::calculateFreeMemory() {
  * Save current positions of all motors to EEPROM
  */
 void SystemManager::saveMotorPositions() {
-    if (m_motorManager == nullptr || m_eepromManager == nullptr) {
+    if (m_motorManager == nullptr) {
+        m_logger->logError(
+            "Failed to save motor positions because the Motor manager is not initialized.",
+            LogModule::SYSTEM);
+        return;
+    }
+
+    if (m_eepromManager == nullptr) {
+        m_logger->logError(
+            "Failed to save motor positions because the EEPROM manager is not initialized.",
+            LogModule::SYSTEM);
         return;
     }
 
@@ -384,8 +405,8 @@ void SystemManager::saveMotorPositions() {
         if (motor != nullptr) {
             int32_t position = motor->getCurrentPosition();
             // Save each motor's position in its own EEPROM address slot
-            m_eepromManager->saveUserData(&position, sizeof(position),
-                                          MOTOR_POSITIONS_ADDR + (i * sizeof(int32_t)));
+            m_eepromManager->saveUserData(
+                &position, sizeof(position), MOTOR_POSITIONS_ADDR + (i * sizeof(int32_t)));
         }
     }
 
@@ -397,7 +418,17 @@ void SystemManager::saveMotorPositions() {
  * Restore motor positions from EEPROM after power failure
  */
 void SystemManager::restoreMotorPositions() {
-    if (m_motorManager == nullptr || m_eepromManager == nullptr) {
+    if (m_motorManager == nullptr) {
+        m_logger->logError(
+            "Failed to restore motor positions because the Motor manager is not initialized.",
+            LogModule::SYSTEM);
+        return;
+    }
+
+    if (m_eepromManager == nullptr) {
+        m_logger->logError(
+            "Failed to restore motor positions because the EEPROM manager is not initialized.",
+            LogModule::SYSTEM);
         return;
     }
 
@@ -407,8 +438,8 @@ void SystemManager::restoreMotorPositions() {
         if (motor != nullptr) {
             int32_t position = 0;
             // Load position from EEPROM
-            m_eepromManager->loadUserData(&position, sizeof(position),
-                                          MOTOR_POSITIONS_ADDR + (i * sizeof(int32_t)));
+            m_eepromManager->loadUserData(
+                &position, sizeof(position), MOTOR_POSITIONS_ADDR + (i * sizeof(int32_t)));
 
             // Enable motor if not already enabled
             if (!motor->isEnabled()) {
@@ -437,6 +468,9 @@ bool SystemManager::wasNormalShutdown() {
 #endif
 
     if (m_eepromManager == nullptr) {
+        m_logger->logError(
+            "Failed to load user data because the EEPROM manager is not initialized.",
+            LogModule::SYSTEM);
         return false;
     }
 
@@ -452,6 +486,10 @@ bool SystemManager::wasNormalShutdown() {
  */
 void SystemManager::setNormalShutdown(bool state) {
     if (m_eepromManager == nullptr) {
+        m_logger->logError(
+            "Failed to set normal shutdown and save user data because the EEPROM manager is not "
+            "initialized.",
+            LogModule::SYSTEM);
         return;
     }
 

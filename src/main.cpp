@@ -17,11 +17,11 @@
 #include "utils/TaskScheduler.h"
 
 // System components
-SystemManager systemManager;
-Logger logger;
-MotorManager motorManager(CONFIG_MAX_MOTORS, &logger);
-TaskScheduler taskScheduler;
-SerialCommand serialCommand;
+SystemManager  systemManager;
+Logger         logger;
+MotorManager   motorManager(CONFIG_MAX_MOTORS, &logger);
+TaskScheduler  taskScheduler;
+SerialCommand  serialCommand;
 StatusReporter statusReporter(&systemManager, CONFIG_STATUS_UPDATE_FREQUENCY_HZ);
 
 // Core 0 task handle
@@ -40,8 +40,8 @@ void auxiliaryTask(void *parameter) {
     serialCommand.begin();
     statusReporter.begin();
 
-    TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(10);  // 100Hz update rate for non-critical tasks
+    TickType_t       xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xFrequency    = pdMS_TO_TICKS(10);  // 100Hz update rate for non-critical tasks
 
     // Main auxiliary task loop
     while (true) {
@@ -78,8 +78,8 @@ void setup() {
     // Initialize logger with custom task parameters for better performance
     LoggerTaskParams loggerParams;
     loggerParams.taskStackSize = 3072;
-    loggerParams.taskPriority = 2;
-    loggerParams.queueSize = 30;
+    loggerParams.taskPriority  = 2;
+    loggerParams.queueSize     = 30;
 
     if (!logger.initialize(CONFIG_SERIAL_BAUD_RATE, loggerParams)) {
         String output = ANSI_COLOR_RED;
@@ -179,8 +179,12 @@ void setup() {
                                       CONFIG_SAFETY_CHECK_INTERVAL_US);
 
     // Create auxiliary task on Core 0
-    xTaskCreatePinnedToCore(auxiliaryTask, "AuxiliaryTask", CONFIG_AUXILIARY_TASK_STACK_SIZE, NULL,
-                            CONFIG_AUXILIARY_TASK_PRIORITY, &auxiliaryTaskHandle,
+    xTaskCreatePinnedToCore(auxiliaryTask,
+                            "AuxiliaryTask",
+                            CONFIG_AUXILIARY_TASK_STACK_SIZE,
+                            NULL,
+                            CONFIG_AUXILIARY_TASK_PRIORITY,
+                            &auxiliaryTaskHandle,
                             0  // Core 0
     );
 
@@ -210,7 +214,7 @@ void loop() {
 
     // Periodically save motor positions (every 10 seconds)
     static uint32_t lastSaveTimeMs = 0;
-    uint32_t currentTimeMs = millis();
+    uint32_t        currentTimeMs  = millis();
 
     if (currentTimeMs - lastSaveTimeMs >= 10000) {
         systemManager.saveMotorPositions();

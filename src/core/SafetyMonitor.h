@@ -173,12 +173,12 @@ class SafetyMonitor {
    private:
     // References to system components
     MotorManager* m_motorManager;
-    Logger* m_logger;
+    Logger*       m_logger;
 
     // Safety state
     SystemSafetyStatus m_status;
-    SafetyCode m_lastCode;
-    bool m_emergencyStopActive;
+    SafetyCode         m_lastCode;
+    bool               m_emergencyStopActive;
 
     // Safety statistics
     uint32_t m_warningCount;
@@ -188,18 +188,18 @@ class SafetyMonitor {
     // Emergency stop pin configuration
     uint8_t m_emergencyStopPin;
     uint8_t m_emergencyStopActiveLevel;
-    bool m_emergencyStopPinConfigured;
+    bool    m_emergencyStopPinConfigured;
 
     // Safety thresholds
     uint32_t m_positionWarningThreshold;
     uint32_t m_positionErrorThreshold;
-    float m_velocityWarningThreshold;
-    float m_velocityErrorThreshold;
-    float m_temperatureWarningThreshold;
-    float m_temperatureErrorThreshold;
-    float m_minVoltage;
-    float m_maxVoltage;
-    float m_voltageWarningThreshold;
+    float    m_velocityWarningThreshold;
+    float    m_velocityErrorThreshold;
+    float    m_temperatureWarningThreshold;
+    float    m_temperatureErrorThreshold;
+    float    m_minVoltage;
+    float    m_maxVoltage;
+    float    m_voltageWarningThreshold;
 
     // History buffers for trend analysis
     CircularBuffer<float, 16> m_temperatureBuffer;  // 10 -> 16 amir

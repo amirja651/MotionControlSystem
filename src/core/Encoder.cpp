@@ -5,8 +5,8 @@
 
 #include "Encoder.h"
 
-Encoder::Encoder(uint8_t encAPin, uint8_t encBPin, uint16_t pulsesPerRev, bool invertDirection,
-                 Logger* logger)
+Encoder::Encoder(
+    uint8_t encAPin, uint8_t encBPin, uint16_t pulsesPerRev, bool invertDirection, Logger* logger)
     : m_encoderAPin(encAPin),
       m_encoderBPin(encBPin),
       m_pulsesPerRev(pulsesPerRev),
@@ -29,12 +29,12 @@ Encoder::Encoder(uint8_t encAPin, uint8_t encBPin, uint16_t pulsesPerRev, bool i
 }
 
 bool Encoder::initialize() {
-
     if (m_logger) {
-        m_logger->logError("Encoder initialized with pins A:" + String(m_encoderAPin) + 
-                          " B:" + String(m_encoderBPin), LogModule::ENCODER);
+        m_logger->logError("Encoder initialized with pins A:" + String(m_encoderAPin)
+                               + " B:" + String(m_encoderBPin),
+                           LogModule::ENCODER);
     }
-    
+
     // Validate pins before configuring them
     if (m_encoderAPin > 39 && m_encoderAPin != 0xFF) {
         if (m_logger) {
@@ -74,8 +74,8 @@ bool Encoder::initialize() {
     m_lastUpdateTimeUs = micros();
 
     if (m_logger) {
-        m_logger->logInfo("Encoder initialized with pins A:" + String(m_encoderAPin) +
-                              ", B:" + String(m_encoderBPin) + ", PPR:" + String(m_pulsesPerRev),
+        m_logger->logInfo("Encoder initialized with pins A:" + String(m_encoderAPin)
+                              + ", B:" + String(m_encoderBPin) + ", PPR:" + String(m_pulsesPerRev),
                           LogModule::ENCODER);
     }
 
@@ -87,11 +87,11 @@ bool Encoder::initialize() {
 }
 
 void Encoder::reset() {
-    m_position = 0;
+    m_position         = 0;
     m_filteredPosition = 0.0f;
-    m_velocity = 0.0f;
+    m_velocity         = 0.0f;
     m_filteredVelocity = 0.0f;
-    m_acceleration = 0.0f;
+    m_acceleration     = 0.0f;
     m_positionBuffer.clear();
     m_velocityBuffer.clear();
 
@@ -101,7 +101,7 @@ void Encoder::reset() {
 }
 
 void Encoder::setPosition(int32_t position) {
-    m_position = position;
+    m_position         = position;
     m_filteredPosition = static_cast<float>(position);
     m_positionBuffer.clear();
     m_positionBuffer.push(position);
@@ -112,7 +112,7 @@ void Encoder::setPosition(int32_t position) {
 }
 
 void Encoder::setVelocity(float velocity) {
-    m_velocity = velocity;
+    m_velocity         = velocity;
     m_filteredVelocity = velocity;
     m_velocityBuffer.clear();
     m_velocityBuffer.push(velocity);
@@ -159,7 +159,7 @@ void Encoder::setInterpolationFactor(uint8_t factor) {
 }
 
 void Encoder::setVelocityFilterAlpha(float alpha) {
-    float oldAlpha = m_velocityFilterAlpha;
+    float oldAlpha        = m_velocityFilterAlpha;
     m_velocityFilterAlpha = MathUtils::constrainValue(alpha, 0.01f, 1.0f);
 
     if (m_logger && oldAlpha != m_velocityFilterAlpha) {
@@ -169,7 +169,7 @@ void Encoder::setVelocityFilterAlpha(float alpha) {
 }
 
 void Encoder::setPositionFilterAlpha(float alpha) {
-    float oldAlpha = m_positionFilterAlpha;
+    float oldAlpha        = m_positionFilterAlpha;
     m_positionFilterAlpha = MathUtils::constrainValue(alpha, 0.01f, 1.0f);
 
     if (m_logger && oldAlpha != m_positionFilterAlpha) {
@@ -194,13 +194,13 @@ void Encoder::update(uint32_t deltaTimeUs) {
 
     // Calculate elapsed time since last update
     uint32_t elapsedTimeUs = currentTimeUs - m_lastUpdateTimeUs;
-    m_lastUpdateTimeUs = currentTimeUs;
+    m_lastUpdateTimeUs     = currentTimeUs;
 
     if (elapsedTimeUs > 0) {
         // Calculate position change
-        static int32_t lastPosition = m_position;
-        int32_t positionChange = m_position - lastPosition;
-        lastPosition = m_position;
+        static int32_t lastPosition   = m_position;
+        int32_t        positionChange = m_position - lastPosition;
+        lastPosition                  = m_position;
 
         // Calculate raw velocity
         float newVelocity = calculateVelocity(positionChange, elapsedTimeUs);
@@ -228,8 +228,9 @@ void Encoder::update(uint32_t deltaTimeUs) {
         static uint32_t lastLogTime = 0;
         if (m_logger && (millis() - lastLogTime > 1000)) {
             lastLogTime = millis();
-            m_logger->logVerbose("Encoder pos=" + String(m_position) + ", vel=" +
-                                     String(m_filteredVelocity) + ", acc=" + String(m_acceleration),
+            m_logger->logVerbose("Encoder pos=" + String(m_position)
+                                     + ", vel=" + String(m_filteredVelocity)
+                                     + ", acc=" + String(m_acceleration),
                                  LogModule::ENCODER);
         }
     }
@@ -238,7 +239,7 @@ void Encoder::update(uint32_t deltaTimeUs) {
     // This helps detect "stopped" state more quickly
     if (m_timeSinceLastTransitionUs > 50000) {  // 50ms timeout
         if (fabs(m_velocity) < 0.1f) {
-            m_velocity = 0.0f;
+            m_velocity         = 0.0f;
             m_filteredVelocity = 0.0f;
 
             if (m_logger) {
@@ -254,13 +255,12 @@ void Encoder::processInterrupt(bool pinA, bool pinB) {
     uint8_t prevStateAB = m_stateAB;
 
     if (m_logger) {
-        m_logger->logError("Encoder interrupt: position=" + String(m_position), 
-                          LogModule::ENCODER);
+        m_logger->logError("Encoder interrupt: position=" + String(m_position), LogModule::ENCODER);
     }
 
     // Determine current state
     uint8_t stateAB = (pinA ? 1 : 0) | (pinB ? 2 : 0);
-    m_stateAB = stateAB;
+    m_stateAB       = stateAB;
 
     // Only update if state has changed
     if (stateAB != prevStateAB) {

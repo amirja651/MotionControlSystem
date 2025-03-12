@@ -100,7 +100,7 @@ class CustomApplication {
     SystemManager* m_systemManager;
 
     // Application state
-    bool m_initialized;
+    bool     m_initialized;
     uint32_t m_lastUpdateTimeMs;
 
     /**
@@ -112,29 +112,29 @@ class CustomApplication {
         // Example: Configure 2 stepper motors with specific parameters
 
         // Motor 0 configuration (X-axis)
-        MotorConfig xAxisConfig = DEFAULT_MOTOR_CONFIGS[0];
-        xAxisConfig.maxVelocity = 5000.0f;       // 5000 steps/second
-        xAxisConfig.maxAcceleration = 20000.0f;  // 20000 steps/second²
-        xAxisConfig.maxDeceleration = 25000.0f;  // 25000 steps/second²
-        xAxisConfig.maxJerk = 100000.0f;         // 100000 steps/second³
-        xAxisConfig.pidKp = 0.5f;                // Lower P gain for smoother response
-        xAxisConfig.pidKi = 0.1f;
-        xAxisConfig.pidKd = 0.05f;
-        xAxisConfig.pidFf = 0.01f;  // Small feed-forward for better tracking
+        MotorConfig xAxisConfig     = DEFAULT_MOTOR_CONFIGS[0];
+        xAxisConfig.maxVelocity     = 5000.0f;    // 5000 steps/second
+        xAxisConfig.maxAcceleration = 20000.0f;   // 20000 steps/second²
+        xAxisConfig.maxDeceleration = 25000.0f;   // 25000 steps/second²
+        xAxisConfig.maxJerk         = 100000.0f;  // 100000 steps/second³
+        xAxisConfig.pidKp           = 0.5f;       // Lower P gain for smoother response
+        xAxisConfig.pidKi           = 0.1f;
+        xAxisConfig.pidKd           = 0.05f;
+        xAxisConfig.pidFf           = 0.01f;  // Small feed-forward for better tracking
 
         // Add X-axis motor
         motorManager->addMotor(xAxisConfig);
 
         // Motor 1 configuration (Y-axis)
-        MotorConfig yAxisConfig = DEFAULT_MOTOR_CONFIGS[1];
-        yAxisConfig.maxVelocity = 4000.0f;       // 4000 steps/second
+        MotorConfig yAxisConfig     = DEFAULT_MOTOR_CONFIGS[1];
+        yAxisConfig.maxVelocity     = 4000.0f;   // 4000 steps/second
         yAxisConfig.maxAcceleration = 15000.0f;  // 15000 steps/second²
         yAxisConfig.maxDeceleration = 20000.0f;  // 20000 steps/second²
-        yAxisConfig.maxJerk = 80000.0f;          // 80000 steps/second³
-        yAxisConfig.pidKp = 0.6f;                // Higher P gain for better position holding
-        yAxisConfig.pidKi = 0.12f;
-        yAxisConfig.pidKd = 0.06f;
-        yAxisConfig.pidFf = 0.01f;
+        yAxisConfig.maxJerk         = 80000.0f;  // 80000 steps/second³
+        yAxisConfig.pidKp           = 0.6f;      // Higher P gain for better position holding
+        yAxisConfig.pidKi           = 0.12f;
+        yAxisConfig.pidKd           = 0.06f;
+        yAxisConfig.pidFf           = 0.01f;
 
         // Add Y-axis motor
         motorManager->addMotor(yAxisConfig);
@@ -177,12 +177,14 @@ class CustomApplication {
         serialCommand->initialize();
 
         // Add custom commands
-        serialCommand->addCommand("home_all", "", "Home all axes",
-                                  [this](const String& params, String& response) {
-                                      return homeAllAxes(params, response);
-                                  });
+        serialCommand->addCommand(
+            "home_all", "", "Home all axes", [this](const String& params, String& response) {
+                return homeAllAxes(params, response);
+            });
 
-        serialCommand->addCommand("square", "<size> [speed]", "Move in square pattern",
+        serialCommand->addCommand("square",
+                                  "<size> [speed]",
+                                  "Move in square pattern",
                                   [this](const String& params, String& response) {
                                       return moveSquarePattern(params, response);
                                   });
@@ -236,7 +238,7 @@ class CustomApplication {
         if (safetyMonitor->isEmergencyStop()) {
             // Emergency stop condition
             static uint32_t lastAttemptMs = 0;
-            uint32_t currentTimeMs = millis();
+            uint32_t        currentTimeMs = millis();
 
             // Try to reset emergency stop every 5 seconds
             if (currentTimeMs - lastAttemptMs >= 5000) {
@@ -361,16 +363,16 @@ class CustomApplication {
         paramsStr.trim();
 
         // Split parameters
-        int spaceIndex = paramsStr.indexOf(' ');
+        int    spaceIndex = paramsStr.indexOf(' ');
         String sizeStr, speedStr;
 
         if (spaceIndex < 0) {
             // Just size
-            sizeStr = paramsStr;
+            sizeStr  = paramsStr;
             speedStr = "1000";  // Default speed
         } else {
             // Size and speed
-            sizeStr = paramsStr.substring(0, spaceIndex);
+            sizeStr  = paramsStr.substring(0, spaceIndex);
             speedStr = paramsStr.substring(spaceIndex + 1);
             speedStr.trim();
         }
@@ -381,8 +383,8 @@ class CustomApplication {
             return false;
         }
 
-        int32_t size = sizeStr.toInt();
-        float speed = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
+        int32_t size  = sizeStr.toInt();
+        float   speed = speedStr.length() > 0 ? speedStr.toFloat() : 1000.0f;
 
         // Get motors
         Motor* xMotor = motorManager->getMotor(0);
