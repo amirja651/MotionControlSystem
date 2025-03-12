@@ -69,16 +69,24 @@ void setup() {
     // Wait a moment for serial to stabilize
     delay(100);
 
-    Serial.println(ANSI_COLOR_MAGENTA SYSTEM_NAME " starting..." ANSI_COLOR_RESET);
+    String output = ANSI_COLOR_MAGENTA;
+    output += SYSTEM_NAME;
+    output += ANSI_COLOR_RESET;
+    output += " starting...";
+    Serial.println(output);
 
     // Initialize logger with custom task parameters for better performance
     LoggerTaskParams loggerParams;
     loggerParams.taskStackSize = 3072;
     loggerParams.taskPriority = 2;
     loggerParams.queueSize = 30;
-    
+
     if (!logger.initialize(CONFIG_SERIAL_BAUD_RATE, loggerParams)) {
-        Serial.println(ANSI_COLOR_RED "Logger initialization failed" ANSI_COLOR_RESET);
+        String output = ANSI_COLOR_RED;
+        output += "Logger initialization failed";
+        output += ANSI_COLOR_RESET;
+        Serial.println(output);
+
         while (1) {
             delay(1000);
         }
@@ -149,6 +157,8 @@ void setup() {
     for (uint8_t i = 0; i < motorManager.getMotorCount(); i++) {
         Motor *motor = motorManager.getMotor(i);
 
+        logger.logInfo("\nREGISTERING MOTOR TASK", LogModule::SYSTEM);
+
         // Register high-priority motor control tasks
         taskScheduler.registerControlTask(
             [motor]() {
@@ -175,7 +185,7 @@ void setup() {
     );
 
     // Log successful initialization
-    logger.logInfo("System initialized successfully");
+    logger.logInfo("\nSystem initialized successfully");
 
     // Make sure serial command interface is properly started
     serialCommand.begin();

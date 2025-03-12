@@ -36,8 +36,17 @@ void StatusReporter::begin() {
     updateStatus();
 }
 
-void StatusReporter::setUpdateFrequency(uint8_t frequencyHz) {
-    m_updateFrequencyHz = frequencyHz > 0 ? frequencyHz : CONFIG_STATUS_UPDATE_FREQUENCY_HZ;
+void StatusReporter::setUpdateFrequency(float frequencyHz) {
+    // Handle frequencies less than 1Hz
+    if (frequencyHz < 1.0f && frequencyHz > 0.0f) {
+        // For frequencies less than 1Hz, convert to equivalent count
+        // For example, 0.5Hz would update every 2 seconds
+        m_updateFrequencyHz = 1.0f; // Keep at 1Hz
+        m_updateSkipCount = round(1.0f / frequencyHz); // But skip updates
+    } else {
+        m_updateFrequencyHz = frequencyHz > 0.0f ? frequencyHz : CONFIG_STATUS_UPDATE_FREQUENCY_HZ;
+        m_updateSkipCount = 1; // Don't skip
+    }
 }
 
 void StatusReporter::updateStatus() {
@@ -48,18 +57,24 @@ void StatusReporter::updateStatus() {
         uint32_t updateIntervalMs = 1000 / m_updateFrequencyHz;
 
         if (currentTimeMs - m_lastUpdateMs >= updateIntervalMs) {
-            // Collect current status data
-            collectStatusData();
+            // Skip updates for frequencies less than 1Hz
+            m_updateCounter++;
+            if (m_updateCounter >= m_updateSkipCount) {
+                m_updateCounter = 0;
+                
+                // Collect current status data
+                collectStatusData();
 
-            // Notify callbacks
-            notifyStatusCallbacks();
+                // Notify callbacks
+                notifyStatusCallbacks();
 
-            // Output to serial if enabled
-            if (m_serialOutputEnabled && Serial) {
-                Serial.println(generateStatusJson());
+                // Output to serial if enabled
+                if (m_serialOutputEnabled && Serial) {
+                    Serial.println(generateStatusJson());
+                }
             }
-
-            // Update last update time
+            
+            // Update last update time regardless of skip
             m_lastUpdateMs = currentTimeMs;
         }
     }

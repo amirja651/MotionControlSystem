@@ -121,11 +121,18 @@ bool SerialCommand::executeCommand(const String &command, String &response) {
             response = "Error executing command";
         }
 
+        if (response.length() > 0 && response[0] != '\n') {
+            response = "\n" + response;
+        }
+
         return success;
     } else {
         // Command not found
-        response = "\nUnknown command '" + cmdName +
-                   "'. Type " ANSI_COLOR_BLUE "'help'" ANSI_COLOR_RESET " for available commands.";
+        response = "\nUnknown command '" + cmdName + "'. Type ";
+        response += ANSI_COLOR_BLUE;
+        response += "'help'";
+        response += ANSI_COLOR_RESET;
+        response += " for available commands.";
         return false;
     }
 }
@@ -187,6 +194,19 @@ void SerialCommand::registerBuiltInCommands() {
     addCommand("status_output", "<on|off>", "Enable or disable status JSON output",
                std::bind(&SerialCommand::handleStatusOutput, this, std::placeholders::_1,
                          std::placeholders::_2));
+
+    addCommand("gpio_state", "<pin>", "Show GPIO pin state",
+               [](const String &params, String &response) {
+                   int pin = params.toInt();
+                   if (pin >= 0 && pin <= 39) {
+                       pinMode(pin, INPUT);
+                       int state = digitalRead(pin);
+                       response = "Pin " + String(pin) + " state: " + String(state);
+                       return true;
+                   }
+                   response = "Invalid pin number";
+                   return false;
+               });
 }
 
 void SerialCommand::parseCommand(const String &commandString, String &command, String &params) {
@@ -504,7 +524,7 @@ bool SerialCommand::handleMove(const String &params, String &response) {
         motor->setTargetPosition(position);
     }
 
-    response = "Moving motor " + indexStr + " to position " + positionStr;
+    response = "\nMoving motor " + indexStr + " to position " + positionStr;
 
     return true;
 }
@@ -899,8 +919,6 @@ bool SerialCommand::handleStatusOutput(const String &params, String &response) {
     if (statusReporter == nullptr) {
         response = "Status reporter not available";
         return false;
-    } else {
-        response = "Status reporter available )))))))))))";
     }
 
     String paramsStr = params;
@@ -909,15 +927,25 @@ bool SerialCommand::handleStatusOutput(const String &params, String &response) {
 
     if (paramsStr == "on" || paramsStr == "true" || paramsStr == "1") {
         statusReporter->enableSerialOutput(true);
-        response = "Status output enabled";
+        statusReporter->setUpdateFrequency(1);  // Default to 1Hz
+        response = "Status output enabled at 1Hz";
         return true;
     } else if (paramsStr == "off" || paramsStr == "false" || paramsStr == "0") {
         statusReporter->enableSerialOutput(false);
         response = "Status output disabled";
         return true;
     } else {
-        response = "Invalid parameter. Usage: status_output <on|off>";
-        return false;
+        // Try to parse as a frequency value
+        float frequency = paramsStr.toFloat();
+        if (frequency > 0) {
+            statusReporter->enableSerialOutput(true);
+            statusReporter->setUpdateFrequency(frequency);
+            response = "Status output enabled at " + String(frequency) + "Hz";
+            return true;
+        } else {
+            response = "Invalid parameter. Usage: status_output <on|off|frequency>";
+            return false;
+        }
     }
 }
 // End of Code

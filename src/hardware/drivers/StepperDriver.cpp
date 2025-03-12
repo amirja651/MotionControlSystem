@@ -460,9 +460,16 @@ void StepperDriver::handleTimerInterrupt() {
 void StepperDriver::pulseStep() {
     // Generate a step pulse
     digitalWrite(m_stepPin, HIGH);
+    // Log the pulse (add this line)
+    if (m_logger) {
+        m_logger->logVerbose("STEP pin " + String(m_stepPin) + " HIGH", LogModule::STEPPER_DRIVER);
+    }
     // Need a short delay to ensure the pulse is seen by the driver
     delayMicroseconds(1);  // 1us should be sufficient for most drivers
     digitalWrite(m_stepPin, LOW);
+    if (m_logger) {
+        m_logger->logVerbose("STEP pin " + String(m_stepPin) + " LOW", LogModule::STEPPER_DRIVER);
+    }
 
     // Record time of step
     m_lastStepTimeUs = micros();

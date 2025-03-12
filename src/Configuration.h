@@ -20,10 +20,10 @@
 
 // Debug and Logging
 #define CONFIG_DEBUG_ENABLED true  // Master switch for debug mode
-#define CONFIG_LOG_LEVEL 3         // 0=OFF, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG, 5=VERBOSE
+#define CONFIG_LOG_LEVEL 5         // 0=OFF, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG, 5=VERBOSE
 #define CONFIG_SERIAL_BAUD_RATE 115200
 #define CONFIG_MAX_LOG_ENTRIES 50
-#define CONFIG_COLOR_OUTPUT_ENABLED true  // Color output for terminal
+#define CONFIG_COLOR_OUTPUT_ENABLED false  // Color output for terminal
 
 // ANSI Color codes for terminal output - conditional based on CONFIG_COLOR_OUTPUT_ENABLED
 #if CONFIG_COLOR_OUTPUT_ENABLED
@@ -55,7 +55,7 @@
 // Task Configuration
 #define CONFIG_CONTROL_LOOP_FREQUENCY_HZ 1000      // 1kHz control loop
 #define CONFIG_TRAJECTORY_UPDATE_FREQUENCY_HZ 250  // 250Hz trajectory updates
-#define CONFIG_STATUS_UPDATE_FREQUENCY_HZ 1        // 1Hz status reporting
+#define CONFIG_STATUS_UPDATE_FREQUENCY_HZ 0.8      // 1 means 1Hz status reporting
 #define CONFIG_SAFETY_CHECK_INTERVAL_US 500        // 500us safety check interval
 #define CONFIG_CONTROL_LOOP_YIELD_US 50            // 50us yield in main loop
 #define CONFIG_AUXILIARY_TASK_STACK_SIZE 4096

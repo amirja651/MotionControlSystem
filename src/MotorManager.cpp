@@ -182,7 +182,7 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     m_motors[config.index] = motor;
 
     if (m_logger) {
-        m_logger->logInfo("Motor " + String(config.index) + " added successfully",
+        m_logger->logInfo("\nMotor " + String(config.index) + " added successfully",
                           LogModule::MOTOR_MANAGER);
     }
 

@@ -374,4 +374,12 @@ void GPIOManager::dumpPinAllocations() {
 
     m_logger->logInfo("===========================", LogModule::SYSTEM);
 }
+
+void GPIOManager::debugPinState(uint8_t pin) {
+    if (m_logger) {
+        int state = digitalRead(pin);
+        m_logger->logDebug("Pin " + String(pin) + " state: " + String(state),
+                           LogModule::SYSTEM);
+    }
+}
 // End of Code

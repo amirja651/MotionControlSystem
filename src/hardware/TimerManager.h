@@ -25,7 +25,7 @@ typedef void (*TimerCallback)();
  * Timer Manager singleton class
  */
 class TimerManager {
-    public:
+   public:
     /**
      * Get the singleton instance
      *
@@ -100,18 +100,18 @@ class TimerManager {
    private:
     /**
      * Private constructor for singleton
-     * 
+     *
      * @param logger Pointer to logger instance
      */
     TimerManager(Logger* logger = nullptr);
-
-    // Add logger member
-    Logger* m_logger;
 
     /**
      * Destructor
      */
     ~TimerManager();
+
+    // Logger instance
+    Logger* m_logger;
 
     // Static singleton instance
     static TimerManager* s_instance;

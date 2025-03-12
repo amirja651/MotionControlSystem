@@ -33,6 +33,8 @@ bool TaskScheduler::initialize() {
 
 int TaskScheduler::registerControlTask(TaskFunction function, uint32_t intervalUs,
                                        TaskTimingMode timingMode) {
+    Serial.println("TaskScheduler::registerControlTask 1");
+
     if (!function || intervalUs == 0) {
         if (m_logger) {
             m_logger->logError("Failed to register control task: invalid parameters",
@@ -41,6 +43,8 @@ int TaskScheduler::registerControlTask(TaskFunction function, uint32_t intervalU
         return -1;
     }
 
+    Serial.println("TaskScheduler::registerControlTask 2");
+    
     // Create new task info
     TaskInfo task;
     task.function = function;
@@ -56,10 +60,14 @@ int TaskScheduler::registerControlTask(TaskFunction function, uint32_t intervalU
     // Add to control tasks
     m_controlTasks.push_back(task);
 
+    Serial.println("TaskScheduler::registerControlTask 3");
+
     if (m_logger) {
         m_logger->logDebug("Control task registered with interval " + String(intervalUs) + "us",
                            LogModule::SYSTEM);
     }
+
+    Serial.println("TaskScheduler::registerControlTask 4");
 
     return static_cast<int>(m_controlTasks.size() - 1);
 }
@@ -74,6 +82,8 @@ int TaskScheduler::registerAuxiliaryTask(TaskFunction function, uint32_t interva
         return -1;
     }
 
+    Serial.println("TaskScheduler::registerControlTask 7");
+    
     // Create new task info
     TaskInfo task;
     task.function = function;
@@ -100,6 +110,10 @@ int TaskScheduler::registerAuxiliaryTask(TaskFunction function, uint32_t interva
 uint32_t TaskScheduler::executeControlTasks() {
     uint32_t currentTimeUs = micros();
     uint32_t tasksExecuted = 0;
+
+    if (m_logger) {
+        m_logger->logError("EXECUTING CONTROL TASKS", LogModule::SYSTEM);
+    }
 
     // Record control loop start time
     m_lastControlLoopStartUs = currentTimeUs;

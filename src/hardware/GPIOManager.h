@@ -156,6 +156,13 @@ class GPIOManager {
     void dumpPinAllocations();
 
     /**
+     * Debug pin state for debugging
+     *
+     * @param pin GPIO pin number
+     */
+    void debugPinState(uint8_t pin);
+
+    /**
      * Find pin allocation by pin number
      *
      * @param pin GPIO pin number

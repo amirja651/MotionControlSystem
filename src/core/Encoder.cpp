@@ -29,6 +29,12 @@ Encoder::Encoder(uint8_t encAPin, uint8_t encBPin, uint16_t pulsesPerRev, bool i
 }
 
 bool Encoder::initialize() {
+
+    if (m_logger) {
+        m_logger->logError("Encoder initialized with pins A:" + String(m_encoderAPin) + 
+                          " B:" + String(m_encoderBPin), LogModule::ENCODER);
+    }
+    
     // Validate pins before configuring them
     if (m_encoderAPin > 39 && m_encoderAPin != 0xFF) {
         if (m_logger) {
@@ -71,6 +77,10 @@ bool Encoder::initialize() {
         m_logger->logInfo("Encoder initialized with pins A:" + String(m_encoderAPin) +
                               ", B:" + String(m_encoderBPin) + ", PPR:" + String(m_pulsesPerRev),
                           LogModule::ENCODER);
+    }
+
+    if (m_logger) {
+        m_logger->logError("ENCODER INITIALIZED", LogModule::ENCODER);
     }
 
     return true;
@@ -172,6 +182,13 @@ void Encoder::update(uint32_t deltaTimeUs) {
     m_deltaTimeUs = deltaTimeUs;
     m_timeSinceLastTransitionUs += deltaTimeUs;
 
+    // Add this to Encoder.cpp, update method
+    if (m_logger) {
+        m_logger->logVerbose(
+            "Encoder position: " + String(m_position) + ", velocity: " + String(m_velocity),
+            LogModule::ENCODER);
+    }
+
     // Measure time between updates for velocity calculation
     uint32_t currentTimeUs = micros();
 
@@ -235,6 +252,11 @@ void Encoder::update(uint32_t deltaTimeUs) {
 void Encoder::processInterrupt(bool pinA, bool pinB) {
     // Get previous state
     uint8_t prevStateAB = m_stateAB;
+
+    if (m_logger) {
+        m_logger->logError("Encoder interrupt: position=" + String(m_position), 
+                          LogModule::ENCODER);
+    }
 
     // Determine current state
     uint8_t stateAB = (pinA ? 1 : 0) | (pinB ? 2 : 0);

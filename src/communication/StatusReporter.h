@@ -78,7 +78,7 @@ class StatusReporter {
      *
      * @param frequencyHz Update frequency in Hz
      */
-    void setUpdateFrequency(uint8_t frequencyHz);
+    void setUpdateFrequency(float frequencyHz);
 
     /**
      * Update system status
@@ -130,6 +130,9 @@ class StatusReporter {
     uint32_t m_lastUpdateMs;
     bool m_serialOutputEnabled;
 
+    uint32_t m_updateSkipCount = 1;
+    uint32_t m_updateCounter = 0;
+
     // Status callbacks
     std::vector<StatusUpdateCallback> m_statusCallbacks;
 
@@ -145,4 +148,4 @@ class StatusReporter {
 };
 
 #endif  // STATUS_REPORTER_H
-// End of Code
+        // End of Code

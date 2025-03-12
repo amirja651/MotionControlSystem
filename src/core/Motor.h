@@ -444,6 +444,13 @@ class Motor {
     void setError(MotorError error);
 
     /**
+     * Update sensor readings
+     *
+     * @param deltaTimeUs Time since last update in microseconds
+     */
+    void updateSensors(uint32_t deltaTimeUs);
+
+    /**
      * Convert control mode to string
      *
      * @param mode Control mode
