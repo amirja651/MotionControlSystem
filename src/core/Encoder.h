@@ -166,6 +166,7 @@ private:
 
     // Current state
     volatile int32_t m_position;
+    volatile int32_t m_lastPosition;
     volatile uint8_t m_stateAB;  // Current A/B state (bits 0-1)
     volatile uint32_t
         m_transitions;  // Total transitions count for diagnostics
@@ -175,6 +176,8 @@ private:
     float m_velocity;  // Counts per second
     float m_filteredVelocity;
     float m_acceleration;  // Counts per second squared
+
+    bool m_showEncoderAutoResetVelocity = false;
 
     // Timing
     uint32_t m_lastUpdateTimeUs;
@@ -228,15 +231,6 @@ private:
      * @param errStr Error string
      * @return True if pin is valid, false otherwise
      */
-    bool gpioAllocatePin(uint8_t       pin,
-                         uint8_t       index,
-                         PinMode       mode,
-                         const String& owner,
-                         const String& errStr,
-                         GPIOManager*  gpioManager);
-
-
-    bool ValidatePinNumbers(uint8_t pin, uint8_t index, const String& errStr);
 };
 
 #endif  // ENCODER_H

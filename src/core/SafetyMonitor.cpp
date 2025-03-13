@@ -60,9 +60,6 @@ bool SafetyMonitor::initialize() {
     if (!gpioManager->allocatePin(CONFIG_VOLTAGE_SENSE_PIN,
                                   PinMode::ANALOG_INPUT_PIN,
                                   "VoltageMonitoring")) {
-        m_logger->logError("Failed to allocate voltage sense pin: "
-                               + String(CONFIG_VOLTAGE_SENSE_PIN),
-                           LogModule::SAFETY_MONITOR);
         return false;
     }
 
@@ -495,8 +492,12 @@ float SafetyMonitor::readVoltageSensor() {
     // voltage *= (R1 + R2) / R2;
 
     // Optional: Log voltage reading for debugging
-    m_logger->logDebug("Voltage Sensor: Raw=" + String(rawValue)
-                       + ", Voltage=" + String(voltage, 2) + "V");
+    if (m_lastRawValue != rawValue) {
+        m_lastRawValue = rawValue;
+        m_logger->logDebug("Voltage Sensor: Raw=" + String(rawValue)
+                           + ", Voltage=" + String(voltage, 2) + "V");
+    }
+
     return voltage;
 #endif  // CONFIG_POWER_MONITORING_ENABLED
 }

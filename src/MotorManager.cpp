@@ -48,14 +48,16 @@ bool MotorManager::initialize() {
         if (i < m_maxMotors) {
             m_logger->logInfo("Adding default motor " + String(i),
                               LogModule::MOTOR_MANAGER);
-            addMotor(DEFAULT_MOTOR_CONFIGS[i]);
+            if (!addMotor(DEFAULT_MOTOR_CONFIGS[i])) {
+                return false;
+            }
         }
     }
 
     // Load saved parameters if available
     loadFromEEPROM();
 
-    m_logger->logInfo(
+    m_logger->logDebug(
         "Motor Manager initialized with " + String(m_motorCount) + " motors",
         LogModule::MOTOR_MANAGER);
 
@@ -77,18 +79,61 @@ bool MotorManager::addMotor(const MotorConfig& config) {
         return false;
     }
 
-
-    // Validate pin numbers
-    if (ValidatePinNumbers(config.limitMinPin,
-                           config.index,
-                           "Invalid limit min pin for motor "))
+    if (config.stepPin != 0xFF && config.stepPin > 39) {
+        m_logger->logError("Invalid limit step pin for motor "
+                               + String(config.index) + ": "
+                               + String(config.stepPin),
+                           LogModule::MOTOR_MANAGER);
         return false;
+    }
 
-    // Validate pin numbers
-    if (ValidatePinNumbers(config.limitMaxPin,
-                           config.index,
-                           "Invalid limit max pin for motor "))
+    if (config.dirPin != 0xFF && config.dirPin > 39) {
+        m_logger->logError("Invalid limit dir pin for motor "
+                               + String(config.index) + ": "
+                               + String(config.dirPin),
+                           LogModule::MOTOR_MANAGER);
         return false;
+    }
+
+    if (config.enablePin != 0xFF && config.enablePin > 39) {
+        m_logger->logError("Invalid limit enable pin for motor "
+                               + String(config.index) + ": "
+                               + String(config.enablePin),
+                           LogModule::MOTOR_MANAGER);
+        return false;
+    }
+
+    if (config.encoderAPin != 0xFF && config.encoderAPin > 39) {
+        m_logger->logError("Invalid limit encoder A pin for motor "
+                               + String(config.index) + ": "
+                               + String(config.encoderAPin),
+                           LogModule::MOTOR_MANAGER);
+        return false;
+    }
+
+    if (config.encoderBPin != 0xFF && config.encoderBPin > 39) {
+        m_logger->logError("Invalid limit encoder B pin for motor "
+                               + String(config.index) + ": "
+                               + String(config.encoderBPin),
+                           LogModule::MOTOR_MANAGER);
+        return false;
+    }
+
+    if (config.limitMinPin != 0xFF && config.limitMinPin > 39) {
+        m_logger->logError("Invalid limit min pin for motor "
+                               + String(config.index) + ": "
+                               + String(config.limitMinPin),
+                           LogModule::MOTOR_MANAGER);
+        return false;
+    }
+
+    if (config.limitMaxPin != 0xFF && config.limitMaxPin > 39) {
+        m_logger->logError("Invalid limit max pin for motor "
+                               + String(config.index) + ": "
+                               + String(config.limitMaxPin),
+                           LogModule::MOTOR_MANAGER);
+        return false;
+    }
 
     // Get GPIO manager instance
     GPIOManager* gpioManager = GPIOManager::getInstance(m_logger);
@@ -98,22 +143,77 @@ bool MotorManager::addMotor(const MotorConfig& config) {
         return false;
     }
 
-
-    if (gpioAllocatePin(config.limitMinPin,
-                        config.index,
-                        PinMode::INPUT_PULLUP_PIN,
-                        "LimitMin",
-                        "Failed to allocate limit min pin: ",
-                        gpioManager))
+    // Attempt to allocate pin for analog input
+    if (!gpioManager->allocatePin(config.stepPin,
+                                  PinMode::OUTPUT_PIN,
+                                  "Motor" + String(config.index) + "_Step")) {
         return false;
+    }
 
-    if (gpioAllocatePin(config.limitMaxPin,
-                        config.index,
-                        PinMode::INPUT_PULLUP_PIN,
-                        "LimitMax",
-                        "Failed to allocate limit max pin: ",
-                        gpioManager))
+    if (!gpioManager->allocatePin(config.dirPin,
+                                  PinMode::OUTPUT_PIN,
+                                  "Motor" + String(config.index) + "_Dir")) {
         return false;
+    }
+
+    if (config.enablePin != 0xFF) {
+        if (!gpioManager->allocatePin(
+                config.enablePin,
+                PinMode::OUTPUT_PIN,
+                "Motor" + String(config.index) + "_Enable")) {
+            return false;
+        }
+    } else {
+        m_logger->logWarning("No enable pin, motor" + String(config.index)
+                                 + " operate witout enable pin",
+                             LogModule::MOTOR_MANAGER);
+    }
+
+    if (config.encoderAPin != 0xFF) {
+        if (!gpioManager->allocatePin(
+                config.encoderAPin,
+                PinMode::INPUT_PULLUP_PIN,
+                "Motor" + String(config.index) + "_EncoderA")) {
+            return false;
+        }
+    }
+
+    if (config.encoderBPin != 0xFF) {
+        if (!gpioManager->allocatePin(
+                config.encoderBPin,
+                PinMode::INPUT_PULLUP_PIN,
+                "Motor" + String(config.index) + "_EncoderB")) {
+            return false;
+        }
+    }
+
+    if (config.limitMinPin != 0xFF) {
+        if (!gpioManager->allocatePin(
+                config.limitMinPin,
+                PinMode::INPUT_PULLUP_PIN,
+                "Motor" + String(config.index) + "_LimitMin")) {
+            return false;
+        }
+    } else {
+        m_logger->logWarning("No physical limit sensor (Min), motor"
+                                 + String(config.index)
+                                 + " moveoperate witout limit sensor",
+                             LogModule::MOTOR_MANAGER);
+    }
+
+    if (config.limitMaxPin != 0xFF) {
+        if (!gpioManager->allocatePin(
+                config.limitMaxPin,
+                PinMode::INPUT_PULLUP_PIN,
+                "Motor" + String(config.index) + "_LimitMax")) {
+            return false;
+        }
+    } else {
+        m_logger->logWarning("No physical limit sensor (Max), motor"
+                                 + String(config.index)
+                                 + " operate witout limit sensor",
+                             LogModule::MOTOR_MANAGER);
+    }
 
     // Create new motor
     Motor* motor = new Motor(config, m_logger);
@@ -144,32 +244,6 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     m_logger->logInfo("Motor " + String(config.index) + " added successfully",
                       LogModule::MOTOR_MANAGER);
 
-    return true;
-}
-
-bool MotorManager::gpioAllocatePin(uint8_t       pin,
-                                   uint8_t       index,
-                                   PinMode       mode,
-                                   const String& owner,
-                                   const String& errStr,
-                                   GPIOManager*  gpioManager) {
-    if (!gpioManager->allocatePin(
-            pin, mode, "Motor" + String(index) + owner)) {
-        m_logger->logError("Motor" + String(index) + errStr + String(pin),
-                           LogModule::MOTOR_MANAGER);
-        return false;
-    }
-    return true;
-}
-
-bool MotorManager::ValidatePinNumbers(uint8_t       pin,
-                                      uint8_t       index,
-                                      const String& errStr) {
-    if (pin != 0xFF && pin > 39) {
-        m_logger->logError(errStr + String(index) + ": " + String(pin),
-                           LogModule::MOTOR_MANAGER);
-        return false;
-    }
     return true;
 }
 

@@ -34,8 +34,10 @@ enum class SafetyCode {
     NONE,  // No error/warning
 
     // Warnings (non-critical)
-    POSITION_DEVIATION,        // Position deviation above threshold but within tolerance
-    VELOCITY_DEVIATION,        // Velocity deviation above threshold but within tolerance
+    POSITION_DEVIATION,        // Position deviation above threshold but within
+                               // tolerance
+    VELOCITY_DEVIATION,        // Velocity deviation above threshold but within
+                               // tolerance
     HIGH_TEMPERATURE,          // Temperature high but below critical threshold
     POWER_SUPPLY_FLUCTUATION,  // Power supply voltage fluctuation
 
@@ -56,7 +58,7 @@ enum class SafetyCode {
  * Safety monitor class for system-wide safety monitoring
  */
 class SafetyMonitor {
-   public:
+public:
     /**
      * Constructor
      *
@@ -129,7 +131,8 @@ class SafetyMonitor {
      * @param warningThreshold Warning threshold in steps
      * @param errorThreshold Error threshold in steps
      */
-    void setPositionTolerances(uint32_t warningThreshold, uint32_t errorThreshold);
+    void setPositionTolerances(uint32_t warningThreshold,
+                               uint32_t errorThreshold);
 
     /**
      * Set velocity tolerance thresholds
@@ -145,7 +148,8 @@ class SafetyMonitor {
      * @param warningThreshold Warning threshold in °C
      * @param errorThreshold Error threshold in °C
      */
-    void setTemperatureTolerances(float warningThreshold, float errorThreshold);
+    void setTemperatureTolerances(float warningThreshold,
+                                  float errorThreshold);
 
     /**
      * Set voltage tolerance thresholds
@@ -154,7 +158,9 @@ class SafetyMonitor {
      * @param maxVoltage Maximum acceptable voltage
      * @param warningThreshold Warning threshold percentage
      */
-    void setVoltageTolerances(float minVoltage, float maxVoltage, float warningThreshold);
+    void setVoltageTolerances(float minVoltage,
+                              float maxVoltage,
+                              float warningThreshold);
 
     /**
      * Get safety statistics
@@ -163,14 +169,16 @@ class SafetyMonitor {
      * @param errorCount Number of errors
      * @param emergencyStopCount Number of emergency stops
      */
-    void getSafetyStats(uint32_t& warningCount, uint32_t& errorCount, uint32_t& emergencyStopCount);
+    void getSafetyStats(uint32_t& warningCount,
+                        uint32_t& errorCount,
+                        uint32_t& emergencyStopCount);
 
     /**
      * Clear safety statistics
      */
     void clearSafetyStats();
 
-   private:
+private:
     // References to system components
     MotorManager* m_motorManager;
     Logger*       m_logger;
@@ -207,6 +215,9 @@ class SafetyMonitor {
 
     // Timestamps
     uint32_t m_lastCheckTimeMs;
+
+    //  last raw value of Voltage sensor
+    int m_lastRawValue = 0;
 
     /**
      * Read voltage from analog input sensor

@@ -242,6 +242,7 @@ private:
     uint8_t       m_microsteps;  // Number of microsteps per full step
 
     // Speed control
+    bool     m_ShowWarningOnMaxStepsPerSecond = false;
     float    m_maxStepsPerSecond;
     uint32_t m_stepIntervalUs;     // Interval between steps in microseconds
     uint32_t m_lastStepTimeUs;     // Time of last step in microseconds
@@ -296,15 +297,6 @@ private:
      * @param errStr Error string
      * @return True if valid, false otherwise
      */
-    bool gpioAllocatePin(uint8_t       pin,
-                         uint8_t       index,
-                         PinMode       mode,
-                         const String& owner,
-                         const String& errStr,
-                         GPIOManager*  gpioManager);
-
-
-    bool ValidatePinNumbers(uint8_t pin, uint8_t index, const String& errStr);
 };
 
 #endif  // STEPPER_DRIVER_H

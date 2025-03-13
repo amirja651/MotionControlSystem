@@ -33,40 +33,6 @@ Encoder::Encoder(uint8_t  encAPin,
       m_direction(0) {}
 
 bool Encoder::initialize() {
-    // Get GPIO manager instance
-    GPIOManager* gpioManager = GPIOManager::getInstance(m_logger);
-    if (gpioManager == nullptr) {
-        m_logger->logError("GPIO Manager not available for motor manager",
-                           LogModule::ENCODER);
-        return false;
-    }
-
-    // Validate pin numbers
-    if (ValidatePinNumbers(
-            m_encoderAPin, m_index, "Invalid encoder A pin for motor "))
-        return false;
-
-    // Validate pin numbers
-    if (ValidatePinNumbers(
-            m_encoderBPin, m_index, "Invalid encoder B pin for motor "))
-        return false;
-
-    if (gpioAllocatePin(m_encoderAPin,
-                        m_index,
-                        PinMode::INPUT_PULLUP_PIN,
-                        "EncoderAPin",
-                        "Failed to allocate encoder A pin: ",
-                        gpioManager))
-        return false;
-
-    if (gpioAllocatePin(m_encoderBPin,
-                        m_index,
-                        PinMode::INPUT_PULLUP_PIN,
-                        "EncoderBPin",
-                        "Failed to allocate encoder B pin: ",
-                        gpioManager))
-        return false;
-
     // If pins are 0xFF, encoder is in open-loop mode
     if (m_encoderAPin == 0xFF || m_encoderBPin == 0xFF) {
         m_logger->logWarning("No physical encoder, motor" + String(m_index)
@@ -92,8 +58,6 @@ bool Encoder::initialize() {
             + String(m_encoderBPin) + ", PPR:" + String(m_pulsesPerRev),
         LogModule::ENCODER);
 
-    m_logger->logError("ENCODER INITIALIZED", LogModule::ENCODER);
-
     return true;
 }
 
@@ -115,8 +79,11 @@ void Encoder::setPosition(int32_t position) {
     m_positionBuffer.clear();
     m_positionBuffer.push(position);
 
-    m_logger->logInfo("Encoder position set to " + String(position),
-                      LogModule::ENCODER);
+    if (m_lastPosition != m_position) {
+        m_lastPosition = m_position;
+        m_logger->logInfo("Encoder position set to " + String(position),
+                          LogModule::ENCODER);
+    }
 }
 
 void Encoder::setVelocity(float velocity) {
@@ -181,10 +148,12 @@ void Encoder::update(uint32_t deltaTimeUs) {
     m_timeSinceLastTransitionUs += deltaTimeUs;
 
     // Add this to Encoder.cpp, update method
-    m_logger->logVerbose("Encoder position: " + String(m_position)
-                             + ", velocity: " + String(m_velocity),
-                         LogModule::ENCODER);
-
+    if (m_lastPosition != m_position) {
+        m_lastPosition = m_position;
+        m_logger->logVerbose("Encoder position: " + String(m_position)
+                                 + ", velocity: " + String(m_velocity),
+                             LogModule::ENCODER);
+    }
     // Measure time between updates for velocity calculation
     uint32_t currentTimeUs = micros();
 
@@ -227,10 +196,14 @@ void Encoder::update(uint32_t deltaTimeUs) {
         static uint32_t lastLogTime = 0;
         if (m_logger && (millis() - lastLogTime > 1000)) {
             lastLogTime = millis();
-            m_logger->logVerbose("Encoder pos=" + String(m_position)
-                                     + ", vel=" + String(m_filteredVelocity)
-                                     + ", acc=" + String(m_acceleration),
-                                 LogModule::ENCODER);
+            if (m_lastPosition != m_position) {
+                m_lastPosition = m_position;
+                m_logger->logVerbose(
+                    "Encoder pos=" + String(m_position)
+                        + ", vel=" + String(m_filteredVelocity)
+                        + ", acc=" + String(m_acceleration),
+                    LogModule::ENCODER);
+            }
         }
     }
 
@@ -241,9 +214,14 @@ void Encoder::update(uint32_t deltaTimeUs) {
             m_velocity         = 0.0f;
             m_filteredVelocity = 0.0f;
 
-            m_logger->logDebug(
-                "Encoder auto-reset velocity to zero after timeout",
-                LogModule::ENCODER);
+            if (!m_showEncoderAutoResetVelocity) {
+                m_showEncoderAutoResetVelocity = true;
+                m_logger->logDebug(
+                    "Encoder auto-reset velocity to zero after timeout",
+                    LogModule::ENCODER);
+            }
+        } else {
+            m_showEncoderAutoResetVelocity = false;
         }
     }
 }
@@ -347,31 +325,5 @@ int8_t Encoder::determineDirection(uint8_t stateAB, uint8_t prevStateAB) {
 
     // Invalid transition (both bits changed or no change)
     return 0;
-}
-
-bool Encoder::gpioAllocatePin(uint8_t       pin,
-                              uint8_t       index,
-                              PinMode       mode,
-                              const String& owner,
-                              const String& errStr,
-                              GPIOManager*  gpioManager) {
-    if (!gpioManager->allocatePin(
-            pin, mode, "Motor" + String(index) + owner)) {
-        m_logger->logError("Motor" + String(index) + errStr + String(pin),
-                           LogModule::ENCODER);
-        return false;
-    }
-    return true;
-}
-
-bool Encoder::ValidatePinNumbers(uint8_t       pin,
-                                 uint8_t       index,
-                                 const String& errStr) {
-    if (pin != 0xFF && pin > 39) {
-        m_logger->logError(errStr + String(index) + ": " + String(pin),
-                           LogModule::ENCODER);
-        return false;
-    }
-    return true;
 }
 // End of Code

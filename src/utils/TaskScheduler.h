@@ -34,22 +34,22 @@ enum class TaskTimingMode {
  * Task information structure
  */
 struct TaskInfo {
-    TaskFunction   function;            // Task function
-    uint32_t       intervalUs;          // Interval in microseconds
-    uint32_t       lastExecutionUs;     // Last execution time
-    uint32_t       executionTimeUs;     // Execution duration
-    uint32_t       maxExecutionTimeUs;  // Maximum execution time
-    uint32_t       missedDeadlines;     // Number of missed deadlines
-    bool           isControlTask;       // Whether this is a high-priority control task
-    TaskTimingMode timingMode;          // Task timing mode
-    bool           enabled;             // Whether task is enabled
+    TaskFunction function;            // Task function
+    uint32_t     intervalUs;          // Interval in microseconds
+    uint32_t     lastExecutionUs;     // Last execution time
+    uint32_t     executionTimeUs;     // Execution duration
+    uint32_t     maxExecutionTimeUs;  // Maximum execution time
+    uint32_t     missedDeadlines;     // Number of missed deadlines
+    bool isControlTask;         // Whether this is a high-priority control task
+    TaskTimingMode timingMode;  // Task timing mode
+    bool           enabled;     // Whether task is enabled
 };
 
 /**
  * Task scheduler class for real-time task management
  */
 class TaskScheduler {
-   public:
+public:
     /**
      * Constructor
      *
@@ -72,9 +72,10 @@ class TaskScheduler {
      * @param timingMode Task timing mode
      * @return Task index or -1 if failed
      */
-    int registerControlTask(TaskFunction   function,
-                            uint32_t       intervalUs,
-                            TaskTimingMode timingMode = TaskTimingMode::FIXED_FREQUENCY);
+    int registerControlTask(
+        TaskFunction   function,
+        uint32_t       intervalUs,
+        TaskTimingMode timingMode = TaskTimingMode::FIXED_FREQUENCY);
 
     /**
      * Register an auxiliary task (lower priority, runs on Core 0)
@@ -84,9 +85,10 @@ class TaskScheduler {
      * @param timingMode Task timing mode
      * @return Task index or -1 if failed
      */
-    int registerAuxiliaryTask(TaskFunction   function,
-                              uint32_t       intervalUs,
-                              TaskTimingMode timingMode = TaskTimingMode::ADAPTIVE);
+    int registerAuxiliaryTask(
+        TaskFunction   function,
+        uint32_t       intervalUs,
+        TaskTimingMode timingMode = TaskTimingMode::ADAPTIVE);
 
     /**
      * Execute control tasks that are due
@@ -164,7 +166,7 @@ class TaskScheduler {
                            uint32_t& totalMissedDeadlines,
                            uint32_t& averageControlLoopTimeUs);
 
-   private:
+private:
     // Logger instance
     Logger* m_logger;
 
@@ -179,6 +181,8 @@ class TaskScheduler {
     uint32_t m_lastControlLoopStartUs;
     uint32_t m_controlLoopTimeUs;
     uint32_t m_maxControlLoopTimeUs;
+
+    bool m_ShowWarningOnSpeedConstrained = false;
 
     // Timing
     uint32_t m_lastYieldTimeUs;

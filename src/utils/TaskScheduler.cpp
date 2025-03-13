@@ -33,8 +33,9 @@ int TaskScheduler::registerControlTask(TaskFunction   function,
                                        uint32_t       intervalUs,
                                        TaskTimingMode timingMode) {
     if (!function || intervalUs == 0) {
-        m_logger->logError("Failed to register control task: invalid parameters",
-                           LogModule::SYSTEM);
+        m_logger->logError(
+            "Failed to register control task: invalid parameters",
+            LogModule::SYSTEM);
         return -1;
     }
 
@@ -54,8 +55,9 @@ int TaskScheduler::registerControlTask(TaskFunction   function,
     // Add to control tasks
     m_controlTasks.push_back(task);
 
-    m_logger->logDebug("Control task registered with interval " + String(intervalUs) + "us",
-                       LogModule::SYSTEM);
+    m_logger->logDebug(
+        "Control task registered with interval " + String(intervalUs) + "us",
+        LogModule::SYSTEM);
 
     return static_cast<int>(m_controlTasks.size() - 1);
 }
@@ -66,8 +68,9 @@ int TaskScheduler::registerAuxiliaryTask(TaskFunction   function,
     m_logger->logInfo("Register Auxiliary Tasks (Amir) #1", LogModule::SYSTEM);
 
     if (!function || intervalUs == 0) {
-        m_logger->logError("Failed to register auxiliary task: invalid parameters",
-                           LogModule::SYSTEM);
+        m_logger->logError(
+            "Failed to register auxiliary task: invalid parameters",
+            LogModule::SYSTEM);
         return -1;
     }
 
@@ -90,8 +93,9 @@ int TaskScheduler::registerAuxiliaryTask(TaskFunction   function,
 
     m_logger->logInfo("Register Auxiliary Tasks (Amir) #3", LogModule::SYSTEM);
 
-    m_logger->logDebug("Auxiliary task registered with interval " + String(intervalUs) + "us",
-                       LogModule::SYSTEM);
+    m_logger->logDebug(
+        "Auxiliary task registered with interval " + String(intervalUs) + "us",
+        LogModule::SYSTEM);
 
     m_logger->logInfo("Register Auxiliary Tasks (Amir) #4", LogModule::SYSTEM);
 
@@ -119,10 +123,16 @@ uint32_t TaskScheduler::executeControlTasks() {
                 task.missedDeadlines++;
                 m_totalMissedDeadlines++;
 
-                m_logger->logWarning(String("Control task missed deadline: ")
-                                         + String(executionTimeUs) + "us > "
-                                         + String(task.intervalUs) + "us",
-                                     LogModule::SYSTEM);
+                if (!m_ShowWarningOnSpeedConstrained) {
+                    m_ShowWarningOnSpeedConstrained = true;
+                    m_logger->logWarning(
+                        String("Control task missed deadline: ")
+                            + String(executionTimeUs) + "us > "
+                            + String(task.intervalUs) + "us",
+                        LogModule::SYSTEM);
+                }
+            } else {
+                m_ShowWarningOnSpeedConstrained = false;
             }
 
             // Update current time
@@ -137,10 +147,11 @@ uint32_t TaskScheduler::executeControlTasks() {
     if (m_controlLoopTimeUs > m_maxControlLoopTimeUs) {
         m_maxControlLoopTimeUs = m_controlLoopTimeUs;
 
-        if (m_logger && m_maxControlLoopTimeUs > 5000) {  // Log only if over 5ms
-            m_logger->logDebug(
-                String("New max control loop time: ") + String(m_maxControlLoopTimeUs) + "us",
-                LogModule::SYSTEM);
+        if (m_logger
+            && m_maxControlLoopTimeUs > 5000) {  // Log only if over 5ms
+            m_logger->logDebug(String("New max control loop time: ")
+                                   + String(m_maxControlLoopTimeUs) + "us",
+                               LogModule::SYSTEM);
         }
     }
 
@@ -359,9 +370,9 @@ uint32_t TaskScheduler::executeTask(TaskInfo& task, uint32_t currentTimeUs) {
 
         // Log if execution time is extremely high (potential issue)
         if (m_logger && executionTimeUs > 10000) {  // 10ms threshold
-            m_logger->logWarning(
-                String("Task execution time spike: ") + String(executionTimeUs) + "us",
-                LogModule::SYSTEM);
+            m_logger->logWarning(String("Task execution time spike: ")
+                                     + String(executionTimeUs) + "us",
+                                 LogModule::SYSTEM);
         }
     }
 

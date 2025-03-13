@@ -22,14 +22,16 @@ Logger::Logger()
     }
 
     // Set module-specific enabled flags based on config
-    m_moduleEnabled[static_cast<size_t>(LogModule::SYSTEM)] = CONFIG_LOG_SYSTEM_ENABLED;
+    m_moduleEnabled[static_cast<size_t>(LogModule::SYSTEM)] =
+        CONFIG_LOG_SYSTEM_ENABLED;
     m_moduleEnabled[static_cast<size_t>(LogModule::MOTOR_MANAGER)] =
         CONFIG_LOG_MOTORMANAGER_ENABLED;
     m_moduleEnabled[static_cast<size_t>(LogModule::STEPPER_DRIVER)] =
         CONFIG_LOG_STEPPERDRIVER_ENABLED;
     m_moduleEnabled[static_cast<size_t>(LogModule::PID_CONTROLLER)] =
         CONFIG_LOG_PIDCONTROLLER_ENABLED;
-    m_moduleEnabled[static_cast<size_t>(LogModule::ENCODER)] = CONFIG_LOG_ENCODER_ENABLED;
+    m_moduleEnabled[static_cast<size_t>(LogModule::ENCODER)] =
+        CONFIG_LOG_ENCODER_ENABLED;
     m_moduleEnabled[static_cast<size_t>(LogModule::SAFETY_MONITOR)] =
         CONFIG_LOG_SAFETYMONITOR_ENABLED;
     m_moduleEnabled[static_cast<size_t>(LogModule::COMMAND_HANDLER)] =
@@ -52,7 +54,8 @@ Logger::~Logger() {
     }
 }
 
-bool Logger::initialize(uint32_t serialBaudRate, const LoggerTaskParams& taskParams) {
+bool Logger::initialize(uint32_t                serialBaudRate,
+                        const LoggerTaskParams& taskParams) {
     // If already initialized, don't re-initialize
     if (m_initialized) {
         return true;
@@ -153,16 +156,14 @@ void Logger::setLogLevel(LogLevel level) {
     logInfo("Log level set to " + logLevelToString(level));
 }
 
-LogLevel Logger::getLogLevel() const {
-    return m_globalLogLevel;
-}
+LogLevel Logger::getLogLevel() const { return m_globalLogLevel; }
 
 void Logger::setModuleLogLevel(LogModule module, LogLevel level) {
     size_t moduleIndex = static_cast<size_t>(module);
     if (moduleIndex < static_cast<size_t>(LogModule::MAX_MODULES)) {
         m_moduleLevels[moduleIndex] = level;
-        logInfo("Module " + moduleToString(module) + " log level set to "
-                + logLevelToString(level));
+        logDebug("Module " + moduleToString(module) + " log level set to "
+                 + logLevelToString(level));
     }
 }
 
@@ -233,13 +234,9 @@ bool Logger::addLogOutput(LogOutputCallback callback) {
     return false;
 }
 
-void Logger::clearLogOutputs() {
-    m_logOutputs.clear();
-}
+void Logger::clearLogOutputs() { m_logOutputs.clear(); }
 
-size_t Logger::getLogCount() const {
-    return m_logBuffer.size();
-}
+size_t Logger::getLogCount() const { return m_logBuffer.size(); }
 
 const LogEntry* Logger::getLogEntry(size_t index) const {
     if (index < m_logBuffer.size()) {
@@ -250,47 +247,29 @@ const LogEntry* Logger::getLogEntry(size_t index) const {
 
 String Logger::logLevelToString(LogLevel level) {
     switch (level) {
-        case LogLevel::OFF:
-            return "OFF";
-        case LogLevel::ERROR:
-            return "ERROR";
-        case LogLevel::WARNING:
-            return "WARN";
-        case LogLevel::INFO:
-            return "INFO";
-        case LogLevel::DEBUG:
-            return "DEBUG";
-        case LogLevel::VERBOSE:
-            return "VERB";
-        default:
-            return "????";
+        case LogLevel::OFF: return "OFF";
+        case LogLevel::ERROR: return "ERROR";
+        case LogLevel::WARNING: return "WARN";
+        case LogLevel::INFO: return "INFO";
+        case LogLevel::DEBUG: return "DEBUG";
+        case LogLevel::VERBOSE: return "VERB";
+        default: return "????";
     }
 }
 
 String Logger::moduleToString(LogModule module) {
     switch (module) {
-        case LogModule::SYSTEM:
-            return "SYS";
-        case LogModule::MOTOR_MANAGER:
-            return "MOT";
-        case LogModule::STEPPER_DRIVER:
-            return "DRV";
-        case LogModule::PID_CONTROLLER:
-            return "PID";
-        case LogModule::ENCODER:
-            return "ENC";
-        case LogModule::SAFETY_MONITOR:
-            return "SAF";
-        case LogModule::COMMAND_HANDLER:
-            return "CMD";
-        case LogModule::CUSTOM_1:
-            return "CUS1";
-        case LogModule::CUSTOM_2:
-            return "CUS2";
-        case LogModule::CUSTOM_3:
-            return "CUS3";
-        default:
-            return "???";
+        case LogModule::SYSTEM: return "SYS";
+        case LogModule::MOTOR_MANAGER: return "MOT";
+        case LogModule::STEPPER_DRIVER: return "DRV";
+        case LogModule::PID_CONTROLLER: return "PID";
+        case LogModule::ENCODER: return "ENC";
+        case LogModule::SAFETY_MONITOR: return "SAF";
+        case LogModule::COMMAND_HANDLER: return "CMD";
+        case LogModule::CUSTOM_1: return "CUS1";
+        case LogModule::CUSTOM_2: return "CUS2";
+        case LogModule::CUSTOM_3: return "CUS3";
+        default: return "???";
     }
 }
 
@@ -303,8 +282,9 @@ void Logger::log(LogLevel level, const String& message, LogModule module) {
 
     // Check module log level and enabled status
     size_t moduleIndex = static_cast<size_t>(module);
-    if (moduleIndex >= static_cast<size_t>(LogModule::MAX_MODULES) || !m_moduleEnabled[moduleIndex]
-        || level == LogLevel::OFF || level > m_moduleLevels[moduleIndex]) {
+    if (moduleIndex >= static_cast<size_t>(LogModule::MAX_MODULES)
+        || !m_moduleEnabled[moduleIndex] || level == LogLevel::OFF
+        || level > m_moduleLevels[moduleIndex]) {
         return;
     }
 
@@ -375,28 +355,19 @@ void Logger::outputLogEntry(const LogEntry& entry) {
     }
 }
 
-// In the formatLogEntry method, make sure it doesn't already include a newline:
+// In the formatLogEntry method, make sure it doesn't already include a
+// newline:
 String Logger::formatLogEntry(const LogEntry& entry) const {
     // Add appropriate color based on log level
     String colorCode = "";
     String resetCode = ANSI_COLOR_RESET;
 
     switch (entry.level) {
-        case LogLevel::ERROR:
-            colorCode = ANSI_COLOR_RED;
-            break;
-        case LogLevel::WARNING:
-            colorCode = ANSI_COLOR_YELLOW;
-            break;
-        case LogLevel::INFO:
-            colorCode = ANSI_COLOR_GREEN;
-            break;
-        case LogLevel::DEBUG:
-            colorCode = ANSI_COLOR_CYAN;
-            break;
-        case LogLevel::VERBOSE:
-            colorCode = ANSI_COLOR_BLUE;
-            break;
+        case LogLevel::ERROR: colorCode = ANSI_COLOR_RED; break;
+        case LogLevel::WARNING: colorCode = ANSI_COLOR_YELLOW; break;
+        case LogLevel::INFO: colorCode = ANSI_COLOR_GREEN; break;
+        case LogLevel::DEBUG: colorCode = ANSI_COLOR_CYAN; break;
+        case LogLevel::VERBOSE: colorCode = ANSI_COLOR_BLUE; break;
         default:
             // No color for other levels
             colorCode = "";

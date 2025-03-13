@@ -53,61 +53,11 @@ StepperDriver::~StepperDriver() {
 }
 
 bool StepperDriver::initialize() {
-    // Get GPIO manager instance
-    GPIOManager* gpioManager = GPIOManager::getInstance(m_logger);
-    if (gpioManager == nullptr) {
-        m_logger->logError("GPIO Manager not available for motor manager",
-                           LogModule::MOTOR_MANAGER);
-        return false;
-    }
-
-    // Validate pin numbers
-    if (ValidatePinNumbers(m_stepPin, m_index, "Invalid step pin for motor "))
-        return false;
-
-    // Validate pin numbers
-    if (ValidatePinNumbers(m_dirPin, m_index, "Invalid dir pin for motor "))
-        return false;
-
-    // Validate pin numbers
-    if (ValidatePinNumbers(
-            m_enablePin, m_index, "Invalid enable pin for motor "))
-        return false;
-
-
-    if (gpioAllocatePin(m_stepPin,
-                        m_index,
-                        PinMode::OUTPUT_PIN,
-                        "StepPin",
-                        "Failed to allocate step pin: ",
-                        gpioManager))
-        return false;
-
-    if (gpioAllocatePin(m_dirPin,
-                        m_index,
-                        PinMode::OUTPUT_PIN,
-                        "DirPin",
-                        "Failed to allocate dir pin: ",
-                        gpioManager))
-        return false;
-
-    if (gpioAllocatePin(m_enablePin,
-                        m_index,
-                        PinMode::OUTPUT_PIN,
-                        "EnablePin",
-                        "Failed to allocate enable pin: ",
-                        gpioManager))
-        return false;
-
     // Only configure enable pin if it's valid (not 0xFF)
     if (m_enablePin != 0xFF) {
         pinMode(m_enablePin, OUTPUT);
         digitalWrite(m_enablePin,
                      m_invertEnable ? LOW : HIGH);  // Default to disabled
-    } else {
-        // Motor enable pin is not used
-        m_logger->logWarning("Invalid ENABLE pin: " + String(m_enablePin),
-                             LogModule::STEPPER_DRIVER);
     }
 
     // Configure pins
@@ -170,10 +120,15 @@ void StepperDriver::setDirection(bool direction) {
 void StepperDriver::setSpeed(float speed) {
     // Constrain speed to maximum
     if (fabs(speed) > m_maxStepsPerSecond) {
-        m_logger->logWarning("Speed constrained from " + String(speed) + " to "
-                                 + String(m_maxStepsPerSecond),
-                             LogModule::STEPPER_DRIVER);
+        if (!m_ShowWarningOnMaxStepsPerSecond) {
+            m_ShowWarningOnMaxStepsPerSecond = true;
+            m_logger->logWarning("Speed constrained from " + String(speed)
+                                     + " to " + String(m_maxStepsPerSecond),
+                                 LogModule::STEPPER_DRIVER);
+        }
         speed = speed > 0 ? m_maxStepsPerSecond : -m_maxStepsPerSecond;
+    } else {
+        m_ShowWarningOnMaxStepsPerSecond = false;
     }
 
     // Update direction if speed sign changed
@@ -544,31 +499,4 @@ String StepperDriver::microstepModeToString(MicrostepMode mode) const {
         default: return "UNKNOWN";
     }
 }
-
-bool StepperDriver::gpioAllocatePin(uint8_t       pin,
-                                    uint8_t       index,
-                                    PinMode       mode,
-                                    const String& owner,
-                                    const String& errStr,
-                                    GPIOManager*  gpioManager) {
-    if (!gpioManager->allocatePin(
-            pin, mode, "Motor" + String(index) + owner)) {
-        m_logger->logError("Motor" + String(index) + errStr + String(pin),
-                           LogModule::STEPPER_DRIVER);
-        return false;
-    }
-    return true;
-}
-
-bool StepperDriver::ValidatePinNumbers(uint8_t       pin,
-                                       uint8_t       index,
-                                       const String& errStr) {
-    if (pin != 0xFF && pin > 39) {
-        m_logger->logError(errStr + String(index) + ": " + String(pin),
-                           LogModule::STEPPER_DRIVER);
-        return false;
-    }
-    return true;
-}
-
 // End of Code
