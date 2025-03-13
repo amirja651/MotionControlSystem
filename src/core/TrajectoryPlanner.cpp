@@ -5,8 +5,11 @@
 
 #include "TrajectoryPlanner.h"
 
-TrajectoryPlanner::TrajectoryPlanner(
-    float maxVelocity, float maxAcceleration, float maxDeceleration, float maxJerk, Logger* logger)
+TrajectoryPlanner::TrajectoryPlanner(float   maxVelocity,
+                                     float   maxAcceleration,
+                                     float   maxDeceleration,
+                                     float   maxJerk,
+                                     Logger* logger)
     : m_defaultMaxVelocity(maxVelocity),
       m_defaultMaxAcceleration(maxAcceleration),
       m_defaultMaxDeceleration(maxDeceleration),
@@ -89,7 +92,8 @@ bool TrajectoryPlanner::planPositionMove(int32_t     currentPosition,
     m_state.initialPosition = currentPosition;
     m_state.targetPosition  = targetPosition;
     m_state.initialVelocity = currentVelocity;
-    m_state.targetVelocity  = 0.0f;  // Target velocity is zero for a position move
+    m_state.targetVelocity =
+        0.0f;  // Target velocity is zero for a position move
     m_state.maxVelocity     = maxVelocity;
     m_state.maxAcceleration = maxAcceleration;
     m_state.maxDeceleration = maxDeceleration;
@@ -114,8 +118,12 @@ bool TrajectoryPlanner::planPositionMove(int32_t     currentPosition,
                                                          maxJerk);
     } else {
         // Default to trapezoidal
-        m_state.profileDuration = calculateTrapezoidalProfile(
-            distance, currentVelocity, 0.0f, maxVelocity, maxAcceleration, maxDeceleration);
+        m_state.profileDuration = calculateTrapezoidalProfile(distance,
+                                                              currentVelocity,
+                                                              0.0f,
+                                                              maxVelocity,
+                                                              maxAcceleration,
+                                                              maxDeceleration);
     }
 
     // Check if valid duration was calculated
@@ -123,17 +131,19 @@ bool TrajectoryPlanner::planPositionMove(int32_t     currentPosition,
         // Invalid profile
         m_state.isComplete = true;
 
-        m_logger->logError("Failed to plan position move: invalid profile duration",
-                           LogModule::PID_CONTROLLER);
+        m_logger->logError(
+            "Failed to plan position move: invalid profile duration",
+            LogModule::PID_CONTROLLER);
 
         return false;
     }
 
-    m_logger->logInfo("Position move planned: " + String(currentPosition) + " to "
-                          + String(targetPosition) + " (dist: " + String(distance) + ")"
-                          + ", profile: " + profileTypeToString(profileType)
-                          + ", duration: " + String(m_state.profileDuration) + "s",
-                      LogModule::PID_CONTROLLER);
+    m_logger->logInfo(
+        "Position move planned: " + String(currentPosition) + " to "
+            + String(targetPosition) + " (dist: " + String(distance) + ")"
+            + ", profile: " + profileTypeToString(profileType)
+            + ", duration: " + String(m_state.profileDuration) + "s",
+        LogModule::PID_CONTROLLER);
 
     return true;
 }
@@ -156,8 +166,9 @@ bool TrajectoryPlanner::planVelocityMove(float       currentVelocity,
     if (currentVelocity == targetVelocity) {
         m_state.isComplete = true;
 
-        m_logger->logDebug("No velocity change needed, already at target velocity",
-                           LogModule::PID_CONTROLLER);
+        m_logger->logDebug(
+            "No velocity change needed, already at target velocity",
+            LogModule::PID_CONTROLLER);
 
         return true;
     }
@@ -167,12 +178,13 @@ bool TrajectoryPlanner::planVelocityMove(float       currentVelocity,
     m_state.targetPosition  = 0;  // Not applicable for velocity move
     m_state.initialVelocity = currentVelocity;
     m_state.targetVelocity  = targetVelocity;
-    m_state.maxVelocity =
-        fabs(targetVelocity);  // For velocity move, max velocity is target velocity
+    m_state.maxVelocity     = fabs(
+        targetVelocity);  // For velocity move, max velocity is target velocity
     m_state.maxAcceleration = maxAcceleration;
-    m_state.maxDeceleration = maxAcceleration;  // Use same value for deceleration
-    m_state.maxJerk         = maxJerk;
-    m_state.profileType     = profileType;
+    m_state.maxDeceleration =
+        maxAcceleration;  // Use same value for deceleration
+    m_state.maxJerk     = maxJerk;
+    m_state.profileType = profileType;
 
     // Reset current state
     m_state.currentPosition     = 0.0f;  // Not relevant for velocity move
@@ -188,8 +200,10 @@ bool TrajectoryPlanner::planVelocityMove(float       currentVelocity,
     if (profileType == ProfileType::S_CURVE) {
         // For S-curve, we need jerk
         // Simple approximation: time to accelerate with jerk limits
-        float accelTime  = maxAcceleration / maxJerk;  // Time to reach max acceleration
-        float cruiseTime = (fabs(velocityChange) - maxAcceleration * accelTime) / maxAcceleration;
+        float accelTime =
+            maxAcceleration / maxJerk;  // Time to reach max acceleration
+        float cruiseTime = (fabs(velocityChange) - maxAcceleration * accelTime)
+                           / maxAcceleration;
 
         if (cruiseTime < 0.0f) {
             // We never reach max acceleration
@@ -199,7 +213,8 @@ bool TrajectoryPlanner::planVelocityMove(float       currentVelocity,
 
         m_state.profileDuration = 2.0f * accelTime + cruiseTime;
     } else {
-        // For trapezoidal (or triangular), just time to reach velocity with constant acceleration
+        // For trapezoidal (or triangular), just time to reach velocity with
+        // constant acceleration
         m_state.profileDuration = fabs(velocityChange) / maxAcceleration;
     }
 
@@ -208,17 +223,19 @@ bool TrajectoryPlanner::planVelocityMove(float       currentVelocity,
         // Invalid profile
         m_state.isComplete = true;
 
-        m_logger->logError("Failed to plan velocity move: invalid profile duration",
-                           LogModule::PID_CONTROLLER);
+        m_logger->logError(
+            "Failed to plan velocity move: invalid profile duration",
+            LogModule::PID_CONTROLLER);
 
         return false;
     }
 
-    m_logger->logInfo("Velocity move planned: " + String(currentVelocity) + " to "
-                          + String(targetVelocity) + " (change: " + String(velocityChange) + ")"
-                          + ", profile: " + profileTypeToString(profileType)
-                          + ", duration: " + String(m_state.profileDuration) + "s",
-                      LogModule::PID_CONTROLLER);
+    m_logger->logInfo(
+        "Velocity move planned: " + String(currentVelocity) + " to "
+            + String(targetVelocity) + " (change: " + String(velocityChange)
+            + ")" + ", profile: " + profileTypeToString(profileType)
+            + ", duration: " + String(m_state.profileDuration) + "s",
+        LogModule::PID_CONTROLLER);
 
     return true;
 }
@@ -238,8 +255,8 @@ void TrajectoryPlanner::update(uint32_t deltaTimeUs) {
     // Check if we've reached the end of the profile
     if (m_state.elapsedTime >= m_state.profileDuration) {
         // Reached the end of the profile
-        m_state.currentPosition     = static_cast<float>(m_state.targetPosition);
-        m_state.currentVelocity     = m_state.targetVelocity;
+        m_state.currentPosition = static_cast<float>(m_state.targetPosition);
+        m_state.currentVelocity = m_state.targetVelocity;
         m_state.currentAcceleration = 0.0f;
         m_state.isComplete          = true;
 
@@ -256,23 +273,27 @@ void TrajectoryPlanner::update(uint32_t deltaTimeUs) {
         updateTrapezoidalProfile(m_state.elapsedTime);
     }
 
-    // Log trajectory progress periodically (every 250ms) to avoid excessive logging
+    // Log trajectory progress periodically (every 250ms) to avoid excessive
+    // logging
     static uint32_t lastLogTime = 0;
     if (m_logger && (millis() - lastLogTime > 250)) {
         lastLogTime = millis();
-        m_logger->logDebug("Trajectory progress: pos=" + String(m_state.currentPosition)
-                               + ", vel=" + String(m_state.currentVelocity)
-                               + ", acc=" + String(m_state.currentAcceleration)
-                               + ", t=" + String(m_state.elapsedTime) + "/"
-                               + String(m_state.profileDuration) + "s",
-                           LogModule::PID_CONTROLLER);
+        m_logger->logDebug(
+            "Trajectory progress: pos=" + String(m_state.currentPosition)
+                + ", vel=" + String(m_state.currentVelocity)
+                + ", acc=" + String(m_state.currentAcceleration)
+                + ", t=" + String(m_state.elapsedTime) + "/"
+                + String(m_state.profileDuration) + "s",
+            LogModule::PID_CONTROLLER);
     }
 }
 
-// Remaining implementation methods like getCurrentPosition(), etc., don't need significant changes
+// Remaining implementation methods like getCurrentPosition(), etc., don't need
+// significant changes
 
 void TrajectoryPlanner::setMaxVelocity(float maxVelocity) {
-    m_defaultMaxVelocity = maxVelocity > 0.0f ? maxVelocity : CONFIG_DEFAULT_MAX_VELOCITY;
+    m_defaultMaxVelocity =
+        maxVelocity > 0.0f ? maxVelocity : CONFIG_DEFAULT_MAX_VELOCITY;
 
     m_logger->logInfo("Max velocity set to " + String(m_defaultMaxVelocity),
                       LogModule::PID_CONTROLLER);
@@ -282,26 +303,30 @@ void TrajectoryPlanner::setMaxAcceleration(float maxAcceleration) {
     m_defaultMaxAcceleration =
         maxAcceleration > 0.0f ? maxAcceleration : CONFIG_DEFAULT_ACCELERATION;
 
-    m_logger->logInfo("Max acceleration set to " + String(m_defaultMaxAcceleration),
-                      LogModule::PID_CONTROLLER);
+    m_logger->logInfo(
+        "Max acceleration set to " + String(m_defaultMaxAcceleration),
+        LogModule::PID_CONTROLLER);
 }
 
 void TrajectoryPlanner::setMaxDeceleration(float maxDeceleration) {
     m_defaultMaxDeceleration =
         maxDeceleration > 0.0f ? maxDeceleration : CONFIG_DEFAULT_DECELERATION;
 
-    m_logger->logInfo("Max deceleration set to " + String(m_defaultMaxDeceleration),
-                      LogModule::PID_CONTROLLER);
+    m_logger->logInfo(
+        "Max deceleration set to " + String(m_defaultMaxDeceleration),
+        LogModule::PID_CONTROLLER);
 }
 
 void TrajectoryPlanner::setMaxJerk(float maxJerk) {
     m_defaultMaxJerk = maxJerk > 0.0f ? maxJerk : CONFIG_DEFAULT_MAX_JERK;
 
-    m_logger->logInfo("Max jerk set to " + String(m_defaultMaxJerk), LogModule::PID_CONTROLLER);
+    m_logger->logInfo("Max jerk set to " + String(m_defaultMaxJerk),
+                      LogModule::PID_CONTROLLER);
 }
 
-// Implementation of the trajectory calculation methods like calculateTrapezoidalProfile
-// remain largely the same, with added logging for errors or warnings
+// Implementation of the trajectory calculation methods like
+// calculateTrapezoidalProfile remain largely the same, with added logging for
+// errors or warnings
 
 float TrajectoryPlanner::calculateTrapezoidalProfile(float distance,
                                                      float initialVelocity,
@@ -309,6 +334,12 @@ float TrajectoryPlanner::calculateTrapezoidalProfile(float distance,
                                                      float maxVelocity,
                                                      float maxAcceleration,
                                                      float maxDeceleration) {
+    // If distance is very small, use a reduced velocity for small movements
+    if (abs(distance) < 21) {  // For very small movements
+        maxVelocity =
+            min(maxVelocity, 500.0f);  // Cap velocity for small movements
+    }
+
     // If this is a velocity move, not a position move
     if (m_state.initialPosition == m_state.targetPosition) {
         // Simple velocity ramp
@@ -321,14 +352,16 @@ float TrajectoryPlanner::calculateTrapezoidalProfile(float distance,
     float accelTime = (maxVelocity - initialVelocity) / maxAcceleration;
     accelTime       = accelTime < 0.0f ? 0.0f : accelTime;
 
-    // Calculate time to decelerate from max velocity to target velocity (typically 0)
+    // Calculate time to decelerate from max velocity to target velocity
+    // (typically 0)
     float decelTime = (maxVelocity - targetVelocity) / maxDeceleration;
     decelTime       = decelTime < 0.0f ? 0.0f : decelTime;
 
     // Calculate distances covered during acceleration and deceleration
-    float accelDistance =
-        initialVelocity * accelTime + 0.5f * maxAcceleration * accelTime * accelTime;
-    float decelDistance = maxVelocity * decelTime - 0.5f * maxDeceleration * decelTime * decelTime;
+    float accelDistance = initialVelocity * accelTime
+                          + 0.5f * maxAcceleration * accelTime * accelTime;
+    float decelDistance = maxVelocity * decelTime
+                          - 0.5f * maxDeceleration * decelTime * decelTime;
 
     // Calculate remaining distance at constant velocity
     float cruiseDistance = distance - accelDistance - decelDistance;
@@ -352,16 +385,18 @@ float TrajectoryPlanner::calculateTrapezoidalProfile(float distance,
             adjustedMaxVelocity -= step;
 
             // Recalculate times and distances
-            accelTime = (adjustedMaxVelocity - initialVelocity) / maxAcceleration;
+            accelTime =
+                (adjustedMaxVelocity - initialVelocity) / maxAcceleration;
             accelTime = accelTime < 0.0f ? 0.0f : accelTime;
 
-            decelTime = (adjustedMaxVelocity - targetVelocity) / maxDeceleration;
+            decelTime =
+                (adjustedMaxVelocity - targetVelocity) / maxDeceleration;
             decelTime = decelTime < 0.0f ? 0.0f : decelTime;
 
-            accelDistance =
-                initialVelocity * accelTime + 0.5f * maxAcceleration * accelTime * accelTime;
-            decelDistance =
-                adjustedMaxVelocity * decelTime - 0.5f * maxDeceleration * decelTime * decelTime;
+            accelDistance = initialVelocity * accelTime
+                            + 0.5f * maxAcceleration * accelTime * accelTime;
+            decelDistance = adjustedMaxVelocity * decelTime
+                            - 0.5f * maxDeceleration * decelTime * decelTime;
 
             cruiseDistance = distance - accelDistance - decelDistance;
 
@@ -376,14 +411,16 @@ float TrajectoryPlanner::calculateTrapezoidalProfile(float distance,
         if (cruiseDistance < 0.0f) {
             // Special case for starting and ending with zero velocity
             if (initialVelocity == 0.0f && targetVelocity == 0.0f) {
-                float peakVelocity = sqrt(2.0f * maxAcceleration * maxDeceleration * distance
-                                          / (maxAcceleration + maxDeceleration));
-                accelTime          = peakVelocity / maxAcceleration;
-                decelTime          = peakVelocity / maxDeceleration;
+                float peakVelocity =
+                    sqrt(2.0f * maxAcceleration * maxDeceleration * distance
+                         / (maxAcceleration + maxDeceleration));
+                accelTime = peakVelocity / maxAcceleration;
+                decelTime = peakVelocity / maxDeceleration;
 
-                m_logger->logDebug("Using direct calculation for triangle profile: peakVel="
-                                       + String(peakVelocity),
-                                   LogModule::PID_CONTROLLER);
+                m_logger->logDebug(
+                    "Using direct calculation for triangle profile: peakVel="
+                        + String(peakVelocity),
+                    LogModule::PID_CONTROLLER);
 
                 return accelTime + decelTime;
             }
@@ -391,18 +428,20 @@ float TrajectoryPlanner::calculateTrapezoidalProfile(float distance,
             // For other cases, use a simplified approximation
             float approxTime = 2.0f * sqrt(distance / maxAcceleration);
 
-            m_logger->logWarning("Using simplified approximation for complex profile: time="
-                                     + String(approxTime) + "s",
-                                 LogModule::PID_CONTROLLER);
+            m_logger->logWarning(
+                "Using simplified approximation for complex profile: time="
+                    + String(approxTime) + "s",
+                LogModule::PID_CONTROLLER);
 
             return approxTime;
         }
 
         // No cruise phase
-        m_logger->logDebug("Triangle profile: adjustedMaxVel=" + String(adjustedMaxVelocity)
-                               + ", accelTime=" + String(accelTime)
-                               + ", decelTime=" + String(decelTime),
-                           LogModule::PID_CONTROLLER);
+        m_logger->logDebug(
+            "Triangle profile: adjustedMaxVel=" + String(adjustedMaxVelocity)
+                + ", accelTime=" + String(accelTime)
+                + ", decelTime=" + String(decelTime),
+            LogModule::PID_CONTROLLER);
 
         return accelTime + decelTime;
     }
@@ -410,10 +449,11 @@ float TrajectoryPlanner::calculateTrapezoidalProfile(float distance,
     // Trapezoidal profile with cruise phase
     float cruiseTime = cruiseDistance / maxVelocity;
 
-    m_logger->logDebug(
-        "Trapezoidal profile: maxVel=" + String(maxVelocity) + ", accelTime=" + String(accelTime)
-            + ", cruiseTime=" + String(cruiseTime) + ", decelTime=" + String(decelTime),
-        LogModule::PID_CONTROLLER);
+    m_logger->logDebug("Trapezoidal profile: maxVel=" + String(maxVelocity)
+                           + ", accelTime=" + String(accelTime)
+                           + ", cruiseTime=" + String(cruiseTime)
+                           + ", decelTime=" + String(decelTime),
+                       LogModule::PID_CONTROLLER);
 
     // Total duration
     return accelTime + cruiseTime + decelTime;
@@ -422,24 +462,16 @@ float TrajectoryPlanner::calculateTrapezoidalProfile(float distance,
 // Add the utility method to convert profile type to string
 String TrajectoryPlanner::profileTypeToString(ProfileType profileType) const {
     switch (profileType) {
-        case ProfileType::NONE:
-            return "NONE";
-        case ProfileType::TRAPEZOIDAL:
-            return "TRAPEZOIDAL";
-        case ProfileType::S_CURVE:
-            return "S_CURVE";
-        default:
-            return "UNKNOWN";
+        case ProfileType::NONE: return "NONE";
+        case ProfileType::TRAPEZOIDAL: return "TRAPEZOIDAL";
+        case ProfileType::S_CURVE: return "S_CURVE";
+        default: return "UNKNOWN";
     }
 }
 
-const TrajectoryState& TrajectoryPlanner::getState() const {
-    return m_state;
-}
+const TrajectoryState& TrajectoryPlanner::getState() const { return m_state; }
 
-bool TrajectoryPlanner::isComplete() const {
-    return m_state.isComplete;
-}
+bool TrajectoryPlanner::isComplete() const { return m_state.isComplete; }
 
 float TrajectoryPlanner::getCurrentPosition() const {
     return m_state.currentPosition;
@@ -472,14 +504,19 @@ float TrajectoryPlanner::calculateSCurveProfile(float distance,
     // A complete implementation would be much more complex
 
     // First, calculate a trapezoidal profile as a base
-    float trapezoidalDuration = calculateTrapezoidalProfile(
-        distance, initialVelocity, targetVelocity, maxVelocity, maxAcceleration, maxDeceleration);
+    float trapezoidalDuration = calculateTrapezoidalProfile(distance,
+                                                            initialVelocity,
+                                                            targetVelocity,
+                                                            maxVelocity,
+                                                            maxAcceleration,
+                                                            maxDeceleration);
 
     // Add time for jerk limitations
     // For each acceleration/deceleration phase, we add time for jerk smoothing
     float jerkTime = maxAcceleration / maxJerk;
 
-    // Total jerk phases: beginning of accel, end of accel, beginning of decel, end of decel
+    // Total jerk phases: beginning of accel, end of accel, beginning of decel,
+    // end of decel
     return trapezoidalDuration + 4.0f * jerkTime;
 }
 
@@ -487,41 +524,47 @@ void TrajectoryPlanner::updateTrapezoidalProfile(float elapsedTimeSeconds) {
     // If doing a velocity move
     if (m_state.initialPosition == m_state.targetPosition) {
         // Simple velocity ramp
-        float velocityChange = m_state.targetVelocity - m_state.initialVelocity;
-        float accelSign      = velocityChange >= 0.0f ? 1.0f : -1.0f;
-        float acceleration   = accelSign * m_state.maxAcceleration;
+        float velocityChange =
+            m_state.targetVelocity - m_state.initialVelocity;
+        float accelSign    = velocityChange >= 0.0f ? 1.0f : -1.0f;
+        float acceleration = accelSign * m_state.maxAcceleration;
 
         // Calculate current velocity based on elapsed time
         if (elapsedTimeSeconds >= m_state.profileDuration) {
             m_state.currentVelocity     = m_state.targetVelocity;
             m_state.currentAcceleration = 0.0f;
         } else {
-            m_state.currentVelocity = m_state.initialVelocity + acceleration * elapsedTimeSeconds;
+            m_state.currentVelocity =
+                m_state.initialVelocity + acceleration * elapsedTimeSeconds;
             m_state.currentAcceleration = acceleration;
         }
 
         return;
     }
 
-    // For position moves, use the MathUtils function to calculate position and velocity
-    // This ensures consistent trajectory calculation
-    float distance = static_cast<float>(m_state.targetPosition - m_state.initialPosition);
+    // For position moves, use the MathUtils function to calculate position and
+    // velocity This ensures consistent trajectory calculation
+    float distance =
+        static_cast<float>(m_state.targetPosition - m_state.initialPosition);
 
-    m_state.currentPosition = MathUtils::calculateTrapezoidalPosition(elapsedTimeSeconds,
-                                                                      m_state.profileDuration,
-                                                                      distance,
-                                                                      m_state.maxVelocity,
-                                                                      m_state.maxAcceleration)
-                              + m_state.initialPosition;
+    m_state.currentPosition =
+        MathUtils::calculateTrapezoidalPosition(elapsedTimeSeconds,
+                                                m_state.profileDuration,
+                                                distance,
+                                                m_state.maxVelocity,
+                                                m_state.maxAcceleration)
+        + m_state.initialPosition;
 
-    m_state.currentVelocity = MathUtils::calculateTrapezoidalVelocity(elapsedTimeSeconds,
-                                                                      m_state.profileDuration,
-                                                                      distance,
-                                                                      m_state.maxVelocity,
-                                                                      m_state.maxAcceleration);
+    m_state.currentVelocity =
+        MathUtils::calculateTrapezoidalVelocity(elapsedTimeSeconds,
+                                                m_state.profileDuration,
+                                                distance,
+                                                m_state.maxVelocity,
+                                                m_state.maxAcceleration);
 
     // Estimate current acceleration
-    // In a trapezoidal profile, acceleration is either maxAcceleration, -maxDeceleration, or 0
+    // In a trapezoidal profile, acceleration is either maxAcceleration,
+    // -maxDeceleration, or 0
     float accelTime = m_state.maxVelocity / m_state.maxAcceleration;
     float decelTime = m_state.maxVelocity / m_state.maxDeceleration;
 
@@ -539,42 +582,47 @@ void TrajectoryPlanner::updateTrapezoidalProfile(float elapsedTimeSeconds) {
 
 void TrajectoryPlanner::updateSCurveProfile(float elapsedTimeSeconds) {
     // Use simplified S-curve approximation based on MathUtils
-    float distance = static_cast<float>(m_state.targetPosition - m_state.initialPosition);
+    float distance =
+        static_cast<float>(m_state.targetPosition - m_state.initialPosition);
 
-    m_state.currentPosition = MathUtils::calculateSCurvePosition(elapsedTimeSeconds,
-                                                                 m_state.profileDuration,
-                                                                 distance,
-                                                                 m_state.maxVelocity,
-                                                                 m_state.maxAcceleration,
-                                                                 m_state.maxJerk)
-                              + m_state.initialPosition;
+    m_state.currentPosition =
+        MathUtils::calculateSCurvePosition(elapsedTimeSeconds,
+                                           m_state.profileDuration,
+                                           distance,
+                                           m_state.maxVelocity,
+                                           m_state.maxAcceleration,
+                                           m_state.maxJerk)
+        + m_state.initialPosition;
 
-    // For velocity, we need to calculate the derivative of the position function
-    // For simplicity, use finite difference approximation
-    const float dt           = 0.001f;  // 1ms
-    float       positionNext = MathUtils::calculateSCurvePosition(elapsedTimeSeconds + dt,
-                                                            m_state.profileDuration,
-                                                            distance,
-                                                            m_state.maxVelocity,
-                                                            m_state.maxAcceleration,
-                                                            m_state.maxJerk);
+    // For velocity, we need to calculate the derivative of the position
+    // function For simplicity, use finite difference approximation
+    const float dt = 0.001f;  // 1ms
+    float       positionNext =
+        MathUtils::calculateSCurvePosition(elapsedTimeSeconds + dt,
+                                           m_state.profileDuration,
+                                           distance,
+                                           m_state.maxVelocity,
+                                           m_state.maxAcceleration,
+                                           m_state.maxJerk);
 
-    float positionCurrent = MathUtils::calculateSCurvePosition(elapsedTimeSeconds,
-                                                               m_state.profileDuration,
-                                                               distance,
-                                                               m_state.maxVelocity,
-                                                               m_state.maxAcceleration,
-                                                               m_state.maxJerk);
+    float positionCurrent =
+        MathUtils::calculateSCurvePosition(elapsedTimeSeconds,
+                                           m_state.profileDuration,
+                                           distance,
+                                           m_state.maxVelocity,
+                                           m_state.maxAcceleration,
+                                           m_state.maxJerk);
 
     m_state.currentVelocity = (positionNext - positionCurrent) / dt;
 
     // For acceleration, use second derivative approximation
-    float positionPrev = MathUtils::calculateSCurvePosition(elapsedTimeSeconds - dt,
-                                                            m_state.profileDuration,
-                                                            distance,
-                                                            m_state.maxVelocity,
-                                                            m_state.maxAcceleration,
-                                                            m_state.maxJerk);
+    float positionPrev =
+        MathUtils::calculateSCurvePosition(elapsedTimeSeconds - dt,
+                                           m_state.profileDuration,
+                                           distance,
+                                           m_state.maxVelocity,
+                                           m_state.maxAcceleration,
+                                           m_state.maxJerk);
 
     m_state.currentAcceleration =
         (positionNext - 2.0f * positionCurrent + positionPrev) / (dt * dt);

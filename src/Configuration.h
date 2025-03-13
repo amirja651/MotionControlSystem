@@ -20,12 +20,13 @@
 
 // Debug and Logging
 #define CONFIG_DEBUG_ENABLED        true  // Master switch for debug mode
-#define CONFIG_LOG_LEVEL            5     // 0=OFF, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG, 5=VERBOSE
+#define CONFIG_LOG_LEVEL            5  // 0=OFF, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG, 5=VERBOSE
 #define CONFIG_SERIAL_BAUD_RATE     115200
 #define CONFIG_MAX_LOG_ENTRIES      50
 #define CONFIG_COLOR_OUTPUT_ENABLED false  // Color output for terminal
 
-// ANSI Color codes for terminal output - conditional based on CONFIG_COLOR_OUTPUT_ENABLED
+// ANSI Color codes for terminal output - conditional based on
+// CONFIG_COLOR_OUTPUT_ENABLED
 #if CONFIG_COLOR_OUTPUT_ENABLED
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -53,11 +54,11 @@
 #define CONFIG_LOG_COMMANDHANDLER_ENABLED true
 
 // Task Configuration
-#define CONFIG_CONTROL_LOOP_FREQUENCY_HZ      1000  // 1kHz control loop
-#define CONFIG_TRAJECTORY_UPDATE_FREQUENCY_HZ 250   // 250Hz trajectory updates
-#define CONFIG_STATUS_UPDATE_FREQUENCY_HZ     0.8   // 1 means 1Hz status reporting
-#define CONFIG_SAFETY_CHECK_INTERVAL_US       500   // 500us safety check interval
-#define CONFIG_CONTROL_LOOP_YIELD_US          50    // 50us yield in main loop
+#define CONFIG_CONTROL_LOOP_FREQUENCY_HZ      500  // 1000 = 1kHz control loop
+#define CONFIG_TRAJECTORY_UPDATE_FREQUENCY_HZ 250  // 250Hz trajectory updates
+#define CONFIG_STATUS_UPDATE_FREQUENCY_HZ     0.8  // 1 means 1Hz status reporting
+#define CONFIG_SAFETY_CHECK_INTERVAL_US       1000  // 500 = 500us safety check interval
+#define CONFIG_CONTROL_LOOP_YIELD_US          50  // 50us yield in main loop
 #define CONFIG_AUXILIARY_TASK_STACK_SIZE      4096
 #define CONFIG_AUXILIARY_TASK_PRIORITY        1
 #define CONFIG_CONTROL_TASK_PRIORITY          10
@@ -72,7 +73,7 @@
 #define CONFIG_MAX_ENCODERS         1
 #define CONFIG_DEFAULT_ACCELERATION 1000.0f   // steps/s²
 #define CONFIG_DEFAULT_DECELERATION 1000.0f   // steps/s²
-#define CONFIG_DEFAULT_MAX_VELOCITY 5000.0f   // steps/s
+#define CONFIG_DEFAULT_MAX_VELOCITY 10000.0f  // steps/s
 #define CONFIG_DEFAULT_MAX_JERK     10000.0f  // steps/s³
 #define CONFIG_MIN_STEP_INTERVAL_US 10        // Minimum 10us between steps
 
@@ -86,7 +87,7 @@
 #define CONFIG_PID_DERIVATIVE_FILTER_ALPHA 0.1f  // Low-pass filter for D term
 
 // Encoder Parameters
-#define CONFIG_ENCODER_BUFFER_SIZE          16    // Size of circular buffer for filtering
+#define CONFIG_ENCODER_BUFFER_SIZE          16  // Size of circular buffer for filtering
 #define CONFIG_ENCODER_DEFAULT_PPR          2000  // Pulses per revolution
 #define CONFIG_ENCODER_INTERPOLATION_FACTOR 4     // 4x interpolation
 
@@ -102,7 +103,8 @@
 #define CONFIG_STEP_TIMER    TIMER_1
 
 // Voltage sensing configuration
-#define CONFIG_POWER_MONITORING_ENABLED  true  // Set to false to disable power monitoring
+#define CONFIG_POWER_MONITORING_ENABLED \
+  true  // Set to false to disable power monitoring
 #define CONFIG_VOLTAGE_SENSE_PIN         36    // ADC1_CH0
 #define CONFIG_VOLTAGE_MIN               3.1f  // Minimum safe voltage
 #define CONFIG_VOLTAGE_MAX               3.3f  // Maximum safe voltage
@@ -124,29 +126,29 @@
 
 // Structure for motor configuration
 struct MotorConfig {
-    uint8_t  index;
-    uint8_t  stepPin;
-    uint8_t  dirPin;
-    uint8_t  enablePin;
-    uint8_t  encoderAPin;
-    uint8_t  encoderBPin;
-    uint8_t  limitMinPin;
-    uint8_t  limitMaxPin;
-    float    maxVelocity;
-    float    maxAcceleration;
-    float    maxDeceleration;
-    float    maxJerk;
-    float    pidKp;
-    float    pidKi;
-    float    pidKd;
-    float    pidFf;
-    uint16_t encoderPPR;
-    bool     invertDirection;
-    bool     invertEncoder;
-    bool     useSoftLimits;
-    int32_t  softLimitMin;
-    int32_t  softLimitMax;
-    bool     invertEnable;  // Invert enable pin logic
+  uint8_t  index;
+  uint8_t  stepPin;
+  uint8_t  dirPin;
+  uint8_t  enablePin;
+  uint8_t  encoderAPin;
+  uint8_t  encoderBPin;
+  uint8_t  limitMinPin;
+  uint8_t  limitMaxPin;
+  float    maxVelocity;
+  float    maxAcceleration;
+  float    maxDeceleration;
+  float    maxJerk;
+  float    pidKp;
+  float    pidKi;
+  float    pidKd;
+  float    pidFf;
+  uint16_t encoderPPR;
+  bool     invertDirection;
+  bool     invertEncoder;
+  bool     useSoftLimits;
+  int32_t  softLimitMin;
+  int32_t  softLimitMax;
+  bool     invertEnable;  // Invert enable pin logic
 };
 
 // Default configurations for static allocation

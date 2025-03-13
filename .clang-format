@@ -1,6 +1,6 @@
 BasedOnStyle: Google
-IndentWidth: 4
-ColumnLimit: 79
+IndentWidth: 2
+ColumnLimit: 85
 AccessModifierOffset: -4
 BreakBeforeBraces: Attach
 MaxEmptyLinesToKeep: 2
@@ -14,7 +14,7 @@ PointerAlignment: Left
 BreakBeforeBinaryOperators: NonAssignment
 IncludeBlocks: Preserve
 ReflowComments: true
-AllowShortFunctionsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: true
