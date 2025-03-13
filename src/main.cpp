@@ -114,7 +114,7 @@ void setup() {
         [motor]() {
           motor->updateControl();  // Runs the PID loop and control logic
         },
-        2000);  // Increase interval from 1000μs to 2000μs
+        1000);  // Increase interval from 1000μs to 2000μs
                 // motor->getControlInterval());
 
     // Register motion profile updates (slightly lower priority)
@@ -122,7 +122,8 @@ void setup() {
         [motor]() {
           motor->updateTrajectory();  // Updates position/velocity profiles
         },
-        motor->getTrajectoryUpdateInterval());
+        2000);  // Double the interval
+                // motor->getTrajectoryUpdateInterval());
   }
 
   // Register system monitoring tasks

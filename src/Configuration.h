@@ -73,7 +73,7 @@
 #define CONFIG_MAX_ENCODERS         1
 #define CONFIG_DEFAULT_ACCELERATION 1000.0f   // steps/s²
 #define CONFIG_DEFAULT_DECELERATION 1000.0f   // steps/s²
-#define CONFIG_DEFAULT_MAX_VELOCITY 10000.0f  // steps/s
+#define CONFIG_DEFAULT_MAX_VELOCITY 10300.0f  // steps/s
 #define CONFIG_DEFAULT_MAX_JERK     10000.0f  // steps/s³
 #define CONFIG_MIN_STEP_INTERVAL_US 10        // Minimum 10us between steps
 

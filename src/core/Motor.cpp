@@ -135,7 +135,7 @@ bool Motor::isEnabled() const {
   return m_driver != nullptr && m_driver->isEnabled();
 }
 
-void Motor::updateControl() {
+void IRAM_ATTR Motor::updateControl() {
   // Check if motor is disabled
   if (m_controlMode == MotorControlMode::DISABLED_) {
     // return;
