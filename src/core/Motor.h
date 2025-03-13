@@ -2,8 +2,9 @@
  * ESP32 High-Precision Motion Control System
  * Motor Class
  *
- * Provides a high-level abstraction for motor control with position and velocity
- * control modes, utilizing closed-loop feedback from encoders.
+ * Provides a high-level abstraction for motor control with position
+ * and velocity control modes, utilizing closed-loop feedback from
+ * encoders.
  */
 
 #ifndef MOTOR_H
@@ -84,7 +85,7 @@ struct MotorState {
  * Motor class - abstracts motor control functionality
  */
 class Motor {
-   public:
+public:
     /**
      * Constructor
      *
@@ -179,7 +180,9 @@ class Motor {
      * @param acceleration Acceleration limit
      * @param jerk Jerk limit (if supported)
      */
-    void setTargetVelocityWithAccel(float velocity, float acceleration, float jerk = 0.0f);
+    void setTargetVelocityWithAccel(float velocity,
+                                    float acceleration,
+                                    float jerk = 0.0f);
 
     /**
      * Emergency stop
@@ -190,7 +193,8 @@ class Motor {
     /**
      * Start homing sequence
      *
-     * @param direction Direction to move during homing (1 = positive, -1 = negative)
+     * @param direction Direction to move during homing (1 = positive,
+     * -1 = negative)
      * @param velocity Homing velocity
      */
     void startHoming(int8_t direction, float velocity);
@@ -299,14 +303,14 @@ class Motor {
      *
      * @return Reference to PID controller
      */
-    PIDController& getPIDController();
+    PIDController* getPIDController();
 
     /**
      * Get encoder
      *
      * @return Reference to encoder
      */
-    Encoder& getEncoder();
+    Encoder* getEncoder();
 
     /**
      * Set soft limits
@@ -324,7 +328,9 @@ class Motor {
      * @param invertMax Whether to invert max limit logic
      * @param enable Whether to enable limit switches
      */
-    void setLimitSwitchConfig(bool invertMin, bool invertMax, bool enable = true);
+    void setLimitSwitchConfig(bool invertMin,
+                              bool invertMax,
+                              bool enable = true);
 
     /**
      * Get control interval in microseconds
@@ -352,22 +358,18 @@ class Motor {
      */
     MotorError checkErrors();
 
-   private:
+private:
     // Motor configuration
     MotorConfig m_config;
 
     bool m_invertEnable;  // Flag to invert enable pin logic
 
     // Motor components
-    Encoder           m_encoder;
-    PIDController     m_controller;
-    TrajectoryPlanner m_trajectoryPlanner;
-    DriverInterface*  m_driver;
-
-    /**
-     * Logger instance
-     */
-    Logger* m_logger;
+    Encoder*           m_encoder;
+    PIDController*     m_controller;
+    TrajectoryPlanner* m_trajectoryPlanner;
+    DriverInterface*   m_driver;
+    Logger*            m_logger;
 
     // Motor state
     MotorState       m_state;

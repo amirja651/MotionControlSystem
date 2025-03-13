@@ -7,20 +7,11 @@
 
 Motor::Motor(const MotorConfig& config, Logger* logger)
     : m_config(config),
-      m_encoder(
-          config.encoderAPin, config.encoderBPin, config.encoderPPR, config.invertEncoder, logger),
-      m_controller(config.pidKp,
-                   config.pidKi,
-                   config.pidKd,
-                   config.pidFf,
-                   1.0f / CONFIG_CONTROL_LOOP_FREQUENCY_HZ,
-                   logger),
-      m_trajectoryPlanner(config.maxVelocity,
-                          config.maxAcceleration,
-                          config.maxDeceleration,
-                          config.maxJerk,
-                          logger),
+      m_logger(logger),
+      m_encoder(nullptr),
       m_driver(nullptr),
+      m_trajectoryPlanner(nullptr),
+      m_controller(nullptr),
       m_controlMode(MotorControlMode::DISABLED_),
       m_controlIntervalUs(1000000 / CONFIG_CONTROL_LOOP_FREQUENCY_HZ),
       m_trajectoryIntervalUs(1000000 / CONFIG_TRAJECTORY_UPDATE_FREQUENCY_HZ),
@@ -37,8 +28,7 @@ Motor::Motor(const MotorConfig& config, Logger* logger)
       m_limitMaxState(false),
       m_lastControlUpdateUs(0),
       m_lastTrajectoryUpdateUs(0),
-      m_invertEnable(config.invertEnable),
-      m_logger(logger) {
+      m_invertEnable(config.invertEnable) {
     // Initialize motor state
     memset(&m_state, 0, sizeof(MotorState));
     m_state.status = MotorStatus::DISABLED_;
@@ -47,28 +37,34 @@ Motor::Motor(const MotorConfig& config, Logger* logger)
 
 bool Motor::initialize() {
     // Initialize encoder
-    if (!m_encoder.initialize()) {
-        if (m_logger) {
-            m_logger->logError("Failed to initialize encoder for motor " + String(m_config.index),
-                               LogModule::MOTOR_MANAGER);
-        }
+    m_encoder = new Encoder(m_config.encoderAPin,
+                            m_config.encoderBPin,
+                            m_config.encoderPPR,
+                            m_config.invertEncoder,
+                            m_config.index,
+                            m_logger);
+
+    if (!m_encoder->initialize()) {
+        m_logger->logError(
+            "Failed to initialize encoder for motor " + String(m_config.index),
+            LogModule::MOTOR);
         return false;
     }
 
     // Initialize driver
-    // For now, we'll use a stepper driver
     m_driver = new StepperDriver(m_config.stepPin,
                                  m_config.dirPin,
                                  m_config.enablePin,
                                  m_config.invertDirection,
                                  m_config.invertEnable,
+                                 m_config.index,
                                  m_logger);
 
-    // Check and configure the enable pin only if it's valid
-    if (m_config.enablePin != 0xFF && m_config.enablePin <= 39) {
-        pinMode(m_config.enablePin, OUTPUT);
-        digitalWrite(m_config.enablePin,
-                     m_invertEnable ? LOW : HIGH);  // Disable default
+    if (!m_driver->initialize()) {
+        m_logger->logError(
+            "Failed to initialize driver for motor " + String(m_config.index),
+            LogModule::MOTOR);
+        return false;
     }
 
     // Check and configure the limit pins only if they're valid
@@ -80,38 +76,25 @@ bool Motor::initialize() {
         pinMode(m_config.limitMaxPin, INPUT_PULLUP);
     }
 
-    if (!m_driver->initialize()) {
-        if (m_logger) {
-            m_logger->logError("Failed to initialize driver for motor " + String(m_config.index),
-                               LogModule::MOTOR_MANAGER);
-        }
-        return false;
-    }
-
+    m_trajectoryPlanner = new TrajectoryPlanner(m_config.maxVelocity,
+                                                m_config.maxAcceleration,
+                                                m_config.maxDeceleration,
+                                                m_config.maxJerk,
+                                                m_logger);
     // Initialize trajectory planner
-    m_trajectoryPlanner.initialize();
+    m_trajectoryPlanner->initialize();
 
+    m_controller = new PIDController(m_config.pidKp,
+                                     m_config.pidKi,
+                                     m_config.pidKd,
+                                     m_config.pidFf,
+                                     1.0f / CONFIG_CONTROL_LOOP_FREQUENCY_HZ,
+                                     m_logger);
     // Initialize PID controller
-    m_controller.initialize();
+    m_controller->initialize();
 
     // Configure limits
     setSoftLimits(m_softLimitMin, m_softLimitMax, m_softLimitsEnabled);
-
-    // Configure GPIO pins for limit switches if needed
-    GPIOManager* gpioManager = GPIOManager::getInstance(m_logger);
-    if (gpioManager != nullptr) {
-        if (m_config.limitMinPin != 0xFF && m_config.limitMinPin <= 39) {
-            gpioManager->allocatePin(m_config.limitMinPin,
-                                     PinMode::INPUT_PULLUP_PIN,
-                                     "Motor" + String(m_config.index) + "LimitMin");
-        }
-
-        if (m_config.limitMaxPin != 0xFF && m_config.limitMaxPin <= 39) {
-            gpioManager->allocatePin(m_config.limitMaxPin,
-                                     PinMode::INPUT_PULLUP_PIN,
-                                     "Motor" + String(m_config.index) + "LimitMax");
-        }
-    }
 
     // Read initial limit switch states
     readLimitSwitches();
@@ -119,10 +102,9 @@ bool Motor::initialize() {
     // Motor initialized, but disabled
     m_state.status = MotorStatus::IDLE;
 
-    if (m_logger) {
-        m_logger->logInfo("Motor " + String(m_config.index) + " initialized successfully",
-                          LogModule::MOTOR_MANAGER);
-    }
+    m_logger->logInfo(
+        "Motor " + String(m_config.index) + " initialized successfully",
+        LogModule::MOTOR);
 
     return true;
 }
@@ -130,13 +112,12 @@ bool Motor::initialize() {
 void Motor::enable() {
     if (m_driver != nullptr) {
         m_driver->enable();
-        m_controlMode  = MotorControlMode::POSITION;  // Default to position mode when enabled
+        m_controlMode = MotorControlMode::POSITION;  // Default to position
+                                                     // mode when enabled
         m_state.status = MotorStatus::IDLE;
 
-        if (m_logger) {
-            m_logger->logInfo("Motor " + String(m_config.index) + " enabled",
-                              LogModule::MOTOR_MANAGER);
-        }
+        m_logger->logInfo("Motor " + String(m_config.index) + " enabled",
+                          LogModule::MOTOR);
     }
 }
 
@@ -146,10 +127,8 @@ void Motor::disable() {
         m_controlMode  = MotorControlMode::DISABLED_;
         m_state.status = MotorStatus::DISABLED_;
 
-        if (m_logger) {
-            m_logger->logInfo("Motor " + String(m_config.index) + " disabled",
-                              LogModule::MOTOR_MANAGER);
-        }
+        m_logger->logInfo("Motor " + String(m_config.index) + " disabled",
+                          LogModule::MOTOR);
     }
 }
 
@@ -188,29 +167,21 @@ void Motor::updateControl() {
     readLimitSwitches();
 
     // Update encoder
-    if (m_logger) {
-        m_logger->logError("CALLING ENCODER UPDATE", LogModule::MOTOR_MANAGER);
-    }
-    m_encoder.update(deltaTimeUs);
+    m_logger->logError("CALLING ENCODER UPDATE", LogModule::MOTOR);
+    m_encoder->update(deltaTimeUs);
 
     // Update motor state
-    m_state.currentPosition     = m_encoder.getPosition();
-    m_state.currentVelocity     = m_encoder.getVelocity();
-    m_state.currentAcceleration = m_encoder.getAcceleration();
+    m_state.currentPosition     = m_encoder->getPosition();
+    m_state.currentVelocity     = m_encoder->getVelocity();
+    m_state.currentAcceleration = m_encoder->getAcceleration();
 
     // Process based on control mode
     switch (m_controlMode) {
-        case MotorControlMode::POSITION:
-            processPositionControl();
-            break;
+        case MotorControlMode::POSITION: processPositionControl(); break;
 
-        case MotorControlMode::VELOCITY:
-            processVelocityControl();
-            break;
+        case MotorControlMode::VELOCITY: processVelocityControl(); break;
 
-        case MotorControlMode::HOMING:
-            processHoming();
-            break;
+        case MotorControlMode::HOMING: processHoming(); break;
 
         default:
             // Nothing to do for other modes
@@ -224,17 +195,19 @@ void Motor::updateControl() {
     static uint32_t lastLogTime = 0;
     if (m_logger && (millis() - lastLogTime > 1000)) {  // Log every second
         lastLogTime = millis();
-        m_logger->logDebug("Motor " + String(m_config.index)
-                               + " state: " + "pos=" + String(m_state.currentPosition)
-                               + ", vel=" + String(m_state.currentVelocity)
-                               + ", mode=" + controlModeToString(m_controlMode)
-                               + ", status=" + motorStatusToString(m_state.status),
-                           LogModule::MOTOR_MANAGER);
+        m_logger->logDebug(
+            "Motor " + String(m_config.index)
+                + " state: " + "pos=" + String(m_state.currentPosition)
+                + ", vel=" + String(m_state.currentVelocity)
+                + ", mode=" + controlModeToString(m_controlMode)
+                + ", status=" + motorStatusToString(m_state.status),
+            LogModule::MOTOR);
     }
 }
 
 void Motor::updateTrajectory() {
-    // Existing implementation remains largely the same, but add logging...
+    // Existing implementation remains largely the same, but add
+    // logging...
 
     // Check if motor is disabled
     if (m_controlMode == MotorControlMode::DISABLED_) {
@@ -248,7 +221,8 @@ void Motor::updateTrajectory() {
     uint32_t deltaTimeUs;
     if (currentTimeUs < m_lastTrajectoryUpdateUs) {
         // Handle timer overflow
-        deltaTimeUs = (UINT32_MAX - m_lastTrajectoryUpdateUs) + currentTimeUs + 1;
+        deltaTimeUs =
+            (UINT32_MAX - m_lastTrajectoryUpdateUs) + currentTimeUs + 1;
     } else {
         deltaTimeUs = currentTimeUs - m_lastTrajectoryUpdateUs;
     }
@@ -262,54 +236,57 @@ void Motor::updateTrajectory() {
     m_lastTrajectoryUpdateUs = currentTimeUs;
 
     // Update trajectory
-    m_trajectoryPlanner.update(deltaTimeUs);
+    m_trajectoryPlanner->update(deltaTimeUs);
 
-    // If trajectory is complete and was in position mode, update the target position
-    if (m_trajectoryPlanner.isComplete() && m_controlMode == MotorControlMode::POSITION) {
-        m_state.targetPosition = static_cast<int32_t>(m_trajectoryPlanner.getCurrentPosition());
+    // If trajectory is complete and was in position mode, update the
+    // target position
+    if (m_trajectoryPlanner->isComplete()
+        && m_controlMode == MotorControlMode::POSITION) {
+        m_state.targetPosition =
+            static_cast<int32_t>(m_trajectoryPlanner->getCurrentPosition());
 
-        if (m_logger) {
-            m_logger->logDebug("Motor " + String(m_config.index)
-                                   + " trajectory complete, target position set to "
-                                   + String(m_state.targetPosition),
-                               LogModule::MOTOR_MANAGER);
-        }
+        m_logger->logDebug(
+            "Motor " + String(m_config.index)
+                + " trajectory complete, target position set to "
+                + String(m_state.targetPosition),
+            LogModule::MOTOR);
     }
 }
 
 void Motor::setControlMode(MotorControlMode mode) {
     // Don't change mode if disabled
-    if (m_controlMode == MotorControlMode::DISABLED_ && mode != MotorControlMode::DISABLED_) {
+    if (m_controlMode == MotorControlMode::DISABLED_
+        && mode != MotorControlMode::DISABLED_) {
         enable();
     }
 
-    if (m_logger) {
-        m_logger->logInfo("Motor " + String(m_config.index) + " control mode changed from "
-                              + controlModeToString(m_controlMode) + " to "
-                              + controlModeToString(mode),
-                          LogModule::MOTOR_MANAGER);
-    }
+    m_logger->logInfo("Motor " + String(m_config.index)
+                          + " control mode changed from "
+                          + controlModeToString(m_controlMode) + " to "
+                          + controlModeToString(mode),
+                      LogModule::MOTOR);
 
     // Set new mode
     m_controlMode = mode;
 
     // Reset controller when changing modes
-    m_controller.reset();
+    m_controller->reset();
 }
 
-// Continue with similar changes to all methods, adding appropriate logging...
+// Continue with similar changes to all methods, adding appropriate
+// logging...
 
-// For larger methods like setTargetPosition, moveToPosition, etc., add logging at key points
+// For larger methods like setTargetPosition, moveToPosition, etc.,
+// add logging at key points
 
 void Motor::setTargetPosition(int32_t position) {
     // Check if within soft limits
     if (m_softLimitsEnabled && !isWithinSoftLimits(position)) {
-        if (m_logger) {
-            m_logger->logWarning("Motor " + String(m_config.index) + " target position "
-                                     + String(position) + " outside soft limits ["
-                                     + String(m_softLimitMin) + ", " + String(m_softLimitMax) + "]",
-                                 LogModule::MOTOR_MANAGER);
-        }
+        m_logger->logWarning(
+            "Motor " + String(m_config.index) + " target position "
+                + String(position) + " outside soft limits ["
+                + String(m_softLimitMin) + ", " + String(m_softLimitMax) + "]",
+            LogModule::MOTOR);
         return;
     }
 
@@ -320,35 +297,36 @@ void Motor::setTargetPosition(int32_t position) {
     setControlMode(MotorControlMode::POSITION);
 
     // Plan trajectory
-    m_trajectoryPlanner.planPositionMove(m_state.currentPosition,
-                                         position,
-                                         m_state.currentVelocity,
-                                         m_config.maxVelocity,
-                                         m_config.maxAcceleration,
-                                         m_config.maxDeceleration,
-                                         m_config.maxJerk);
+    m_trajectoryPlanner->planPositionMove(m_state.currentPosition,
+                                          position,
+                                          m_state.currentVelocity,
+                                          m_config.maxVelocity,
+                                          m_config.maxAcceleration,
+                                          m_config.maxDeceleration,
+                                          m_config.maxJerk);
 
     // Update state
     m_state.status = MotorStatus::MOVING;
 
-    if (m_logger) {
-        m_logger->logInfo("Motor " + String(m_config.index) + " target position set to "
-                              + String(position) + " (current: " + String(m_state.currentPosition)
-                              + ")",
-                          LogModule::MOTOR_MANAGER);
-    }
+    m_logger->logInfo("Motor " + String(m_config.index)
+                          + " target position set to " + String(position)
+                          + " (current: " + String(m_state.currentPosition)
+                          + ")",
+                      LogModule::MOTOR);
 }
 
-void Motor::moveToPosition(
-    int32_t position, float maxVelocity, float acceleration, float deceleration, float jerk) {
+void Motor::moveToPosition(int32_t position,
+                           float   maxVelocity,
+                           float   acceleration,
+                           float   deceleration,
+                           float   jerk) {
     // Check if within soft limits
     if (m_softLimitsEnabled && !isWithinSoftLimits(position)) {
-        if (m_logger) {
-            m_logger->logWarning("Motor " + String(m_config.index) + " target position "
-                                     + String(position) + " outside soft limits ["
-                                     + String(m_softLimitMin) + ", " + String(m_softLimitMax) + "]",
-                                 LogModule::MOTOR_MANAGER);
-        }
+        m_logger->logWarning(
+            "Motor " + String(m_config.index) + " target position "
+                + String(position) + " outside soft limits ["
+                + String(m_softLimitMin) + ", " + String(m_softLimitMax) + "]",
+            LogModule::MOTOR);
         return;
     }
 
@@ -359,25 +337,29 @@ void Motor::moveToPosition(
     setControlMode(MotorControlMode::POSITION);
 
     // Plan trajectory
-    m_trajectoryPlanner.planPositionMove(m_state.currentPosition,
-                                         position,
-                                         m_state.currentVelocity,
-                                         maxVelocity > 0 ? maxVelocity : m_config.maxVelocity,
-                                         acceleration > 0 ? acceleration : m_config.maxAcceleration,
-                                         deceleration > 0 ? deceleration : m_config.maxDeceleration,
-                                         jerk > 0 ? jerk : m_config.maxJerk);
+    m_trajectoryPlanner->planPositionMove(
+        m_state.currentPosition,
+        position,
+        m_state.currentVelocity,
+        maxVelocity > 0 ? maxVelocity : m_config.maxVelocity,
+        acceleration > 0 ? acceleration : m_config.maxAcceleration,
+        deceleration > 0 ? deceleration : m_config.maxDeceleration,
+        jerk > 0 ? jerk : m_config.maxJerk);
 
     // Update state
     m_state.status = MotorStatus::MOVING;
 
-    if (m_logger) {
-        m_logger->logInfo(
-            "Motor " + String(m_config.index) + " moving to position " + String(position)
-                + " with v_max=" + String(maxVelocity > 0 ? maxVelocity : m_config.maxVelocity)
-                + ", a=" + String(acceleration > 0 ? acceleration : m_config.maxAcceleration)
-                + ", d=" + String(deceleration > 0 ? deceleration : m_config.maxDeceleration),
-            LogModule::MOTOR_MANAGER);
-    }
+    m_logger->logInfo(
+        "Motor " + String(m_config.index) + " moving to position "
+            + String(position) + " with v_max="
+            + String(maxVelocity > 0 ? maxVelocity : m_config.maxVelocity)
+            + ", a="
+            + String(acceleration > 0 ? acceleration
+                                      : m_config.maxAcceleration)
+            + ", d="
+            + String(deceleration > 0 ? deceleration
+                                      : m_config.maxDeceleration),
+        LogModule::MOTOR);
 }
 
 void Motor::emergencyStop() {
@@ -385,13 +367,13 @@ void Motor::emergencyStop() {
     m_emergencyStopActive = true;
 
     // Stop trajectory
-    m_trajectoryPlanner.reset();
+    m_trajectoryPlanner->reset();
 
     // Set target velocity to zero
     m_state.targetVelocity = 0.0f;
 
     // Reset controller
-    m_controller.reset();
+    m_controller->reset();
 
     // Send stop command to driver
     if (m_driver != nullptr) {
@@ -402,100 +384,73 @@ void Motor::emergencyStop() {
     // Update state
     m_state.status = MotorStatus::IDLE;
 
-    if (m_logger) {
-        m_logger->logError("Motor " + String(m_config.index) + " emergency stop",
-                           LogModule::MOTOR_MANAGER);
-    }
+    m_logger->logError("Motor " + String(m_config.index) + " emergency stop",
+                       LogModule::MOTOR);
 }
 
 void Motor::abort() {
     // Stop trajectory with normal deceleration
-    m_trajectoryPlanner.reset();
+    m_trajectoryPlanner->reset();
 
     // Set target velocity to zero
     m_state.targetVelocity = 0.0f;
 
     // Plan deceleration trajectory
-    m_trajectoryPlanner.planVelocityMove(
-        m_state.currentVelocity, 0.0f, m_config.maxDeceleration, m_config.maxJerk);
+    m_trajectoryPlanner->planVelocityMove(m_state.currentVelocity,
+                                          0.0f,
+                                          m_config.maxDeceleration,
+                                          m_config.maxJerk);
 
     // Update state
     m_state.status = MotorStatus::MOVING;
 
-    if (m_logger) {
-        m_logger->logInfo("Motor " + String(m_config.index) + " abort requested",
-                          LogModule::MOTOR_MANAGER);
-    }
+    m_logger->logInfo("Motor " + String(m_config.index) + " abort requested",
+                      LogModule::MOTOR);
 }
 
 // Add the utility methods for converting enums to strings
 
 String Motor::controlModeToString(MotorControlMode mode) const {
     switch (mode) {
-        case MotorControlMode::DISABLED_:
-            return "DISABLED";
-        case MotorControlMode::OPEN_LOOP:
-            return "OPEN_LOOP";
-        case MotorControlMode::POSITION:
-            return "POSITION";
-        case MotorControlMode::VELOCITY:
-            return "VELOCITY";
-        case MotorControlMode::TORQUE:
-            return "TORQUE";
-        case MotorControlMode::HOMING:
-            return "HOMING";
-        default:
-            return "UNKNOWN";
+        case MotorControlMode::DISABLED_: return "DISABLED";
+        case MotorControlMode::OPEN_LOOP: return "OPEN_LOOP";
+        case MotorControlMode::POSITION: return "POSITION";
+        case MotorControlMode::VELOCITY: return "VELOCITY";
+        case MotorControlMode::TORQUE: return "TORQUE";
+        case MotorControlMode::HOMING: return "HOMING";
+        default: return "UNKNOWN";
     }
 }
 
 String Motor::motorStatusToString(MotorStatus status) const {
     switch (status) {
-        case MotorStatus::IDLE:
-            return "IDLE";
-        case MotorStatus::MOVING:
-            return "MOVING";
-        case MotorStatus::HOMING:
-            return "HOMING";
-        case MotorStatus::HOLDING:
-            return "HOLDING";
-        case MotorStatus::ERROR:
-            return "ERROR";
-        case MotorStatus::DISABLED_:
-            return "DISABLED";
-        default:
-            return "UNKNOWN";
+        case MotorStatus::IDLE: return "IDLE";
+        case MotorStatus::MOVING: return "MOVING";
+        case MotorStatus::HOMING: return "HOMING";
+        case MotorStatus::HOLDING: return "HOLDING";
+        case MotorStatus::ERROR: return "ERROR";
+        case MotorStatus::DISABLED_: return "DISABLED";
+        default: return "UNKNOWN";
     }
 }
 
 String Motor::motorErrorToString(MotorError error) const {
     switch (error) {
-        case MotorError::NONE:
-            return "NONE";
-        case MotorError::POSITION_ERROR:
-            return "POSITION_ERROR";
-        case MotorError::VELOCITY_ERROR:
-            return "VELOCITY_ERROR";
+        case MotorError::NONE: return "NONE";
+        case MotorError::POSITION_ERROR: return "POSITION_ERROR";
+        case MotorError::VELOCITY_ERROR: return "VELOCITY_ERROR";
         case MotorError::LIMIT_SWITCH_TRIGGERED:
             return "LIMIT_SWITCH_TRIGGERED";
-        case MotorError::DRIVER_FAULT:
-            return "DRIVER_FAULT";
-        case MotorError::ENCODER_ERROR:
-            return "ENCODER_ERROR";
-        case MotorError::TIMEOUT:
-            return "TIMEOUT";
-        case MotorError::TRAJECTORY_ERROR:
-            return "TRAJECTORY_ERROR";
-        case MotorError::GENERAL_ERROR:
-            return "GENERAL_ERROR";
-        default:
-            return "UNKNOWN";
+        case MotorError::DRIVER_FAULT: return "DRIVER_FAULT";
+        case MotorError::ENCODER_ERROR: return "ENCODER_ERROR";
+        case MotorError::TIMEOUT: return "TIMEOUT";
+        case MotorError::TRAJECTORY_ERROR: return "TRAJECTORY_ERROR";
+        case MotorError::GENERAL_ERROR: return "GENERAL_ERROR";
+        default: return "UNKNOWN";
     }
 }
 
-MotorControlMode Motor::getControlMode() const {
-    return m_controlMode;
-}
+MotorControlMode Motor::getControlMode() const { return m_controlMode; }
 
 void Motor::setTargetVelocity(float velocity) {
     // Set target velocity
@@ -514,7 +469,9 @@ void Motor::setTargetVelocity(float velocity) {
     }
 }
 
-void Motor::setTargetVelocityWithAccel(float velocity, float acceleration, float jerk) {
+void Motor::setTargetVelocityWithAccel(float velocity,
+                                       float acceleration,
+                                       float jerk) {
     // Set target velocity
     m_state.targetVelocity = velocity;
 
@@ -522,10 +479,11 @@ void Motor::setTargetVelocityWithAccel(float velocity, float acceleration, float
     setControlMode(MotorControlMode::VELOCITY);
 
     // Plan velocity trajectory
-    m_trajectoryPlanner.planVelocityMove(m_state.currentVelocity,
-                                         velocity,
-                                         acceleration > 0 ? acceleration : m_config.maxAcceleration,
-                                         jerk > 0 ? jerk : m_config.maxJerk);
+    m_trajectoryPlanner->planVelocityMove(
+        m_state.currentVelocity,
+        velocity,
+        acceleration > 0 ? acceleration : m_config.maxAcceleration,
+        jerk > 0 ? jerk : m_config.maxJerk);
 
     // Update state
     if (velocity != 0.0f) {
@@ -551,69 +509,51 @@ void Motor::startHoming(int8_t direction, float velocity) {
     m_state.status  = MotorStatus::HOMING;
 }
 
-const MotorState& Motor::getState() const {
-    return m_state;
-}
+const MotorState& Motor::getState() const { return m_state; }
 
-uint8_t Motor::getIndex() const {
-    return m_config.index;
-}
+uint8_t Motor::getIndex() const { return m_config.index; }
 
-int32_t Motor::getCurrentPosition() const {
-    return m_state.currentPosition;
-}
+int32_t Motor::getCurrentPosition() const { return m_state.currentPosition; }
 
-float Motor::getCurrentVelocity() const {
-    return m_state.currentVelocity;
-}
+float Motor::getCurrentVelocity() const { return m_state.currentVelocity; }
 
-int32_t Motor::getTargetPosition() const {
-    return m_state.targetPosition;
-}
+int32_t Motor::getTargetPosition() const { return m_state.targetPosition; }
 
-float Motor::getTargetVelocity() const {
-    return m_state.targetVelocity;
-}
+float Motor::getTargetVelocity() const { return m_state.targetVelocity; }
 
-bool Motor::isMoving() const {
-    return m_state.status == MotorStatus::MOVING;
-}
+bool Motor::isMoving() const { return m_state.status == MotorStatus::MOVING; }
 
 bool Motor::isPositionReached() const {
-    return fabs(m_state.currentPosition - m_state.targetPosition) <= m_positionTolerance;
+    return fabs(m_state.currentPosition - m_state.targetPosition)
+           <= m_positionTolerance;
 }
 
 bool Motor::isVelocityReached() const {
-    return fabs(m_state.currentVelocity - m_state.targetVelocity) <= m_velocityTolerance;
+    return fabs(m_state.currentVelocity - m_state.targetVelocity)
+           <= m_velocityTolerance;
 }
 
-bool Motor::isHomed() const {
-    return m_state.isHomed;
-}
+bool Motor::isHomed() const { return m_state.isHomed; }
 
 void Motor::resetPosition() {
-    m_encoder.reset();
+    m_encoder->reset();
     m_state.currentPosition = 0;
     m_state.targetPosition  = 0;
 }
 
 void Motor::setPosition(int32_t position) {
-    m_encoder.setPosition(position);
+    m_encoder->setPosition(position);
     m_state.currentPosition = position;
     m_state.targetPosition  = position;
 }
 
 void Motor::setPIDParameters(float kp, float ki, float kd, float ff) {
-    m_controller.setGains(kp, ki, kd, ff);
+    m_controller->setGains(kp, ki, kd, ff);
 }
 
-PIDController& Motor::getPIDController() {
-    return m_controller;
-}
+PIDController* Motor::getPIDController() { return m_controller; }
 
-Encoder& Motor::getEncoder() {
-    return m_encoder;
-}
+Encoder* Motor::getEncoder() { return m_encoder; }
 
 void Motor::setSoftLimits(int32_t min, int32_t max, bool enable) {
     m_softLimitMin      = min;
@@ -627,17 +567,13 @@ void Motor::setLimitSwitchConfig(bool invertMin, bool invertMax, bool enable) {
     m_limitSwitchesEnabled = enable;
 }
 
-uint32_t Motor::getControlInterval() const {
-    return m_controlIntervalUs;
-}
+uint32_t Motor::getControlInterval() const { return m_controlIntervalUs; }
 
 uint32_t Motor::getTrajectoryUpdateInterval() const {
     return m_trajectoryIntervalUs;
 }
 
-void Motor::clearError() {
-    m_state.error = MotorError::NONE;
-}
+void Motor::clearError() { m_state.error = MotorError::NONE; }
 
 MotorError Motor::checkErrors() {
     // Check for position error
@@ -733,10 +669,10 @@ void Motor::processPositionControl() {
     float targetPosition;
     float targetVelocity;
 
-    if (!m_trajectoryPlanner.isComplete()) {
+    if (!m_trajectoryPlanner->isComplete()) {
         // Get position and velocity from trajectory
-        targetPosition = m_trajectoryPlanner.getCurrentPosition();
-        targetVelocity = m_trajectoryPlanner.getCurrentVelocity();
+        targetPosition = m_trajectoryPlanner->getCurrentPosition();
+        targetVelocity = m_trajectoryPlanner->getCurrentVelocity();
     } else {
         // Use direct target position
         targetPosition = static_cast<float>(m_state.targetPosition);
@@ -744,9 +680,10 @@ void Motor::processPositionControl() {
     }
 
     // Perform PID control for position
-    float controlOutput = m_controller.compute(targetPosition,
-                                               static_cast<float>(m_state.currentPosition),
-                                               targetVelocity  // Feed-forward with target velocity
+    float controlOutput = m_controller->compute(
+        targetPosition,
+        static_cast<float>(m_state.currentPosition),
+        targetVelocity  // Feed-forward with target velocity
     );
 
     // Apply control output to motor
@@ -758,10 +695,10 @@ void Motor::processVelocityControl() {
     float targetVelocity;
     float targetAcceleration;
 
-    if (!m_trajectoryPlanner.isComplete()) {
+    if (!m_trajectoryPlanner->isComplete()) {
         // Get velocity and acceleration from trajectory
-        targetVelocity     = m_trajectoryPlanner.getCurrentVelocity();
-        targetAcceleration = m_trajectoryPlanner.getCurrentAcceleration();
+        targetVelocity     = m_trajectoryPlanner->getCurrentVelocity();
+        targetAcceleration = m_trajectoryPlanner->getCurrentAcceleration();
     } else {
         // Use direct target velocity
         targetVelocity     = m_state.targetVelocity;
@@ -769,11 +706,11 @@ void Motor::processVelocityControl() {
     }
 
     // Perform PID control for velocity
-    float controlOutput =
-        m_controller.compute(targetVelocity,
-                             m_state.currentVelocity,
-                             targetAcceleration  // Feed-forward with target acceleration
-        );
+    float controlOutput = m_controller->compute(
+        targetVelocity,
+        m_state.currentVelocity,
+        targetAcceleration  // Feed-forward with target acceleration
+    );
 
     // Apply control output to motor
     applyControlOutput(controlOutput);
@@ -815,9 +752,9 @@ void Motor::processHoming() {
         m_state.status = MotorStatus::IDLE;
     } else {
         // Continue homing - use velocity control
-        float controlOutput = m_controller.compute(m_state.targetVelocity,
-                                                   m_state.currentVelocity,
-                                                   0.0f  // No feed-forward
+        float controlOutput = m_controller->compute(m_state.targetVelocity,
+                                                    m_state.currentVelocity,
+                                                    0.0f  // No feed-forward
         );
 
         // Apply control output to motor
@@ -830,7 +767,8 @@ void Motor::updateMotorState() {
     if (m_state.status == MotorStatus::MOVING) {
         // Check if we've reached the target
         if (m_controlMode == MotorControlMode::POSITION) {
-            if (isPositionReached() && fabs(m_state.currentVelocity) < m_velocityTolerance) {
+            if (isPositionReached()
+                && fabs(m_state.currentVelocity) < m_velocityTolerance) {
                 m_state.status = MotorStatus::IDLE;
             }
         } else if (m_controlMode == MotorControlMode::VELOCITY) {
@@ -857,11 +795,11 @@ void Motor::setError(MotorError error) {
 
 void Motor::updateSensors(uint32_t deltaTimeUs) {
     // Update encoder
-    m_encoder.update(deltaTimeUs);
+    m_encoder->update(deltaTimeUs);
 
     // Update motor state with encoder data
-    m_state.currentPosition     = m_encoder.getPosition();
-    m_state.currentVelocity     = m_encoder.getVelocity();
-    m_state.currentAcceleration = m_encoder.getAcceleration();
+    m_state.currentPosition     = m_encoder->getPosition();
+    m_state.currentVelocity     = m_encoder->getVelocity();
+    m_state.currentAcceleration = m_encoder->getAcceleration();
 }
 // End of Code

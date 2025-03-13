@@ -19,7 +19,8 @@
 /**
  * Motor Manager Class
  *
- * Central management of multiple motors with coordination capabilities
+ * Central management of multiple motors with coordination
+ * capabilities
  */
 class MotorManager {
    public:
@@ -29,23 +30,26 @@ class MotorManager {
      * @param maxMotors Maximum number of motors to manage
      * @param logger Pointer to the logger instance
      */
-    MotorManager(uint8_t maxMotors = CONFIG_MAX_MOTORS, Logger* logger = nullptr);
+    MotorManager(uint8_t        maxMotors     = CONFIG_MAX_MOTORS,
+                 EEPROMManager* eepromManager = nullptr,
+                 Logger*        logger        = nullptr);
 
-    // In the existing class implementation, update log calls to use the module-specific logger:
+    // In the existing class implementation, update log calls to use
+    // the module-specific logger:
 
     // Example (these would be in MotorManager.cpp):
     // From:
-    // m_logger->logInfo("Motor Manager created with " + String(m_maxMotors) + " motors capacity");
-    // To:
-    // m_logger->logInfo("Motor Manager created with " + String(m_maxMotors) + " motors capacity",
+    // m_logger->logInfo("Motor Manager created with " +
+    // String(m_maxMotors) + " motors capacity"); To:
+    // m_logger->logInfo("Motor Manager created with " +
+    // String(m_maxMotors) + " motors capacity",
     // LogModule::MOTOR_MANAGER);
 
     // Another example:
     // From:
-    // m_logger->logError("Cannot add motor: maximum motor count reached");
-    // To:
-    // m_logger->logError("Cannot add motor: maximum motor count reached",
-    // LogModule::MOTOR_MANAGER);
+    // m_logger->logError("Cannot add motor: maximum motor count
+    // reached"); To: m_logger->logError("Cannot add motor: maximum
+    // motor count reached", LogModule::MOTOR_MANAGER);
 
     /**
      * Destructor
@@ -66,6 +70,34 @@ class MotorManager {
      * @return True if motor added successfully, false otherwise
      */
     bool addMotor(const MotorConfig& config);
+
+    /**
+     * Allocate a GPIO pin for a motor
+     *
+     * @param pin Pin number to allocate
+     * @param mode Pin mode (input/output)
+     * @param owner Owner of the pin
+     * @param errStr Error string for logging
+     * @return True if pin allocated successfully, false otherwise
+     */
+    bool gpioAllocatePin(uint8_t       pin,
+                         uint8_t       index,
+                         PinMode       mode,
+                         const String& owner,
+                         const String& errStr,
+                         GPIOManager*  gpioManager);
+
+    /**
+     * Validate pin numbers for a motor configuration
+     *
+     * @param pin Pin number to validate
+     * @param index Motor index
+     * @param errStr Error string for logging
+     * @return True if pin is valid, false otherwise
+     */
+    bool ValidatePinNumbers(uint8_t       pin,
+                            uint8_t       index,
+                            const String& errStr);
 
     /**
      * Get a motor by index
@@ -138,7 +170,8 @@ class MotorManager {
      * @param motorCount Number of motors to check
      * @return True if all motors have completed, false otherwise
      */
-    bool areMotorsIdle(const uint8_t* motorIndices, uint8_t motorCount);
+    bool areMotorsIdle(const uint8_t* motorIndices,
+                       uint8_t        motorCount);
 
     /**
      * Calculate synchronized motion profile for multiple motors
@@ -149,7 +182,8 @@ class MotorManager {
      * @param maxVelocity Maximum velocity
      * @param acceleration Acceleration rate
      * @param deceleration Deceleration rate
-     * @return Duration of the synchronized move in seconds, or 0.0 if failed
+     * @return Duration of the synchronized move in seconds, or 0.0 if
+     * failed
      */
     float calculateSynchronizedMove(const int32_t* positions,
                                     const uint8_t* motorIndices,
@@ -186,7 +220,7 @@ class MotorManager {
     uint8_t m_motorCount;
 
     // EEPROM manager for parameter storage
-    EEPROMManager m_eepromManager;
+    EEPROMManager* m_eepromManager;
 
     // Logger instance
     Logger* m_logger;

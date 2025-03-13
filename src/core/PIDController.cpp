@@ -10,6 +10,8 @@ PIDController::PIDController(float kp, float ki, float kd, float ff, float dt, L
       m_ki(ki),
       m_kd(kd),
       m_ff(ff),
+      m_dtSeconds(dt),
+      m_logger(logger),
       m_adaptiveGainsEnabled(false),
       m_adaptiveErrorThreshold(100.0f),
       m_adaptiveRate(0.1f),
@@ -20,7 +22,6 @@ PIDController::PIDController(float kp, float ki, float kd, float ff, float dt, L
       m_integralTerm(0.0f),
       m_lastProcessVariable(0.0f),
       m_filteredDerivative(0.0f),
-      m_dtSeconds(dt),
       m_proportionalTerm(0.0f),
       m_derivativeTerm(0.0f),
       m_feedForwardTerm(0.0f),
@@ -28,20 +29,17 @@ PIDController::PIDController(float kp, float ki, float kd, float ff, float dt, L
       m_derivativeFilterAlpha(CONFIG_PID_DERIVATIVE_FILTER_ALPHA),
       m_minOutput(-CONFIG_PID_OUTPUT_LIMIT),
       m_maxOutput(CONFIG_PID_OUTPUT_LIMIT),
-      m_antiWindupLimit(CONFIG_PID_ANTI_WINDUP_LIMIT),
-      m_logger(logger) {
+      m_antiWindupLimit(CONFIG_PID_ANTI_WINDUP_LIMIT) {
     initialize();
 }
 
 void PIDController::initialize() {
     reset();
 
-    if (m_logger) {
-        m_logger->logInfo(String("PID controller initialized with gains: ") + "Kp=" + String(m_kp)
-                              + ", Ki=" + String(m_ki) + ", Kd=" + String(m_kd)
-                              + ", Ff=" + String(m_ff) + ", dt=" + String(m_dtSeconds) + "s",
-                          LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo(String("PID controller initialized with gains: ") + "Kp=" + String(m_kp)
+                          + ", Ki=" + String(m_ki) + ", Kd=" + String(m_kd) + ", Ff=" + String(m_ff)
+                          + ", dt=" + String(m_dtSeconds) + "s",
+                      LogModule::PID_CONTROLLER);
 }
 
 void PIDController::reset() {
@@ -55,9 +53,7 @@ void PIDController::reset() {
     m_lastOutput          = 0.0f;
     m_errorBuffer.clear();
 
-    if (m_logger) {
-        m_logger->logDebug("PID controller reset", LogModule::PID_CONTROLLER);
-    }
+    m_logger->logDebug("PID controller reset", LogModule::PID_CONTROLLER);
 }
 
 float PIDController::compute(float setpoint, float processVariable, float feedforwardValue) {
@@ -136,46 +132,36 @@ void PIDController::setGains(float kp, float ki, float kd, float ff) {
     m_kiBase = ki;
     m_kdBase = kd;
 
-    if (m_logger) {
-        m_logger->logInfo("PID gains set: Kp=" + String(kp) + ", Ki=" + String(ki)
-                              + ", Kd=" + String(kd) + ", Ff=" + String(ff),
-                          LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("PID gains set: Kp=" + String(kp) + ", Ki=" + String(ki)
+                          + ", Kd=" + String(kd) + ", Ff=" + String(ff),
+                      LogModule::PID_CONTROLLER);
 }
 
 void PIDController::setKp(float kp) {
     m_kp     = kp;
     m_kpBase = kp;
 
-    if (m_logger) {
-        m_logger->logInfo("PID Kp set to " + String(kp), LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("PID Kp set to " + String(kp), LogModule::PID_CONTROLLER);
 }
 
 void PIDController::setKi(float ki) {
     m_ki     = ki;
     m_kiBase = ki;
 
-    if (m_logger) {
-        m_logger->logInfo("PID Ki set to " + String(ki), LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("PID Ki set to " + String(ki), LogModule::PID_CONTROLLER);
 }
 
 void PIDController::setKd(float kd) {
     m_kd     = kd;
     m_kdBase = kd;
 
-    if (m_logger) {
-        m_logger->logInfo("PID Kd set to " + String(kd), LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("PID Kd set to " + String(kd), LogModule::PID_CONTROLLER);
 }
 
 void PIDController::setFf(float ff) {
     m_ff = ff;
 
-    if (m_logger) {
-        m_logger->logInfo("PID Ff set to " + String(ff), LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("PID Ff set to " + String(ff), LogModule::PID_CONTROLLER);
 }
 
 void PIDController::setOutputLimits(float min, float max) {
@@ -183,11 +169,9 @@ void PIDController::setOutputLimits(float min, float max) {
         m_minOutput = min;
         m_maxOutput = max;
 
-        if (m_logger) {
-            m_logger->logInfo("PID output limits set: min=" + String(min) + ", max=" + String(max),
-                              LogModule::PID_CONTROLLER);
-        }
-    } else if (m_logger) {
+        m_logger->logInfo("PID output limits set: min=" + String(min) + ", max=" + String(max),
+                          LogModule::PID_CONTROLLER);
+    } else {
         m_logger->logError("Invalid output limits: min must be less than max",
                            LogModule::PID_CONTROLLER);
     }
@@ -196,19 +180,15 @@ void PIDController::setOutputLimits(float min, float max) {
 void PIDController::setAntiWindupLimits(float limit) {
     m_antiWindupLimit = limit > 0.0f ? limit : 0.0f;
 
-    if (m_logger) {
-        m_logger->logInfo("PID anti-windup limit set to " + String(m_antiWindupLimit),
-                          LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("PID anti-windup limit set to " + String(m_antiWindupLimit),
+                      LogModule::PID_CONTROLLER);
 }
 
 void PIDController::setDerivativeFilterAlpha(float alpha) {
     m_derivativeFilterAlpha = MathUtils::constrainValue(alpha, 0.0f, 1.0f);
 
-    if (m_logger) {
-        m_logger->logInfo("PID derivative filter alpha set to " + String(m_derivativeFilterAlpha),
-                          LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("PID derivative filter alpha set to " + String(m_derivativeFilterAlpha),
+                      LogModule::PID_CONTROLLER);
 }
 
 void PIDController::enableAdaptiveGains(bool enable) {
@@ -221,22 +201,18 @@ void PIDController::enableAdaptiveGains(bool enable) {
         m_kd = m_kdBase;
     }
 
-    if (m_logger) {
-        m_logger->logInfo("PID adaptive gains " + String(enable ? "enabled" : "disabled"),
-                          LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("PID adaptive gains " + String(enable ? "enabled" : "disabled"),
+                      LogModule::PID_CONTROLLER);
 }
 
 void PIDController::setAdaptiveGainParameters(float errorThreshold, float adaptationRate) {
     m_adaptiveErrorThreshold = errorThreshold > 0.0f ? errorThreshold : 1.0f;
     m_adaptiveRate           = MathUtils::constrainValue(adaptationRate, 0.0f, 1.0f);
 
-    if (m_logger) {
-        m_logger->logInfo(
-            "PID adaptive gain parameters set: errorThreshold=" + String(m_adaptiveErrorThreshold)
-                + ", adaptationRate=" + String(m_adaptiveRate),
-            LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo(
+        "PID adaptive gain parameters set: errorThreshold=" + String(m_adaptiveErrorThreshold)
+            + ", adaptationRate=" + String(m_adaptiveRate),
+        LogModule::PID_CONTROLLER);
 }
 
 float PIDController::getProportionalTerm() const {
@@ -301,11 +277,9 @@ void PIDController::applyAntiWindup() {
     // Check if integral term exceeds limits
     if (m_integralTerm > m_antiWindupLimit || m_integralTerm < -m_antiWindupLimit) {
         // Log anti-windup activation
-        if (m_logger) {
-            m_logger->logDebug("PID anti-windup activated: integralTerm=" + String(m_integralTerm)
-                                   + " constrained to +/-" + String(m_antiWindupLimit),
-                               LogModule::PID_CONTROLLER);
-        }
+        m_logger->logDebug("PID anti-windup activated: integralTerm=" + String(m_integralTerm)
+                               + " constrained to +/-" + String(m_antiWindupLimit),
+                           LogModule::PID_CONTROLLER);
     }
 
     // Clamp integral term to prevent windup
@@ -317,11 +291,9 @@ float PIDController::applyOutputLimits(float output) {
     // Check if output exceeds limits
     if (output > m_maxOutput || output < m_minOutput) {
         // Log output limiting
-        if (m_logger) {
-            m_logger->logDebug("PID output limited: " + String(output) + " constrained to ["
-                                   + String(m_minOutput) + ", " + String(m_maxOutput) + "]",
-                               LogModule::PID_CONTROLLER);
-        }
+        m_logger->logDebug("PID output limited: " + String(output) + " constrained to ["
+                               + String(m_minOutput) + ", " + String(m_maxOutput) + "]",
+                           LogModule::PID_CONTROLLER);
     }
 
     // Clamp output to min/max limits

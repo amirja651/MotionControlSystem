@@ -17,12 +17,7 @@
 #include "utils/TaskScheduler.h"
 
 // System components
-SystemManager  systemManager;
-Logger         logger;
-MotorManager   motorManager(CONFIG_MAX_MOTORS, &logger);
-TaskScheduler  taskScheduler;
-SerialCommand  serialCommand;
-StatusReporter statusReporter(&systemManager, CONFIG_STATUS_UPDATE_FREQUENCY_HZ);
+SystemManager systemManager;
 
 // Core 0 task handle
 TaskHandle_t auxiliaryTaskHandle = NULL;
@@ -37,8 +32,8 @@ TaskHandle_t auxiliaryTaskHandle = NULL;
  */
 void auxiliaryTask(void *parameter) {
     // Initialize auxiliary systems
-    serialCommand.begin();
-    statusReporter.begin();
+    systemManager.getSerialCommand()->begin();
+    systemManager.getStatusReporter()->begin();
 
     TickType_t       xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency    = pdMS_TO_TICKS(10);  // 100Hz update rate for non-critical tasks
@@ -46,16 +41,16 @@ void auxiliaryTask(void *parameter) {
     // Main auxiliary task loop
     while (true) {
         // Process incoming commands with priority
-        serialCommand.processCommands();
+        systemManager.getSerialCommand()->processCommands();
 
         // Execute scheduled auxiliary tasks
-        taskScheduler.executeAuxiliaryTasks();
+        systemManager.getTaskScheduler()->executeAuxiliaryTasks();
 
         // Update system status at regular intervals
-        statusReporter.updateStatus();
+        systemManager.getStatusReporter()->updateStatus();
 
         // Log system information
-        logger.processPendingLogs();
+        systemManager.getLogger()->processPendingLogs();
 
         // Yield to allow other Core 0 tasks to run
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
@@ -75,62 +70,14 @@ void setup() {
     output += " starting...";
     Serial.println(output);
 
-    // Initialize logger with custom task parameters for better performance
-    LoggerTaskParams loggerParams;
-    loggerParams.taskStackSize = 3072;
-    loggerParams.taskPriority  = 2;
-    loggerParams.queueSize     = 30;
-
-    if (!logger.initialize(CONFIG_SERIAL_BAUD_RATE, loggerParams)) {
-        String output = ANSI_COLOR_RED;
-        output += "Logger initialization failed";
+    // Initialize system components with proper error handling
+    if (!systemManager.initialize()) {
+        output = ANSI_COLOR_RED;
+        output += "System initialization failed";
         output += ANSI_COLOR_RESET;
         Serial.println(output);
 
-        while (1) {
-            delay(1000);
-        }
-    }
-
-    // Configure module-specific log levels
-    logger.setModuleLogLevel(LogModule::MOTOR_MANAGER, LogLevel::INFO);
-    logger.setModuleLogLevel(LogModule::STEPPER_DRIVER, LogLevel::INFO);
-    logger.setModuleLogLevel(LogModule::PID_CONTROLLER, LogLevel::WARNING);
-    logger.setModuleLogLevel(LogModule::SAFETY_MONITOR, LogLevel::INFO);
-
-    // Initialize system components with proper error handling
-    if (!systemManager.initialize()) {
-        logger.logError("System initialization failed", LogModule::SYSTEM);
-        while (1) {
-            delay(1000);
-        }  // Safety halt if critical initialization fails
-    }
-
-    // Make sure the serialCommand knows about the systemManager
-    serialCommand.setSystemManager(&systemManager);
-
-    // Initialize the motor manager with the configured motors
-    if (!motorManager.initialize()) {
-        logger.logError("Motor manager initialization failed");
-        while (1) {
-            delay(1000);
-        }
-    }
-
-    // The SystemManager should store a reference to this instance:
-    systemManager.setStatusReporter(&statusReporter);
-
-    // Initialize the status reporter after the system manager is ready
-    if (!statusReporter.initialize()) {
-        logger.logError("Status reporter initialization failed");
-        while (1) {
-            delay(1000);
-        }
-    }
-
-    // to ensure it's ready to handle commands
-    if (!serialCommand.initialize()) {
-        logger.logError("Serial command initialization failed");
+        // Safety halt if critical initialization fails
         while (1) {
             delay(1000);
         }
@@ -140,34 +87,34 @@ void setup() {
 #if CONFIG_POWER_MONITORING_ENABLED
     if (!systemManager.wasNormalShutdown()) {
         // Power interruption detected
-        logger.logInfo("Power interruption detected. Restoring previous positions...");
+        systemManager.getLogger()->logInfo(
+            "Power interruption detected. Restoring previous positions...", LogModule::SYSTEM);
         systemManager.restoreMotorPositions();
     }
 #else
-    logger.logWarning("Power monitoring disabled. Skipping power failure recovery.");
+    systemManager.getLogger()->logWarning(
+        "Power monitoring disabled. Skipping power failure recovery.", LogModule::SYSTEM);
 #endif
 
     // Reset the shutdown flag for next time
     systemManager.setNormalShutdown(false);
 
     // Configure the task scheduler
-    taskScheduler.initialize();
-
     // Register scheduled tasks for Core 1 (control loop)
-    for (uint8_t i = 0; i < motorManager.getMotorCount(); i++) {
-        Motor *motor = motorManager.getMotor(i);
+    for (uint8_t i = 0; i < systemManager.getMotorManager()->getMotorCount(); i++) {
+        Motor *motor = systemManager.getMotorManager()->getMotor(i);
 
-        logger.logInfo("\nREGISTERING MOTOR TASK", LogModule::SYSTEM);
+        systemManager.getLogger()->logInfo("REGISTERING MOTOR TASK", LogModule::SYSTEM);
 
         // Register high-priority motor control tasks
-        taskScheduler.registerControlTask(
+        systemManager.getTaskScheduler()->registerControlTask(
             [motor]() {
                 motor->updateControl();  // Runs the PID loop and control logic
             },
             motor->getControlInterval());
 
         // Register motion profile updates (slightly lower priority)
-        taskScheduler.registerControlTask(
+        systemManager.getTaskScheduler()->registerControlTask(
             [motor]() {
                 motor->updateTrajectory();  // Updates position/velocity profiles
             },
@@ -175,8 +122,8 @@ void setup() {
     }
 
     // Register system monitoring tasks
-    taskScheduler.registerControlTask([]() { systemManager.getSafetyMonitor()->checkSafety(); },
-                                      CONFIG_SAFETY_CHECK_INTERVAL_US);
+    systemManager.getTaskScheduler()->registerControlTask(
+        []() { systemManager.getSafetyMonitor()->checkSafety(); }, CONFIG_SAFETY_CHECK_INTERVAL_US);
 
     // Create auxiliary task on Core 0
     xTaskCreatePinnedToCore(auxiliaryTask,
@@ -189,15 +136,20 @@ void setup() {
     );
 
     // Log successful initialization
-    logger.logInfo("\nSystem initialized successfully");
+    systemManager.getLogger()->logInfo("System initialized successfully", LogModule::SYSTEM);
 
     // Make sure serial command interface is properly started
-    serialCommand.begin();
+    systemManager.getSerialCommand()->begin();
 
     // Print welcome message
-    logger.logInfo(SYSTEM_NAME " initialized");
+    systemManager.getLogger()->logInfo(SYSTEM_NAME " initialized", LogModule::SYSTEM);
     delay(100);
-    Serial.println("Type " ANSI_COLOR_BLUE "'help'" ANSI_COLOR_RESET " for available commands");
+    output = "Type ";
+    output += ANSI_COLOR_BLUE;
+    output += "'help'";
+    output += ANSI_COLOR_RESET;
+    output += " for available commands";
+    Serial.println(output);
     Serial.print("> ");
 }
 
@@ -207,7 +159,7 @@ void setup() {
  */
 void loop() {
     // Execute all scheduled high-priority control tasks
-    taskScheduler.executeControlTasks();
+    systemManager.getTaskScheduler()->executeControlTasks();
 
     // Make sure the status reporter is updating
     // statusReporter.updateStatus();

@@ -19,18 +19,14 @@ GPIOManager::GPIOManager(Logger* logger) : m_logger(logger) {
     // Reserve space for pin allocations to avoid reallocations
     m_pinAllocations.reserve(40);  // ESP32 has up to 40 GPIO pins
 
-    if (m_logger) {
-        m_logger->logInfo("GPIO Manager initialized", LogModule::SYSTEM);
-    }
+    m_logger->logInfo("GPIO Manager initialized", LogModule::SYSTEM);
 }
 
 GPIOManager::~GPIOManager() {
     // Release all pins
     resetAllocations();
 
-    if (m_logger) {
-        m_logger->logInfo("GPIO Manager destroyed", LogModule::SYSTEM);
-    }
+    m_logger->logInfo("GPIO Manager destroyed", LogModule::SYSTEM);
 }
 
 bool GPIOManager::allocatePin(uint8_t pin, PinMode mode, const String& owner) {
@@ -43,11 +39,9 @@ bool GPIOManager::allocatePin(uint8_t pin, PinMode mode, const String& owner) {
             // Only allow if the same owner is reconfiguring
             if (it->owner != owner) {
                 // Pin is in use by someone else
-                if (m_logger) {
-                    m_logger->logError(
-                        "Pin " + String(pin) + " allocation failed: already in use by " + it->owner,
-                        LogModule::SYSTEM);
-                }
+                m_logger->logError(
+                    "Pin " + String(pin) + " allocation failed: already in use by " + it->owner,
+                    LogModule::SYSTEM);
                 return false;
             }
         }
@@ -57,11 +51,9 @@ bool GPIOManager::allocatePin(uint8_t pin, PinMode mode, const String& owner) {
         it->owner = owner;
         it->inUse = true;
 
-        if (m_logger) {
-            m_logger->logInfo("Pin " + String(pin) + " reconfigured to mode "
-                                  + pinModeToString(mode) + " by " + owner,
-                              LogModule::SYSTEM);
-        }
+        m_logger->logInfo("Pin " + String(pin) + " reconfigured to mode " + pinModeToString(mode)
+                              + " by " + owner,
+                          LogModule::SYSTEM);
     } else {
         // Pin is not allocated, add new allocation
         PinAllocation allocation;
@@ -71,11 +63,9 @@ bool GPIOManager::allocatePin(uint8_t pin, PinMode mode, const String& owner) {
         allocation.inUse = true;
         m_pinAllocations.push_back(allocation);
 
-        if (m_logger) {
-            m_logger->logInfo("Pin " + String(pin) + " allocated in mode " + pinModeToString(mode)
-                                  + " to " + owner,
-                              LogModule::SYSTEM);
-        }
+        m_logger->logInfo(
+            "Pin " + String(pin) + " allocated in mode " + pinModeToString(mode) + " to " + owner,
+            LogModule::SYSTEM);
     }
 
     // Configure pin mode in hardware
@@ -107,18 +97,15 @@ bool GPIOManager::releasePin(uint8_t pin, const String& owner) {
                 disableInterrupt(pin);
             }
 
-            if (m_logger) {
-                m_logger->logInfo("Pin " + String(pin) + " released by " + owner,
-                                  LogModule::SYSTEM);
-            }
+            m_logger->logInfo("Pin " + String(pin) + " released by " + owner, LogModule::SYSTEM);
 
             return true;
-        } else if (m_logger) {
+        } else {
             m_logger->logWarning("Pin " + String(pin) + " release failed: owned by " + it->owner
                                      + ", release attempted by " + owner,
                                  LogModule::SYSTEM);
         }
-    } else if (m_logger) {
+    } else {
         m_logger->logWarning("Pin " + String(pin) + " release failed: not allocated or not in use",
                              LogModule::SYSTEM);
     }
@@ -161,21 +148,17 @@ bool GPIOManager::configureInterrupt(uint8_t pin, PinMode mode, void (*callback)
     // Validate interrupt mode
     if (mode != PinMode::INTERRUPT_RISING_PIN && mode != PinMode::INTERRUPT_FALLING_PIN
         && mode != PinMode::INTERRUPT_CHANGE_PIN) {
-        if (m_logger) {
-            m_logger->logError(
-                "Interrupt configuration failed for pin " + String(pin) + ": invalid mode",
-                LogModule::SYSTEM);
-        }
+        m_logger->logError(
+            "Interrupt configuration failed for pin " + String(pin) + ": invalid mode",
+            LogModule::SYSTEM);
         return false;
     }
 
     // Configure pin mode first
     if (!configurePinMode(pin, mode)) {
-        if (m_logger) {
-            m_logger->logError("Interrupt configuration failed for pin " + String(pin)
-                                   + ": pin mode configuration failed",
-                               LogModule::SYSTEM);
-        }
+        m_logger->logError("Interrupt configuration failed for pin " + String(pin)
+                               + ": pin mode configuration failed",
+                           LogModule::SYSTEM);
         return false;
     }
 
@@ -198,24 +181,22 @@ bool GPIOManager::configureInterrupt(uint8_t pin, PinMode mode, void (*callback)
     // Attach interrupt
     attachInterrupt(digitalPinToInterrupt(pin), callback, interruptMode);
 
-    if (m_logger) {
-        String modeStr;
-        switch (mode) {
-            case PinMode::INTERRUPT_RISING_PIN:
-                modeStr = "RISING";
-                break;
-            case PinMode::INTERRUPT_FALLING_PIN:
-                modeStr = "FALLING";
-                break;
-            case PinMode::INTERRUPT_CHANGE_PIN:
-                modeStr = "CHANGE";
-                break;
-            default:
-                modeStr = "UNKNOWN";
-        }
+    String modeStr;
+    switch (mode) {
+        case PinMode::INTERRUPT_RISING_PIN:
+            modeStr = "RISING";
+            break;
+        case PinMode::INTERRUPT_FALLING_PIN:
+            modeStr = "FALLING";
+            break;
+        case PinMode::INTERRUPT_CHANGE_PIN:
+            modeStr = "CHANGE";
+            break;
+        default:
+            modeStr = "UNKNOWN";
 
-        m_logger->logInfo("Interrupt configured for pin " + String(pin) + " in mode " + modeStr,
-                          LogModule::SYSTEM);
+            m_logger->logInfo("Interrupt configured for pin " + String(pin) + " in mode " + modeStr,
+                              LogModule::SYSTEM);
     }
 
     return true;
@@ -225,9 +206,7 @@ bool GPIOManager::disableInterrupt(uint8_t pin) {
     // Detach interrupt
     detachInterrupt(digitalPinToInterrupt(pin));
 
-    if (m_logger) {
-        m_logger->logInfo("Interrupt disabled for pin " + String(pin), LogModule::SYSTEM);
-    }
+    m_logger->logInfo("Interrupt disabled for pin " + String(pin), LogModule::SYSTEM);
 
     return true;
 }
@@ -247,11 +226,9 @@ void GPIOManager::resetAllocations() {
         }
     }
 
-    if (m_logger) {
-        m_logger->logInfo(
-            "Resetting all pin allocations (" + String(m_pinAllocations.size()) + " pins)",
-            LogModule::SYSTEM);
-    }
+    m_logger->logInfo(
+        "Resetting all pin allocations (" + String(m_pinAllocations.size()) + " pins)",
+        LogModule::SYSTEM);
 
     // Clear all allocations
     m_pinAllocations.clear();
@@ -302,10 +279,8 @@ bool GPIOManager::configurePinMode(uint8_t pin, PinMode mode) {
         case PinMode::ANALOG_OUTPUT_PIN:
             // Check if pin is DAC capable (ESP32 DAC: GPIO25, GPIO26)
             if (pin != 25 && pin != 26) {
-                if (m_logger) {
-                    m_logger->logError("Pin " + String(pin) + " does not support analog output",
-                                       LogModule::SYSTEM);
-                }
+                m_logger->logError("Pin " + String(pin) + " does not support analog output",
+                                   LogModule::SYSTEM);
                 return false;
             }
             break;
@@ -318,9 +293,7 @@ bool GPIOManager::configurePinMode(uint8_t pin, PinMode mode) {
             break;
 
         default:
-            if (m_logger) {
-                m_logger->logError("Invalid pin mode for pin " + String(pin), LogModule::SYSTEM);
-            }
+            m_logger->logError("Invalid pin mode for pin " + String(pin), LogModule::SYSTEM);
             return false;
     }
 
@@ -377,9 +350,7 @@ void GPIOManager::dumpPinAllocations() {
 }
 
 void GPIOManager::debugPinState(uint8_t pin) {
-    if (m_logger) {
-        int state = digitalRead(pin);
-        m_logger->logDebug("Pin " + String(pin) + " state: " + String(state), LogModule::SYSTEM);
-    }
+    int state = digitalRead(pin);
+    m_logger->logDebug("Pin " + String(pin) + " state: " + String(state), LogModule::SYSTEM);
 }
 // End of Code

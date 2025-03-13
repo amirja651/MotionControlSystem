@@ -30,15 +30,42 @@ SafetyMonitor::SafetyMonitor(MotorManager* motorManager, Logger* logger)
 }
 
 bool SafetyMonitor::initialize() {
-    // Initialize emergency stop pin if configured
-    if (m_emergencyStopPinConfigured && m_emergencyStopPin != 0xFF) {
-        pinMode(m_emergencyStopPin, INPUT_PULLUP);
+    // Validate pin numbers (ESP32 has GPIO pins 0-39)
+    if (CONFIG_VOLTAGE_SENSE_PIN != 0xFF && CONFIG_VOLTAGE_SENSE_PIN > 39) {
+        m_logger->logError(
+            "Invalid voltage monitoring pin for motor: " + String(CONFIG_VOLTAGE_SENSE_PIN),
+            LogModule::MOTOR_MANAGER);
+        return false;
     }
 
-    // Log initialization
-    if (m_logger != nullptr) {
-        m_logger->logInfo("Safety monitor initialized");
+    // Initialize emergency stop pin if configured
+    if (m_emergencyStopPin != 0xFF && m_emergencyStopPin > 39) {
+        m_logger->logError("Invalid emergency stop pin for motor: " + String(m_emergencyStopPin),
+                           LogModule::MOTOR_MANAGER);
+        return false;
     }
+
+    // Get GPIO manager instance
+    GPIOManager* gpioManager = GPIOManager::getInstance();
+
+    // Validate GPIO manager
+    if (gpioManager == nullptr) {
+        // Log error or handle initialization failure
+        m_logger->logError("GPIO Manager not available for safety monitor",
+                           LogModule::SAFETY_MONITOR);
+        return false;
+    }
+
+    // Attempt to allocate pin for analog input
+    if (!gpioManager->allocatePin(
+            CONFIG_VOLTAGE_SENSE_PIN, PinMode::ANALOG_INPUT_PIN, "VoltageMonitoring")) {
+        m_logger->logError(
+            "Failed to allocate voltage sense pin: " + String(CONFIG_VOLTAGE_SENSE_PIN),
+            LogModule::SAFETY_MONITOR);
+        return false;
+    }
+
+    m_logger->logInfo("Safety monitor initialized", LogModule::SAFETY_MONITOR);
 
     // Set initial check time
     m_lastCheckTimeMs = millis();
@@ -481,30 +508,6 @@ float SafetyMonitor::readVoltageSensor() {
     return (m_minVoltage + m_maxVoltage) / 2.0f;  // Return a safe value in the middle of the range
 #else
 
-    // Get GPIO manager instance
-    GPIOManager* gpioManager = GPIOManager::getInstance();
-
-    // Validate GPIO manager
-    if (gpioManager == nullptr) {
-        // Log error or handle initialization failure
-        if (m_logger) {
-            m_logger->logError("GPIO Manager not available for voltage sensing");
-        }
-        return 0.0f;
-    }
-
-    // Allocate analog input pin if not already allocated
-    if (!gpioManager->isPinAvailable(CONFIG_VOLTAGE_SENSE_PIN)) {
-        // Attempt to allocate pin for analog input
-        if (!gpioManager->allocatePin(
-                CONFIG_VOLTAGE_SENSE_PIN, PinMode::ANALOG_INPUT_PIN, "VoltageMonitoring")) {
-            if (m_logger) {
-                m_logger->logError("Failed to allocate voltage sense pin");
-            }
-            return 0.0f;
-        }
-    }
-
     // Read raw analog value
     int rawValue = analogRead(CONFIG_VOLTAGE_SENSE_PIN);
 
@@ -517,11 +520,8 @@ float SafetyMonitor::readVoltageSensor() {
     // voltage *= (R1 + R2) / R2;
 
     // Optional: Log voltage reading for debugging
-    if (m_logger) {
-        m_logger->logDebug("Voltage Sensor: Raw=" + String(rawValue)
-                           + ", Voltage=" + String(voltage, 2) + "V");
-    }
-
+    m_logger->logDebug("Voltage Sensor: Raw=" + String(rawValue) + ", Voltage=" + String(voltage, 2)
+                       + "V");
     return voltage;
 #endif  // CONFIG_POWER_MONITORING_ENABLED
 }

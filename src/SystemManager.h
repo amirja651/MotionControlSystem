@@ -13,6 +13,7 @@
 
 #include "Configuration.h"
 #include "MotorManager.h"
+#include "communication/SerialCommand.h"
 #include "communication/StatusReporter.h"
 #include "core/SafetyMonitor.h"
 #include "utils/EEPROMManager.h"
@@ -21,6 +22,7 @@
 
 // Forward declaration
 class StatusReporter;
+class SerialCommand;
 
 /**
  * System state enumeration
@@ -111,6 +113,13 @@ class SystemManager {
      * @return Pointer to EEPROM manager
      */
     EEPROMManager* getEEPROMManager();
+
+    /**
+     * Get SerialCommand interface
+     *
+     * @return Pointer to SerialCommand interface
+     */
+    SerialCommand* getSerialCommand();
 
     /**
      * Set system state
@@ -221,11 +230,12 @@ class SystemManager {
 
    private:
     // System components
-    MotorManager*   m_motorManager;
-    SafetyMonitor*  m_safetyMonitor;
-    Logger*         m_logger;
-    TaskScheduler*  m_taskScheduler;
+    SerialCommand*  m_serialCommand;
     StatusReporter* m_statusReporter;
+    SafetyMonitor*  m_safetyMonitor;
+    MotorManager*   m_motorManager;
+    TaskScheduler*  m_taskScheduler;
+    Logger*         m_logger;
     EEPROMManager*  m_eepromManager;
 
     // System state

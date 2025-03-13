@@ -12,6 +12,7 @@
 #include <Arduino.h>
 
 #include "../../Configuration.h"
+#include "../../hardware/GPIOManager.h"
 #include "../../utils/Logger.h"
 #include "../DriverInterface.h"
 #include "../TimerManager.h"
@@ -32,7 +33,7 @@ enum class MicrostepMode {
  * Stepper motor driver class
  */
 class StepperDriver : public DriverInterface {
-   public:
+public:
     /**
      * Constructor
      *
@@ -41,6 +42,7 @@ class StepperDriver : public DriverInterface {
      * @param enablePin Enable pin number
      * @param invertDir Whether to invert direction pin logic
      * @param invertEnable Whether to invert enable pin logic
+     * @param index Motor index
      * @param logger Pointer to logger instance
      */
     StepperDriver(uint8_t stepPin,
@@ -48,6 +50,7 @@ class StepperDriver : public DriverInterface {
                   uint8_t enablePin,
                   bool    invertDir    = false,
                   bool    invertEnable = false,
+                  uint8_t index        = 0,
                   Logger* logger       = nullptr);
 
     /**
@@ -217,19 +220,20 @@ class StepperDriver : public DriverInterface {
      */
     void handleTimerInterrupt();
 
-   private:
+private:
     // Pin configuration
     uint8_t m_stepPin;
     uint8_t m_dirPin;
     uint8_t m_enablePin;
     bool    m_invertDir;
     bool    m_invertEnable;
+    uint8_t m_index;
 
     // Driver state
-    bool    m_enabled;
-    bool    m_direction;       // Current direction (true = forward, false = reverse)
-    float   m_speed;           // Current speed in steps per second
-    int32_t m_position;        // Current position in steps
+    bool  m_enabled;
+    bool  m_direction;   // Current direction (true = forward, false = reverse)
+    float m_speed;       // Current speed in steps per second
+    int32_t m_position;  // Current position in steps
     int32_t m_targetPosition;  // Target position in steps
     bool    m_isMoving;        // Whether motor is currently moving
 
@@ -238,10 +242,10 @@ class StepperDriver : public DriverInterface {
     uint8_t       m_microsteps;  // Number of microsteps per full step
 
     // Speed control
-    float            m_maxStepsPerSecond;
-    uint32_t         m_stepIntervalUs;  // Interval between steps in microseconds
-    uint32_t         m_lastStepTimeUs;  // Time of last step in microseconds
-    volatile int32_t m_stepsToGo;       // Steps remaining to move
+    float    m_maxStepsPerSecond;
+    uint32_t m_stepIntervalUs;     // Interval between steps in microseconds
+    uint32_t m_lastStepTimeUs;     // Time of last step in microseconds
+    volatile int32_t m_stepsToGo;  // Steps remaining to move
 
     // Timer control
     TimerManager* m_timerManager;
@@ -283,6 +287,24 @@ class StepperDriver : public DriverInterface {
      * @return String representation of mode
      */
     String microstepModeToString(MicrostepMode mode) const;
+
+    /**
+     * Validate pin numbers
+     *
+     * @param pin Pin number to validate
+     * @param index Motor index
+     * @param errStr Error string
+     * @return True if valid, false otherwise
+     */
+    bool gpioAllocatePin(uint8_t       pin,
+                         uint8_t       index,
+                         PinMode       mode,
+                         const String& owner,
+                         const String& errStr,
+                         GPIOManager*  gpioManager);
+
+
+    bool ValidatePinNumbers(uint8_t pin, uint8_t index, const String& errStr);
 };
 
 #endif  // STEPPER_DRIVER_H

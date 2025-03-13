@@ -18,14 +18,12 @@ TrajectoryPlanner::TrajectoryPlanner(
 void TrajectoryPlanner::initialize() {
     reset();
 
-    if (m_logger) {
-        m_logger->logInfo(String("Trajectory planner initialized with defaults: ")
-                              + "v_max=" + String(m_defaultMaxVelocity) + ", "
-                              + "a_max=" + String(m_defaultMaxAcceleration) + ", "
-                              + "d_max=" + String(m_defaultMaxDeceleration) + ", "
-                              + "j_max=" + String(m_defaultMaxJerk),
-                          LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo(String("Trajectory planner initialized with defaults: ")
+                          + "v_max=" + String(m_defaultMaxVelocity) + ", "
+                          + "a_max=" + String(m_defaultMaxAcceleration) + ", "
+                          + "d_max=" + String(m_defaultMaxDeceleration) + ", "
+                          + "j_max=" + String(m_defaultMaxJerk),
+                      LogModule::PID_CONTROLLER);
 }
 
 void TrajectoryPlanner::reset() {
@@ -46,9 +44,7 @@ void TrajectoryPlanner::reset() {
     m_state.isComplete          = true;
     m_state.profileType         = ProfileType::NONE;
 
-    if (m_logger) {
-        m_logger->logDebug("Trajectory planner reset", LogModule::PID_CONTROLLER);
-    }
+    m_logger->logDebug("Trajectory planner reset", LogModule::PID_CONTROLLER);
 }
 
 bool TrajectoryPlanner::planPositionMove(int32_t     currentPosition,
@@ -83,10 +79,8 @@ bool TrajectoryPlanner::planPositionMove(int32_t     currentPosition,
     if (distance == 0.0f && currentVelocity == 0.0f) {
         m_state.isComplete = true;
 
-        if (m_logger) {
-            m_logger->logDebug("No movement needed, already at target position",
-                               LogModule::PID_CONTROLLER);
-        }
+        m_logger->logDebug("No movement needed, already at target position",
+                           LogModule::PID_CONTROLLER);
 
         return true;
     }
@@ -129,21 +123,17 @@ bool TrajectoryPlanner::planPositionMove(int32_t     currentPosition,
         // Invalid profile
         m_state.isComplete = true;
 
-        if (m_logger) {
-            m_logger->logError("Failed to plan position move: invalid profile duration",
-                               LogModule::PID_CONTROLLER);
-        }
+        m_logger->logError("Failed to plan position move: invalid profile duration",
+                           LogModule::PID_CONTROLLER);
 
         return false;
     }
 
-    if (m_logger) {
-        m_logger->logInfo("Position move planned: " + String(currentPosition) + " to "
-                              + String(targetPosition) + " (dist: " + String(distance) + ")"
-                              + ", profile: " + profileTypeToString(profileType)
-                              + ", duration: " + String(m_state.profileDuration) + "s",
-                          LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("Position move planned: " + String(currentPosition) + " to "
+                          + String(targetPosition) + " (dist: " + String(distance) + ")"
+                          + ", profile: " + profileTypeToString(profileType)
+                          + ", duration: " + String(m_state.profileDuration) + "s",
+                      LogModule::PID_CONTROLLER);
 
     return true;
 }
@@ -166,10 +156,8 @@ bool TrajectoryPlanner::planVelocityMove(float       currentVelocity,
     if (currentVelocity == targetVelocity) {
         m_state.isComplete = true;
 
-        if (m_logger) {
-            m_logger->logDebug("No velocity change needed, already at target velocity",
-                               LogModule::PID_CONTROLLER);
-        }
+        m_logger->logDebug("No velocity change needed, already at target velocity",
+                           LogModule::PID_CONTROLLER);
 
         return true;
     }
@@ -220,21 +208,17 @@ bool TrajectoryPlanner::planVelocityMove(float       currentVelocity,
         // Invalid profile
         m_state.isComplete = true;
 
-        if (m_logger) {
-            m_logger->logError("Failed to plan velocity move: invalid profile duration",
-                               LogModule::PID_CONTROLLER);
-        }
+        m_logger->logError("Failed to plan velocity move: invalid profile duration",
+                           LogModule::PID_CONTROLLER);
 
         return false;
     }
 
-    if (m_logger) {
-        m_logger->logInfo("Velocity move planned: " + String(currentVelocity) + " to "
-                              + String(targetVelocity) + " (change: " + String(velocityChange) + ")"
-                              + ", profile: " + profileTypeToString(profileType)
-                              + ", duration: " + String(m_state.profileDuration) + "s",
-                          LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("Velocity move planned: " + String(currentVelocity) + " to "
+                          + String(targetVelocity) + " (change: " + String(velocityChange) + ")"
+                          + ", profile: " + profileTypeToString(profileType)
+                          + ", duration: " + String(m_state.profileDuration) + "s",
+                      LogModule::PID_CONTROLLER);
 
     return true;
 }
@@ -259,9 +243,7 @@ void TrajectoryPlanner::update(uint32_t deltaTimeUs) {
         m_state.currentAcceleration = 0.0f;
         m_state.isComplete          = true;
 
-        if (m_logger) {
-            m_logger->logInfo("Trajectory completed", LogModule::PID_CONTROLLER);
-        }
+        m_logger->logInfo("Trajectory completed", LogModule::PID_CONTROLLER);
 
         return;
     }
@@ -292,38 +274,30 @@ void TrajectoryPlanner::update(uint32_t deltaTimeUs) {
 void TrajectoryPlanner::setMaxVelocity(float maxVelocity) {
     m_defaultMaxVelocity = maxVelocity > 0.0f ? maxVelocity : CONFIG_DEFAULT_MAX_VELOCITY;
 
-    if (m_logger) {
-        m_logger->logInfo("Max velocity set to " + String(m_defaultMaxVelocity),
-                          LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("Max velocity set to " + String(m_defaultMaxVelocity),
+                      LogModule::PID_CONTROLLER);
 }
 
 void TrajectoryPlanner::setMaxAcceleration(float maxAcceleration) {
     m_defaultMaxAcceleration =
         maxAcceleration > 0.0f ? maxAcceleration : CONFIG_DEFAULT_ACCELERATION;
 
-    if (m_logger) {
-        m_logger->logInfo("Max acceleration set to " + String(m_defaultMaxAcceleration),
-                          LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("Max acceleration set to " + String(m_defaultMaxAcceleration),
+                      LogModule::PID_CONTROLLER);
 }
 
 void TrajectoryPlanner::setMaxDeceleration(float maxDeceleration) {
     m_defaultMaxDeceleration =
         maxDeceleration > 0.0f ? maxDeceleration : CONFIG_DEFAULT_DECELERATION;
 
-    if (m_logger) {
-        m_logger->logInfo("Max deceleration set to " + String(m_defaultMaxDeceleration),
-                          LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("Max deceleration set to " + String(m_defaultMaxDeceleration),
+                      LogModule::PID_CONTROLLER);
 }
 
 void TrajectoryPlanner::setMaxJerk(float maxJerk) {
     m_defaultMaxJerk = maxJerk > 0.0f ? maxJerk : CONFIG_DEFAULT_MAX_JERK;
 
-    if (m_logger) {
-        m_logger->logInfo("Max jerk set to " + String(m_defaultMaxJerk), LogModule::PID_CONTROLLER);
-    }
+    m_logger->logInfo("Max jerk set to " + String(m_defaultMaxJerk), LogModule::PID_CONTROLLER);
 }
 
 // Implementation of the trajectory calculation methods like calculateTrapezoidalProfile
@@ -366,10 +340,8 @@ float TrajectoryPlanner::calculateTrapezoidalProfile(float distance,
         // v² = v₀² + 2a₁s₁ = v₂² + 2a₂s₂
         // Solve for peak velocity and recalculate times
 
-        if (m_logger) {
-            m_logger->logDebug("Triangle profile: cannot reach max velocity",
-                               LogModule::PID_CONTROLLER);
-        }
+        m_logger->logDebug("Triangle profile: cannot reach max velocity",
+                           LogModule::PID_CONTROLLER);
 
         // For simplicity, let's use a numerical method
         // Iteratively reduce max velocity until profile is valid
@@ -409,11 +381,9 @@ float TrajectoryPlanner::calculateTrapezoidalProfile(float distance,
                 accelTime          = peakVelocity / maxAcceleration;
                 decelTime          = peakVelocity / maxDeceleration;
 
-                if (m_logger) {
-                    m_logger->logDebug("Using direct calculation for triangle profile: peakVel="
-                                           + String(peakVelocity),
-                                       LogModule::PID_CONTROLLER);
-                }
+                m_logger->logDebug("Using direct calculation for triangle profile: peakVel="
+                                       + String(peakVelocity),
+                                   LogModule::PID_CONTROLLER);
 
                 return accelTime + decelTime;
             }
@@ -421,22 +391,18 @@ float TrajectoryPlanner::calculateTrapezoidalProfile(float distance,
             // For other cases, use a simplified approximation
             float approxTime = 2.0f * sqrt(distance / maxAcceleration);
 
-            if (m_logger) {
-                m_logger->logWarning("Using simplified approximation for complex profile: time="
-                                         + String(approxTime) + "s",
-                                     LogModule::PID_CONTROLLER);
-            }
+            m_logger->logWarning("Using simplified approximation for complex profile: time="
+                                     + String(approxTime) + "s",
+                                 LogModule::PID_CONTROLLER);
 
             return approxTime;
         }
 
         // No cruise phase
-        if (m_logger) {
-            m_logger->logDebug("Triangle profile: adjustedMaxVel=" + String(adjustedMaxVelocity)
-                                   + ", accelTime=" + String(accelTime)
-                                   + ", decelTime=" + String(decelTime),
-                               LogModule::PID_CONTROLLER);
-        }
+        m_logger->logDebug("Triangle profile: adjustedMaxVel=" + String(adjustedMaxVelocity)
+                               + ", accelTime=" + String(accelTime)
+                               + ", decelTime=" + String(decelTime),
+                           LogModule::PID_CONTROLLER);
 
         return accelTime + decelTime;
     }
@@ -444,12 +410,10 @@ float TrajectoryPlanner::calculateTrapezoidalProfile(float distance,
     // Trapezoidal profile with cruise phase
     float cruiseTime = cruiseDistance / maxVelocity;
 
-    if (m_logger) {
-        m_logger->logDebug("Trapezoidal profile: maxVel=" + String(maxVelocity) + ", accelTime="
-                               + String(accelTime) + ", cruiseTime=" + String(cruiseTime)
-                               + ", decelTime=" + String(decelTime),
-                           LogModule::PID_CONTROLLER);
-    }
+    m_logger->logDebug(
+        "Trapezoidal profile: maxVel=" + String(maxVelocity) + ", accelTime=" + String(accelTime)
+            + ", cruiseTime=" + String(cruiseTime) + ", decelTime=" + String(decelTime),
+        LogModule::PID_CONTROLLER);
 
     // Total duration
     return accelTime + cruiseTime + decelTime;

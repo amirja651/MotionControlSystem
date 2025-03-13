@@ -5,8 +5,11 @@
 
 #include "MotorManager.h"
 
-MotorManager::MotorManager(uint8_t maxMotors, Logger* logger)
-    : m_maxMotors(maxMotors > 0 ? maxMotors : CONFIG_MAX_MOTORS),
+MotorManager::MotorManager(uint8_t        maxMotors,
+                           EEPROMManager* eepromManager,
+                           Logger*        logger)
+    : m_eepromManager(eepromManager),
+      m_maxMotors(maxMotors > 0 ? maxMotors : CONFIG_MAX_MOTORS),
       m_motorCount(0),
       m_logger(logger) {
     // Allocate memory for motor pointers
@@ -18,10 +21,9 @@ MotorManager::MotorManager(uint8_t maxMotors, Logger* logger)
     }
 
     // Log creation if logger is available
-    if (m_logger) {
-        m_logger->logInfo("Motor Manager created with " + String(m_maxMotors) + " motors capacity",
-                          LogModule::MOTOR_MANAGER);
-    }
+    m_logger->logInfo("Motor Manager created with " + String(m_maxMotors)
+                          + " motors capacity",
+                      LogModule::MOTOR_MANAGER);
 }
 
 MotorManager::~MotorManager() {
@@ -35,23 +37,17 @@ MotorManager::~MotorManager() {
 
     // Free the motor array
     delete[] m_motors;
+    delete m_logger;
+    delete m_eepromManager;
 }
 
 bool MotorManager::initialize() {
-    // Initialize EEPROM manager
-    if (!m_eepromManager.initialize()) {
-        if (m_logger) {
-            m_logger->logError("Failed to initialize EEPROM manager", LogModule::MOTOR_MANAGER);
-        }
-        return false;
-    }
-
-    // If there are predefined motor configurations, add them
+    // If there are predefined motor configurations, add
+    // them
     for (uint8_t i = 0; i < CONFIG_MAX_MOTORS; i++) {
         if (i < m_maxMotors) {
-            if (m_logger) {
-                m_logger->logInfo("Adding default motor " + String(i), LogModule::MOTOR_MANAGER);
-            }
+            m_logger->logInfo("Adding default motor " + String(i),
+                              LogModule::MOTOR_MANAGER);
             addMotor(DEFAULT_MOTOR_CONFIGS[i]);
         }
     }
@@ -59,10 +55,9 @@ bool MotorManager::initialize() {
     // Load saved parameters if available
     loadFromEEPROM();
 
-    if (m_logger) {
-        m_logger->logInfo("Motor Manager initialized with " + String(m_motorCount) + " motors",
-                          LogModule::MOTOR_MANAGER);
-    }
+    m_logger->logInfo(
+        "Motor Manager initialized with " + String(m_motorCount) + " motors",
+        LogModule::MOTOR_MANAGER);
 
     return true;
 }
@@ -70,108 +65,73 @@ bool MotorManager::initialize() {
 bool MotorManager::addMotor(const MotorConfig& config) {
     // Check if we have room for another motor
     if (m_motorCount >= m_maxMotors) {
-        if (m_logger) {
-            m_logger->logError("Cannot add motor: maximum motor count reached",
-                               LogModule::MOTOR_MANAGER);
-        }
+        m_logger->logError("Cannot add motor: maximum motor count reached",
+                           LogModule::MOTOR_MANAGER);
         return false;
     }
 
     // Check if motor index is valid
     if (config.index >= m_maxMotors) {
-        if (m_logger) {
-            m_logger->logError("Invalid motor index: " + String(config.index),
-                               LogModule::MOTOR_MANAGER);
-        }
+        m_logger->logError("Invalid motor index: " + String(config.index),
+                           LogModule::MOTOR_MANAGER);
         return false;
     }
 
-    // Validate pin numbers (ESP32 has GPIO pins 0-39)
-    if (config.stepPin > 39) {
-        if (m_logger) {
-            m_logger->logError("Invalid step pin for motor " + String(config.index) + ": "
-                                   + String(config.stepPin),
-                               LogModule::MOTOR_MANAGER);
-        }
+
+    // Validate pin numbers
+    if (ValidatePinNumbers(config.limitMinPin,
+                           config.index,
+                           "Invalid limit min pin for motor "))
+        return false;
+
+    // Validate pin numbers
+    if (ValidatePinNumbers(config.limitMaxPin,
+                           config.index,
+                           "Invalid limit max pin for motor "))
+        return false;
+
+    // Get GPIO manager instance
+    GPIOManager* gpioManager = GPIOManager::getInstance();
+    if (gpioManager == nullptr) {
+        m_logger->logError("GPIO Manager not available for motor manager",
+                           LogModule::MOTOR_MANAGER);
         return false;
     }
 
-    if (config.dirPin > 39) {
-        if (m_logger) {
-            m_logger->logError(
-                "Invalid dir pin for motor " + String(config.index) + ": " + String(config.dirPin),
-                LogModule::MOTOR_MANAGER);
-        }
-        return false;
-    }
 
-    // Enable pin can be 0xFF (no pin) or a valid pin number
-    if (config.enablePin != 0xFF && config.enablePin > 39) {
-        if (m_logger) {
-            m_logger->logError("Invalid enable pin for motor " + String(config.index) + ": "
-                                   + String(config.enablePin),
-                               LogModule::MOTOR_MANAGER);
-        }
+    if (gpioAllocatePin(config.limitMinPin,
+                        config.index,
+                        PinMode::INPUT_PULLUP_PIN,
+                        "LimitMin",
+                        "Failed to allocate limit min pin: ",
+                        gpioManager))
         return false;
-    }
 
-    // Validate encoder pins if used
-    if (config.encoderAPin != 0xFF && config.encoderAPin > 39) {
-        if (m_logger) {
-            m_logger->logError("Invalid encoder A pin for motor " + String(config.index) + ": "
-                                   + String(config.encoderAPin),
-                               LogModule::MOTOR_MANAGER);
-        }
+    if (gpioAllocatePin(config.limitMaxPin,
+                        config.index,
+                        PinMode::INPUT_PULLUP_PIN,
+                        "LimitMax",
+                        "Failed to allocate limit max pin: ",
+                        gpioManager))
         return false;
-    }
-
-    if (config.encoderBPin != 0xFF && config.encoderBPin > 39) {
-        if (m_logger) {
-            m_logger->logError("Invalid encoder B pin for motor " + String(config.index) + ": "
-                                   + String(config.encoderBPin),
-                               LogModule::MOTOR_MANAGER);
-        }
-        return false;
-    }
-
-    // Validate limit switch pins if used
-    if (config.limitMinPin != 0xFF && config.limitMinPin > 39) {
-        if (m_logger) {
-            m_logger->logError("Invalid limit min pin for motor " + String(config.index) + ": "
-                                   + String(config.limitMinPin),
-                               LogModule::MOTOR_MANAGER);
-        }
-        return false;
-    }
-
-    if (config.limitMaxPin != 0xFF && config.limitMaxPin > 39) {
-        if (m_logger) {
-            m_logger->logError("Invalid limit max pin for motor " + String(config.index) + ": "
-                                   + String(config.limitMaxPin),
-                               LogModule::MOTOR_MANAGER);
-        }
-        return false;
-    }
 
     // Create new motor
-    Motor* motor = new Motor(config);
+    Motor* motor = new Motor(config, m_logger);
 
     // Initialize the motor
     if (!motor->initialize()) {
-        if (m_logger) {
-            m_logger->logError("Failed to initialize motor " + String(config.index),
-                               LogModule::MOTOR_MANAGER);
-        }
+        m_logger->logError(
+            "Failed to initialize motor " + String(config.index),
+            LogModule::MOTOR_MANAGER);
         delete motor;
         return false;
     }
 
     // If there's already a motor at this index, replace it
     if (m_motors[config.index] != nullptr) {
-        if (m_logger) {
-            m_logger->logInfo("Replacing existing motor at index " + String(config.index),
-                              LogModule::MOTOR_MANAGER);
-        }
+        m_logger->logInfo(
+            "Replacing existing motor at index " + String(config.index),
+            LogModule::MOTOR_MANAGER);
         delete m_motors[config.index];
     } else {
         // Increment motor count only if this is a new slot
@@ -181,11 +141,35 @@ bool MotorManager::addMotor(const MotorConfig& config) {
     // Store motor
     m_motors[config.index] = motor;
 
-    if (m_logger) {
-        m_logger->logInfo("\nMotor " + String(config.index) + " added successfully",
-                          LogModule::MOTOR_MANAGER);
-    }
+    m_logger->logInfo("Motor " + String(config.index) + " added successfully",
+                      LogModule::MOTOR_MANAGER);
 
+    return true;
+}
+
+bool MotorManager::gpioAllocatePin(uint8_t       pin,
+                                   uint8_t       index,
+                                   PinMode       mode,
+                                   const String& owner,
+                                   const String& errStr,
+                                   GPIOManager*  gpioManager) {
+    if (!gpioManager->allocatePin(
+            pin, mode, "Motor" + String(index) + owner)) {
+        m_logger->logError("Motor" + String(index) + errStr + String(pin),
+                           LogModule::MOTOR_MANAGER);
+        return false;
+    }
+    return true;
+}
+
+bool MotorManager::ValidatePinNumbers(uint8_t       pin,
+                                      uint8_t       index,
+                                      const String& errStr) {
+    if (pin != 0xFF && pin > 39) {
+        m_logger->logError(errStr + String(index) + ": " + String(pin),
+                           LogModule::MOTOR_MANAGER);
+        return false;
+    }
     return true;
 }
 
@@ -196,9 +180,7 @@ Motor* MotorManager::getMotor(uint8_t index) {
     return nullptr;
 }
 
-uint8_t MotorManager::getMotorCount() const {
-    return m_motorCount;
-}
+uint8_t MotorManager::getMotorCount() const { return m_motorCount; }
 
 void MotorManager::enableAllMotors() {
     for (uint8_t i = 0; i < m_maxMotors; i++) {
@@ -234,14 +216,15 @@ bool MotorManager::loadFromEEPROM() {
         if (m_motors[i] != nullptr) {
             // Load PID parameters
             float kp, ki, kd, ff;
-            if (m_eepromManager.loadPIDParameters(i, kp, ki, kd, ff)) {
+            if (m_eepromManager->loadPIDParameters(i, kp, ki, kd, ff)) {
                 m_motors[i]->setPIDParameters(kp, ki, kd, ff);
             }
 
             // Load soft limits
             int32_t minLimit, maxLimit;
             bool    limitsEnabled;
-            if (m_eepromManager.loadSoftLimits(i, minLimit, maxLimit, limitsEnabled)) {
+            if (m_eepromManager->loadSoftLimits(
+                    i, minLimit, maxLimit, limitsEnabled)) {
                 m_motors[i]->setSoftLimits(minLimit, maxLimit, limitsEnabled);
             }
         }
@@ -255,20 +238,21 @@ bool MotorManager::saveToEEPROM() {
     for (uint8_t i = 0; i < m_maxMotors; i++) {
         if (m_motors[i] != nullptr) {
             // Get PID parameters
-            PIDController& pid = m_motors[i]->getPIDController();
-            m_eepromManager.savePIDParameters(i,
-                                              pid.getProportionalTerm(),
-                                              pid.getIntegralTerm(),
-                                              pid.getDerivativeTerm(),
-                                              pid.getFeedForwardTerm());
+            PIDController* pid = m_motors[i]->getPIDController();
+            m_eepromManager->savePIDParameters(i,
+                                               pid->getProportionalTerm(),
+                                               pid->getIntegralTerm(),
+                                               pid->getDerivativeTerm(),
+                                               pid->getFeedForwardTerm());
 
-            // Save soft limits (would need to add a method to Motor to get these values)
-            // For now, just a placeholder
-            // m_eepromManager.saveSoftLimits(i, minLimit, maxLimit, limitsEnabled);
+            // Save soft limits (would need to add a method
+            // to Motor to get these values) For now, just a
+            // placeholder m_eepromManager.saveSoftLimits(i,
+            // minLimit, maxLimit, limitsEnabled);
         }
     }
 
-    return m_eepromManager.commit();
+    return m_eepromManager->commit();
 }
 
 bool MotorManager::moveMultipleMotors(const int32_t* positions,
@@ -283,8 +267,12 @@ bool MotorManager::moveMultipleMotors(const int32_t* positions,
     }
 
     // Calculate synchronized move duration
-    float syncDuration = calculateSynchronizedMove(
-        positions, motorIndices, motorCount, maxVelocity, acceleration, deceleration);
+    float syncDuration = calculateSynchronizedMove(positions,
+                                                   motorIndices,
+                                                   motorCount,
+                                                   maxVelocity,
+                                                   acceleration,
+                                                   deceleration);
 
     if (syncDuration <= 0.0f) {
         return false;
@@ -295,7 +283,8 @@ bool MotorManager::moveMultipleMotors(const int32_t* positions,
         uint8_t index = motorIndices[i];
 
         if (index < m_maxMotors && m_motors[index] != nullptr) {
-            // Scale velocity and acceleration for this motor based on distance
+            // Scale velocity and acceleration for this
+            // motor based on distance
             Motor*  motor    = m_motors[index];
             int32_t distance = abs(positions[i] - motor->getCurrentPosition());
 
@@ -304,9 +293,9 @@ bool MotorManager::moveMultipleMotors(const int32_t* positions,
                 continue;
             }
 
-            // Calculate velocity needed to complete in syncDuration
-            // Trapezoidal profile: s = v_max * t - (a * t²) / 2
-            // Solve for v_max
+            // Calculate velocity needed to complete in
+            // syncDuration Trapezoidal profile: s = v_max *
+            // t - (a * t²) / 2 Solve for v_max
             float motorVelocity = distance / syncDuration;
 
             // Cap to maximum allowed velocity
@@ -315,14 +304,16 @@ bool MotorManager::moveMultipleMotors(const int32_t* positions,
             }
 
             // Move the motor
-            motor->moveToPosition(positions[i], motorVelocity, acceleration, deceleration);
+            motor->moveToPosition(
+                positions[i], motorVelocity, acceleration, deceleration);
         }
     }
 
     return true;
 }
 
-bool MotorManager::areMotorsIdle(const uint8_t* motorIndices, uint8_t motorCount) {
+bool MotorManager::areMotorsIdle(const uint8_t* motorIndices,
+                                 uint8_t        motorCount) {
     // Check each specified motor
     for (uint8_t i = 0; i < motorCount; i++) {
         uint8_t index = motorIndices[i];

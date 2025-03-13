@@ -6,7 +6,9 @@
 #include "SerialCommand.h"
 
 SerialCommand::SerialCommand(SystemManager *systemManager)
-    : m_systemManager(systemManager), m_commandBufferIndex(0), m_lastCommandTimeMs(0) {
+    : m_systemManager(systemManager),
+      m_commandBufferIndex(0),
+      m_lastCommandTimeMs(0) {
     // Clear command buffer
     memset(m_commandBuffer, 0, CONFIG_COMMAND_BUFFER_SIZE);
 
@@ -43,7 +45,8 @@ void SerialCommand::processCommands() {
 
                 // Execute the command
                 String response;
-                bool   success = executeCommand(String(m_commandBuffer), response);
+                bool   success =
+                    executeCommand(String(m_commandBuffer), response);
 
                 // Print response
                 if (response.length() > 0) {
@@ -141,85 +144,109 @@ bool SerialCommand::executeCommand(const String &command, String &response) {
 
 void SerialCommand::registerBuiltInCommands() {
     // Add all built-in commands
-    addCommand(
-        "help",
-        "[command]",
-        "Display help information",
-        std::bind(&SerialCommand::handleHelp, this, std::placeholders::_1, std::placeholders::_2));
+    addCommand("help",
+               "[command]",
+               "Display help information",
+               std::bind(&SerialCommand::handleHelp,
+                         this,
+                         std::placeholders::_1,
+                         std::placeholders::_2));
 
-    addCommand(
-        "status",
-        "",
-        "Display system status",
-        std::bind(
-            &SerialCommand::handleStatus, this, std::placeholders::_1, std::placeholders::_2));
+    addCommand("status",
+               "",
+               "Display system status",
+               std::bind(&SerialCommand::handleStatus,
+                         this,
+                         std::placeholders::_1,
+                         std::placeholders::_2));
 
-    addCommand(
-        "motor",
-        "<index> [enable|disable]",
-        "Get or set motor state",
-        std::bind(&SerialCommand::handleMotor, this, std::placeholders::_1, std::placeholders::_2));
+    addCommand("motor",
+               "<index> [enable|disable]",
+               "Get or set motor state",
+               std::bind(&SerialCommand::handleMotor,
+                         this,
+                         std::placeholders::_1,
+                         std::placeholders::_2));
 
-    addCommand(
-        "move",
-        "<index> <position> [velocity] [accel]",
-        "Move motor to position",
-        std::bind(&SerialCommand::handleMove, this, std::placeholders::_1, std::placeholders::_2));
+    addCommand("move",
+               "<index> <position> [velocity] [accel]",
+               "Move motor to position",
+               std::bind(&SerialCommand::handleMove,
+                         this,
+                         std::placeholders::_1,
+                         std::placeholders::_2));
 
-    addCommand(
-        "stop",
-        "[index] [emergency]",
-        "Stop one or all motors",
-        std::bind(&SerialCommand::handleStop, this, std::placeholders::_1, std::placeholders::_2));
+    addCommand("stop",
+               "[index] [emergency]",
+               "Stop one or all motors",
+               std::bind(&SerialCommand::handleStop,
+                         this,
+                         std::placeholders::_1,
+                         std::placeholders::_2));
 
-    addCommand(
-        "home",
-        "<index> [direction]",
-        "Home a motor",
-        std::bind(&SerialCommand::handleHome, this, std::placeholders::_1, std::placeholders::_2));
+    addCommand("home",
+               "<index> [direction]",
+               "Home a motor",
+               std::bind(&SerialCommand::handleHome,
+                         this,
+                         std::placeholders::_1,
+                         std::placeholders::_2));
 
-    addCommand(
-        "pid",
-        "<index> [kp] [ki] [kd] [ff]",
-        "Get or set PID parameters",
-        std::bind(&SerialCommand::handlePID, this, std::placeholders::_1, std::placeholders::_2));
+    addCommand("pid",
+               "<index> [kp] [ki] [kd] [ff]",
+               "Get or set PID parameters",
+               std::bind(&SerialCommand::handlePID,
+                         this,
+                         std::placeholders::_1,
+                         std::placeholders::_2));
 
-    addCommand(
-        "reset",
-        "[config]",
-        "Reset system or configuration",
-        std::bind(&SerialCommand::handleReset, this, std::placeholders::_1, std::placeholders::_2));
+    addCommand("reset",
+               "[config]",
+               "Reset system or configuration",
+               std::bind(&SerialCommand::handleReset,
+                         this,
+                         std::placeholders::_1,
+                         std::placeholders::_2));
 
-    addCommand(
-        "save",
-        "",
-        "Save configuration to EEPROM",
-        std::bind(&SerialCommand::handleSave, this, std::placeholders::_1, std::placeholders::_2));
+    addCommand("save",
+               "",
+               "Save configuration to EEPROM",
+               std::bind(&SerialCommand::handleSave,
+                         this,
+                         std::placeholders::_1,
+                         std::placeholders::_2));
 
-    addCommand(
-        "load",
-        "",
-        "Load configuration from EEPROM",
-        std::bind(&SerialCommand::handleLoad, this, std::placeholders::_1, std::placeholders::_2));
+    addCommand("load",
+               "",
+               "Load configuration from EEPROM",
+               std::bind(&SerialCommand::handleLoad,
+                         this,
+                         std::placeholders::_1,
+                         std::placeholders::_2));
 
-    addCommand(
-        "estop",
-        "[reset]",
-        "Trigger or reset emergency stop",
-        std::bind(&SerialCommand::handleEStop, this, std::placeholders::_1, std::placeholders::_2));
+    addCommand("estop",
+               "[reset]",
+               "Trigger or reset emergency stop",
+               std::bind(&SerialCommand::handleEStop,
+                         this,
+                         std::placeholders::_1,
+                         std::placeholders::_2));
 
-    addCommand(
-        "debug",
-        "<level>",
-        "Set debug log level",
-        std::bind(&SerialCommand::handleDebug, this, std::placeholders::_1, std::placeholders::_2));
+    addCommand("debug",
+               "<level>",
+               "Set debug log level",
+               std::bind(&SerialCommand::handleDebug,
+                         this,
+                         std::placeholders::_1,
+                         std::placeholders::_2));
 
-    addCommand(
-        "shutdown",
-        "",
-        "Shutdown system normally and save positions",
-        std::bind(
-            &SerialCommand::handleShutdown, this, std::placeholders::_1, std::placeholders::_2));
+    addCommand("shutdown",
+               "",
+               "Shutdown system normally and save positions",
+               std::bind(&SerialCommand::handleShutdown,
+                         this,
+                         std::placeholders::_1,
+                         std::placeholders::_2));
 
     addCommand("status_output",
                "<on|off>",
@@ -229,21 +256,26 @@ void SerialCommand::registerBuiltInCommands() {
                          std::placeholders::_1,
                          std::placeholders::_2));
 
-    addCommand(
-        "gpio_state", "<pin>", "Show GPIO pin state", [](const String &params, String &response) {
-            int pin = params.toInt();
-            if (pin >= 0 && pin <= 39) {
-                pinMode(pin, INPUT);
-                int state = digitalRead(pin);
-                response  = "Pin " + String(pin) + " state: " + String(state);
-                return true;
-            }
-            response = "Invalid pin number";
-            return false;
-        });
+    addCommand("gpio_state",
+               "<pin>",
+               "Show GPIO pin state",
+               [](const String &params, String &response) {
+                   int pin = params.toInt();
+                   if (pin >= 0 && pin <= 39) {
+                       pinMode(pin, INPUT);
+                       int state = digitalRead(pin);
+                       response =
+                           "Pin " + String(pin) + " state: " + String(state);
+                       return true;
+                   }
+                   response = "Invalid pin number";
+                   return false;
+               });
 }
 
-void SerialCommand::parseCommand(const String &commandString, String &command, String &params) {
+void SerialCommand::parseCommand(const String &commandString,
+                                 String       &command,
+                                 String       &params) {
     // Find first space
     int spaceIndex = commandString.indexOf(' ');
 
@@ -282,7 +314,9 @@ bool SerialCommand::handleHelp(const String &params, String &response) {
             response += "\n";
         }
 
-        response += "Type 'help <command>' for more information on a specific command.";
+        response +=
+            "Type 'help <command>' for more information on a specific "
+            "command.";
     } else {
         // Show help for specific command
         auto it = findCommand(params);
@@ -314,36 +348,24 @@ bool SerialCommand::handleStatus(const String &params, String &response) {
     String      stateStr;
 
     switch (state) {
-        case SystemState::INITIALIZING:
-            stateStr = "Initializing";
-            break;
-        case SystemState::READY:
-            stateStr = "Ready";
-            break;
-        case SystemState::RUNNING:
-            stateStr = "Running";
-            break;
-        case SystemState::ERROR:
-            stateStr = "Error";
-            break;
-        case SystemState::EMERGENCY_STOP:
-            stateStr = "Emergency Stop";
-            break;
-        case SystemState::SHUTDOWN:
-            stateStr = "Shutdown";
-            break;
-        default:
-            stateStr = "Unknown";
-            break;
+        case SystemState::INITIALIZING: stateStr = "Initializing"; break;
+        case SystemState::READY: stateStr = "Ready"; break;
+        case SystemState::RUNNING: stateStr = "Running"; break;
+        case SystemState::ERROR: stateStr = "Error"; break;
+        case SystemState::EMERGENCY_STOP: stateStr = "Emergency Stop"; break;
+        case SystemState::SHUTDOWN: stateStr = "Shutdown"; break;
+        default: stateStr = "Unknown"; break;
     }
 
     // Build status response
     response = "System Status:\n";
     response += "  State: " + stateStr + "\n";
-    response += "  Uptime: " + String(m_systemManager->getUptimeMs() / 1000) + " s\n";
+    response +=
+        "  Uptime: " + String(m_systemManager->getUptimeMs() / 1000) + " s\n";
     response += "  CPU: " + String(m_systemManager->getCPUUsage(0), 1) + "% / "
                 + String(m_systemManager->getCPUUsage(1), 1) + "%\n";
-    response += "  Memory: " + String(m_systemManager->getFreeMemory() / 1024) + " KB free\n";
+    response += "  Memory: " + String(m_systemManager->getFreeMemory() / 1024)
+                + " KB free\n";
 
     // Motor status
     MotorManager *motorManager = m_systemManager->getMotorManager();
@@ -355,10 +377,14 @@ bool SerialCommand::handleStatus(const String &params, String &response) {
             Motor *motor = motorManager->getMotor(i);
             if (motor != nullptr) {
                 response += "    Motor " + String(i) + ": ";
-                response += "Pos=" + String(motor->getCurrentPosition()) + ", ";
-                response += "Vel=" + String(motor->getCurrentVelocity(), 1) + ", ";
-                response += "Enabled=" + String(motor->isEnabled() ? "Yes" : "No") + ", ";
-                response += "Moving=" + String(motor->isMoving() ? "Yes" : "No") + "\n";
+                response +=
+                    "Pos=" + String(motor->getCurrentPosition()) + ", ";
+                response +=
+                    "Vel=" + String(motor->getCurrentVelocity(), 1) + ", ";
+                response += "Enabled="
+                            + String(motor->isEnabled() ? "Yes" : "No") + ", ";
+                response += "Moving="
+                            + String(motor->isMoving() ? "Yes" : "No") + "\n";
             }
         }
     }
@@ -370,28 +396,21 @@ bool SerialCommand::handleStatus(const String &params, String &response) {
         String             safetyStr;
 
         switch (safetyStatus) {
-            case SystemSafetyStatus::NORMAL:
-                safetyStr = "Normal";
-                break;
-            case SystemSafetyStatus::WARNING:
-                safetyStr = "Warning";
-                break;
-            case SystemSafetyStatus::ERROR:
-                safetyStr = "Error";
-                break;
+            case SystemSafetyStatus::NORMAL: safetyStr = "Normal"; break;
+            case SystemSafetyStatus::WARNING: safetyStr = "Warning"; break;
+            case SystemSafetyStatus::ERROR: safetyStr = "Error"; break;
             case SystemSafetyStatus::EMERGENCY_STOP:
                 safetyStr = "E-Stop";
                 break;
-            default:
-                safetyStr = "Unknown";
-                break;
+            default: safetyStr = "Unknown"; break;
         }
 
         response += "  Safety: " + safetyStr + "\n";
 
         if (safetyStatus != SystemSafetyStatus::NORMAL) {
             SafetyCode code = safetyMonitor->getLastSafetyCode();
-            response += "  Safety Code: " + String(static_cast<int>(code)) + "\n";
+            response +=
+                "  Safety Code: " + String(static_cast<int>(code)) + "\n";
         }
     }
 
@@ -446,13 +465,17 @@ bool SerialCommand::handleMotor(const String &params, String &response) {
         const MotorState &state = motor->getState();
 
         response = "Motor " + indexStr + " Status:\n";
-        response += "  Enabled: " + String(motor->isEnabled() ? "Yes" : "No") + "\n";
+        response +=
+            "  Enabled: " + String(motor->isEnabled() ? "Yes" : "No") + "\n";
         response += "  Position: " + String(state.currentPosition) + "\n";
         response += "  Target: " + String(state.targetPosition) + "\n";
         response += "  Velocity: " + String(state.currentVelocity, 1) + "\n";
-        response += "  Mode: " + String(static_cast<int>(motor->getControlMode())) + "\n";
-        response += "  Moving: " + String(motor->isMoving() ? "Yes" : "No") + "\n";
-        response += "  Homed: " + String(motor->isHomed() ? "Yes" : "No") + "\n";
+        response += "  Mode: "
+                    + String(static_cast<int>(motor->getControlMode())) + "\n";
+        response +=
+            "  Moving: " + String(motor->isMoving() ? "Yes" : "No") + "\n";
+        response +=
+            "  Homed: " + String(motor->isHomed() ? "Yes" : "No") + "\n";
         response += "  Error: " + String(static_cast<int>(state.error));
     } else if (command.equalsIgnoreCase("enable")) {
         // Enable motor
@@ -490,7 +513,9 @@ bool SerialCommand::handleMove(const String &params, String &response) {
     // Split parameters
     int spaceIndex = paramsStr.indexOf(' ');
     if (spaceIndex < 0) {
-        response = "Insufficient parameters. Usage: move <index> <position> [velocity] [accel]";
+        response =
+            "Insufficient parameters. Usage: move <index> <position> "
+            "[velocity] [accel]";
         return false;
     }
 
@@ -530,8 +555,8 @@ bool SerialCommand::handleMove(const String &params, String &response) {
     // Convert parameters to values
     int     motorIndex = indexStr.toInt();
     int32_t position   = positionStr.toInt();
-    float   velocity   = velocityStr.length() > 0 ? velocityStr.toFloat() : 0.0f;
-    float   accel      = accelStr.length() > 0 ? accelStr.toFloat() : 0.0f;
+    float   velocity = velocityStr.length() > 0 ? velocityStr.toFloat() : 0.0f;
+    float   accel    = accelStr.length() > 0 ? accelStr.toFloat() : 0.0f;
 
     // Get motor
     Motor *motor = motorManager->getMotor(motorIndex);
@@ -551,8 +576,11 @@ bool SerialCommand::handleMove(const String &params, String &response) {
         motor->moveToPosition(position, velocity, accel, accel, 0.0f);
     } else if (velocity > 0.0f) {
         // Use moveToPosition with specified velocity and default acceleration
-        motor->moveToPosition(
-            position, velocity, CONFIG_DEFAULT_ACCELERATION, CONFIG_DEFAULT_DECELERATION, 0.0f);
+        motor->moveToPosition(position,
+                              velocity,
+                              CONFIG_DEFAULT_ACCELERATION,
+                              CONFIG_DEFAULT_DECELERATION,
+                              0.0f);
     } else {
         // Use setTargetPosition with default velocity and acceleration
         motor->setTargetPosition(position);
@@ -611,8 +639,8 @@ bool SerialCommand::handleStop(const String &params, String &response) {
             // Stop the motor
             motor->emergencyStop();  // amir stop(emergency);
 
-            response =
-                emergency ? "Emergency stopped motor " + paramsStr : "Stopped motor " + paramsStr;
+            response = emergency ? "Emergency stopped motor " + paramsStr
+                                 : "Stopped motor " + paramsStr;
         }
     }
 
@@ -677,8 +705,8 @@ bool SerialCommand::handleHome(const String &params, String &response) {
     // Start homing
     motor->startHoming(direction, CONFIG_DEFAULT_MAX_VELOCITY / 2.0f);
 
-    response = "Homing motor " + indexStr + " in " + (direction > 0 ? "positive" : "negative")
-               + " direction";
+    response = "Homing motor " + indexStr + " in "
+               + (direction > 0 ? "positive" : "negative") + " direction";
 
     return true;
 }
@@ -731,15 +759,15 @@ bool SerialCommand::handlePID(const String &params, String &response) {
     }
 
     // Get PID controller
-    PIDController &pid = motor->getPIDController();
+    PIDController *pid = motor->getPIDController();
 
     if (remainingParams.length() == 0) {
         // No parameters, show current PID values
         response = "Motor " + indexStr + " PID Parameters:\n";
-        response += "  Kp: " + String(pid.getProportionalTerm()) + "\n";
-        response += "  Ki: " + String(pid.getIntegralTerm()) + "\n";
-        response += "  Kd: " + String(pid.getDerivativeTerm()) + "\n";
-        response += "  FF: " + String(pid.getFeedForwardTerm());
+        response += "  Kp: " + String(pid->getProportionalTerm()) + "\n";
+        response += "  Ki: " + String(pid->getIntegralTerm()) + "\n";
+        response += "  Kd: " + String(pid->getDerivativeTerm()) + "\n";
+        response += "  FF: " + String(pid->getFeedForwardTerm());
     } else {
         // Parse PID values
         float kp = 0.0f, ki = 0.0f, kd = 0.0f, ff = 0.0f;
@@ -752,28 +780,21 @@ bool SerialCommand::handlePID(const String &params, String &response) {
 
         while (token != NULL && i < 4) {
             switch (i) {
-                case 0:
-                    kp = atof(token);
-                    break;
-                case 1:
-                    ki = atof(token);
-                    break;
-                case 2:
-                    kd = atof(token);
-                    break;
-                case 3:
-                    ff = atof(token);
-                    break;
+                case 0: kp = atof(token); break;
+                case 1: ki = atof(token); break;
+                case 2: kd = atof(token); break;
+                case 3: ff = atof(token); break;
             }
             token = strtok(NULL, " ");
             i++;
         }
 
         // Set PID parameters
-        pid.setGains(kp, ki, kd, ff);
+        pid->setGains(kp, ki, kd, ff);
 
-        response = "Set motor " + indexStr + " PID to Kp=" + String(kp) + ", Ki=" + String(ki)
-                   + ", Kd=" + String(kd) + ", FF=" + String(ff);
+        response = "Set motor " + indexStr + " PID to Kp=" + String(kp)
+                   + ", Ki=" + String(ki) + ", Kd=" + String(kd)
+                   + ", FF=" + String(ff);
     }
 
     return true;
@@ -869,7 +890,8 @@ bool SerialCommand::handleEStop(const String &params, String &response) {
         }
     } else {
         // Trigger emergency stop
-        m_systemManager->triggerEmergencyStop(SafetyCode::EMERGENCY_STOP_PRESSED);
+        m_systemManager->triggerEmergencyStop(
+            SafetyCode::EMERGENCY_STOP_PRESSED);
         response = "Emergency stop triggered";
         return true;
     }
@@ -893,18 +915,21 @@ bool SerialCommand::handleDebug(const String &params, String &response) {
     if (paramsStr.length() == 0) {
         // Show current log level
         LogLevel level = logger->getLogLevel();
-        response       = "Current log level: " + Logger::logLevelToString(level);
+        response = "Current log level: " + Logger::logLevelToString(level);
         return true;
     } else {
         // Set log level
         int level = paramsStr.toInt();
         if (level >= 0 && level <= 5) {
             logger->setLogLevel(static_cast<LogLevel>(level));
-            response = "Log level set to " + Logger::logLevelToString(static_cast<LogLevel>(level));
+            response =
+                "Log level set to "
+                + Logger::logLevelToString(static_cast<LogLevel>(level));
             return true;
         } else {
             response =
-                "Invalid log level. Valid levels: 0=OFF, 1=ERROR, 2=WARNING, 3=INFO, 4=DEBUG, "
+                "Invalid log level. Valid levels: 0=OFF, 1=ERROR, 2=WARNING, "
+                "3=INFO, 4=DEBUG, "
                 "5=VERBOSE";
             return false;
         }
@@ -943,7 +968,8 @@ bool SerialCommand::handleShutdown(const String &params, String &response) {
  * @param response Command response
  * @return True if successful, false otherwise
  */
-bool SerialCommand::handleStatusOutput(const String &params, String &response) {
+bool SerialCommand::handleStatusOutput(const String &params,
+                                       String       &response) {
     if (m_systemManager == nullptr) {
         response = "System manager not available";
         return false;
@@ -964,7 +990,8 @@ bool SerialCommand::handleStatusOutput(const String &params, String &response) {
         statusReporter->setUpdateFrequency(1);  // Default to 1Hz
         response = "Status output enabled at 1Hz";
         return true;
-    } else if (paramsStr == "off" || paramsStr == "false" || paramsStr == "0") {
+    } else if (paramsStr == "off" || paramsStr == "false"
+               || paramsStr == "0") {
         statusReporter->enableSerialOutput(false);
         response = "Status output disabled";
         return true;
@@ -977,7 +1004,8 @@ bool SerialCommand::handleStatusOutput(const String &params, String &response) {
             response = "Status output enabled at " + String(frequency) + "Hz";
             return true;
         } else {
-            response = "Invalid parameter. Usage: status_output <on|off|frequency>";
+            response =
+                "Invalid parameter. Usage: status_output <on|off|frequency>";
             return false;
         }
     }

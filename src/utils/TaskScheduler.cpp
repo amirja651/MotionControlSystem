@@ -24,9 +24,7 @@ bool TaskScheduler::initialize() {
     m_lastControlLoopStartUs = micros();
     m_lastYieldTimeUs        = m_lastControlLoopStartUs;
 
-    if (m_logger) {
-        m_logger->logInfo("Task Scheduler initialized", LogModule::SYSTEM);
-    }
+    m_logger->logInfo("Task Scheduler initialized", LogModule::SYSTEM);
 
     return true;
 }
@@ -34,17 +32,12 @@ bool TaskScheduler::initialize() {
 int TaskScheduler::registerControlTask(TaskFunction   function,
                                        uint32_t       intervalUs,
                                        TaskTimingMode timingMode) {
-    m_logger->logInfo("Register Control Tasks (Amir) #1", LogModule::SYSTEM);
-
     if (!function || intervalUs == 0) {
-        if (m_logger) {
-            m_logger->logError("Failed to register control task: invalid parameters",
-                               LogModule::SYSTEM);
-        }
+        m_logger->logError("Failed to register control task: invalid parameters",
+                           LogModule::SYSTEM);
         return -1;
     }
 
-    m_logger->logInfo("Register Control Tasks (Amir) #2", LogModule::SYSTEM);
 
     // Create new task info
     TaskInfo task;
@@ -61,14 +54,8 @@ int TaskScheduler::registerControlTask(TaskFunction   function,
     // Add to control tasks
     m_controlTasks.push_back(task);
 
-    m_logger->logInfo("Register Control Tasks (Amir) #3", LogModule::SYSTEM);
-
-    if (m_logger) {
-        m_logger->logDebug("Control task registered with interval " + String(intervalUs) + "us",
-                           LogModule::SYSTEM);
-    }
-
-    m_logger->logInfo("Register Control Tasks (Amir) #4", LogModule::SYSTEM);
+    m_logger->logDebug("Control task registered with interval " + String(intervalUs) + "us",
+                       LogModule::SYSTEM);
 
     return static_cast<int>(m_controlTasks.size() - 1);
 }
@@ -79,10 +66,8 @@ int TaskScheduler::registerAuxiliaryTask(TaskFunction   function,
     m_logger->logInfo("Register Auxiliary Tasks (Amir) #1", LogModule::SYSTEM);
 
     if (!function || intervalUs == 0) {
-        if (m_logger) {
-            m_logger->logError("Failed to register auxiliary task: invalid parameters",
-                               LogModule::SYSTEM);
-        }
+        m_logger->logError("Failed to register auxiliary task: invalid parameters",
+                           LogModule::SYSTEM);
         return -1;
     }
 
@@ -105,10 +90,8 @@ int TaskScheduler::registerAuxiliaryTask(TaskFunction   function,
 
     m_logger->logInfo("Register Auxiliary Tasks (Amir) #3", LogModule::SYSTEM);
 
-    if (m_logger) {
-        m_logger->logDebug("Auxiliary task registered with interval " + String(intervalUs) + "us",
-                           LogModule::SYSTEM);
-    }
+    m_logger->logDebug("Auxiliary task registered with interval " + String(intervalUs) + "us",
+                       LogModule::SYSTEM);
 
     m_logger->logInfo("Register Auxiliary Tasks (Amir) #4", LogModule::SYSTEM);
 
@@ -118,10 +101,6 @@ int TaskScheduler::registerAuxiliaryTask(TaskFunction   function,
 uint32_t TaskScheduler::executeControlTasks() {
     uint32_t currentTimeUs = micros();
     uint32_t tasksExecuted = 0;
-
-    if (m_logger) {
-        m_logger->logError("EXECUTING CONTROL TASKS", LogModule::SYSTEM);
-    }
 
     // Record control loop start time
     m_lastControlLoopStartUs = currentTimeUs;
@@ -140,12 +119,10 @@ uint32_t TaskScheduler::executeControlTasks() {
                 task.missedDeadlines++;
                 m_totalMissedDeadlines++;
 
-                if (m_logger) {
-                    m_logger->logWarning(String("Control task missed deadline: ")
-                                             + String(executionTimeUs) + "us > "
-                                             + String(task.intervalUs) + "us",
-                                         LogModule::SYSTEM);
-                }
+                m_logger->logWarning(String("Control task missed deadline: ")
+                                         + String(executionTimeUs) + "us > "
+                                         + String(task.intervalUs) + "us",
+                                     LogModule::SYSTEM);
             }
 
             // Update current time

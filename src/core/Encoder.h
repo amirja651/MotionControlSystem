@@ -2,8 +2,9 @@
  * ESP32 High-Precision Motion Control System
  * Encoder Class
  *
- * Provides high-resolution position feedback with advanced signal processing,
- * including quadrature decoding, digital filtering, and interpolation.
+ * Provides high-resolution position feedback with advanced signal
+ * processing, including quadrature decoding, digital filtering, and
+ * interpolation.
  */
 
 #ifndef ENCODER_H
@@ -12,12 +13,13 @@
 #include <Arduino.h>
 
 #include "../Configuration.h"
+#include "../hardware/GPIOManager.h"
 #include "../utils/CircularBuffer.h"
 #include "../utils/Logger.h"
 #include "../utils/MathUtils.h"
 
 class Encoder {
-   public:
+public:
     /**
      * Constructor
      *
@@ -25,12 +27,14 @@ class Encoder {
      * @param encBPin Encoder B pin
      * @param pulsesPerRev Encoder pulses per revolution
      * @param invertDirection Whether to invert the direction
+     * @param index Motor index for identification
      * @param logger Pointer to logger instance
      */
     Encoder(uint8_t  encAPin,
             uint8_t  encBPin,
             uint16_t pulsesPerRev    = CONFIG_ENCODER_DEFAULT_PPR,
             bool     invertDirection = false,
+            uint8_t  index           = 0,
             Logger*  logger          = nullptr);
 
     /**
@@ -105,20 +109,23 @@ class Encoder {
     /**
      * Set the velocity filter time constant
      *
-     * @param alpha Filter coefficient (0.0 - 1.0, higher = less filtering)
+     * @param alpha Filter coefficient (0.0 - 1.0, higher = less
+     * filtering)
      */
     void setVelocityFilterAlpha(float alpha);
 
     /**
      * Set the position filter time constant
      *
-     * @param alpha Filter coefficient (0.0 - 1.0, higher = less filtering)
+     * @param alpha Filter coefficient (0.0 - 1.0, higher = less
+     * filtering)
      */
     void setPositionFilterAlpha(float alpha);
 
     /**
      * Update encoder position and velocity
-     * Must be called at regular intervals for accurate velocity calculation
+     * Must be called at regular intervals for accurate velocity
+     * calculation
      *
      * @param deltaTimeUs Time since last update in microseconds
      */
@@ -141,7 +148,7 @@ class Encoder {
      */
     uint32_t getCountsPerRevolution() const;
 
-   private:
+private:
     // Logger instance
     Logger* m_logger;
 
@@ -154,10 +161,14 @@ class Encoder {
     uint8_t  m_interpolationFactor;
     bool     m_invertDirection;
 
+    // Index for motor identification
+    uint8_t m_index;
+
     // Current state
-    volatile int32_t  m_position;
-    volatile uint8_t  m_stateAB;      // Current A/B state (bits 0-1)
-    volatile uint32_t m_transitions;  // Total transitions count for diagnostics
+    volatile int32_t m_position;
+    volatile uint8_t m_stateAB;  // Current A/B state (bits 0-1)
+    volatile uint32_t
+        m_transitions;  // Total transitions count for diagnostics
 
     // Position and velocity tracking
     float m_filteredPosition;
@@ -182,7 +193,8 @@ class Encoder {
     int8_t m_direction;
 
     /**
-     * Calculate the encoder velocity based on position change and time
+     * Calculate the encoder velocity based on position change and
+     * time
      *
      * @param positionChange Change in position
      * @param deltaTimeUs Time since last update in microseconds
@@ -207,6 +219,24 @@ class Encoder {
      * @return Direction: 1 for forward, -1 for reverse, 0 for invalid
      */
     int8_t determineDirection(uint8_t stateAB, uint8_t prevStateAB);
+
+    /**
+     * Validate encoder pin numbers
+     *
+     * @param pin Encoder pin number
+     * @param index Motor index
+     * @param errStr Error string
+     * @return True if pin is valid, false otherwise
+     */
+    bool gpioAllocatePin(uint8_t       pin,
+                         uint8_t       index,
+                         PinMode       mode,
+                         const String& owner,
+                         const String& errStr,
+                         GPIOManager*  gpioManager);
+
+
+    bool ValidatePinNumbers(uint8_t pin, uint8_t index, const String& errStr);
 };
 
 #endif  // ENCODER_H

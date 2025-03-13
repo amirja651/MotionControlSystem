@@ -36,17 +36,18 @@ enum class LogLevel {
  * Module identifiers for module-specific logging control
  */
 enum class LogModule : uint8_t {
-    SYSTEM          = 0,  // System-wide logs
-    MOTOR_MANAGER   = 1,  // Motor manager logs
-    STEPPER_DRIVER  = 2,  // Stepper driver logs
-    PID_CONTROLLER  = 3,  // PID controller logs
-    ENCODER         = 4,  // Encoder logs
-    SAFETY_MONITOR  = 5,  // Safety monitor logs
-    COMMAND_HANDLER = 6,  // Command handler logs
-    CUSTOM_1        = 7,  // Custom module 1
-    CUSTOM_2        = 8,  // Custom module 2
-    CUSTOM_3        = 9,  // Custom module 3
-    MAX_MODULES     = 10  // Maximum number of modules
+    SYSTEM          = 0,   // System-wide logs
+    MOTOR_MANAGER   = 1,   // Motor manager logs
+    STEPPER_DRIVER  = 2,   // Stepper driver logs
+    PID_CONTROLLER  = 3,   // PID controller logs
+    ENCODER         = 4,   // Encoder logs
+    SAFETY_MONITOR  = 5,   // Safety monitor logs
+    COMMAND_HANDLER = 6,   // Command handler logs
+    CUSTOM_1        = 7,   // Custom module 1
+    CUSTOM_2        = 8,   // Custom module 2
+    CUSTOM_3        = 9,   // Custom module 3
+    MAX_MODULES     = 10,  // Maximum number of modules
+    MOTOR           = 11   // Motor logs
 };
 
 /**
@@ -56,7 +57,7 @@ struct LogEntry {
     uint32_t  timestamp;  // Timestamp in milliseconds
     LogLevel  level;      // Log level
     LogModule module;     // Source module
-    String    message;    // Log message (using reference counting to avoid copies)
+    String message;  // Log message (using reference counting to avoid copies)
 };
 
 /**
@@ -79,7 +80,7 @@ struct LoggerTaskParams {
  * Logger class for diagnostic logging
  */
 class Logger {
-   public:
+public:
     /**
      * Constructor
      */
@@ -97,8 +98,9 @@ class Logger {
      * @param taskParams FreeRTOS task parameters
      * @return True if initialization successful, false otherwise
      */
-    virtual bool initialize(uint32_t                serialBaudRate = 0,
-                            const LoggerTaskParams& taskParams     = LoggerTaskParams());
+    virtual bool initialize(
+        uint32_t                serialBaudRate = 0,
+        const LoggerTaskParams& taskParams     = LoggerTaskParams());
 
     /**
      * Set global log level
@@ -153,7 +155,8 @@ class Logger {
      * @param message Message to log
      * @param module Source module (default: SYSTEM)
      */
-    virtual void logError(const String& message, LogModule module = LogModule::SYSTEM);
+    virtual void logError(const String& message,
+                          LogModule     module = LogModule::SYSTEM);
 
     /**
      * Log a warning message
@@ -161,7 +164,8 @@ class Logger {
      * @param message Message to log
      * @param module Source module (default: SYSTEM)
      */
-    virtual void logWarning(const String& message, LogModule module = LogModule::SYSTEM);
+    virtual void logWarning(const String& message,
+                            LogModule     module = LogModule::SYSTEM);
 
     /**
      * Log an info message
@@ -169,7 +173,8 @@ class Logger {
      * @param message Message to log
      * @param module Source module (default: SYSTEM)
      */
-    virtual void logInfo(const String& message, LogModule module = LogModule::SYSTEM);
+    virtual void logInfo(const String& message,
+                         LogModule     module = LogModule::SYSTEM);
 
     /**
      * Log a debug message
@@ -177,7 +182,8 @@ class Logger {
      * @param message Message to log
      * @param module Source module (default: SYSTEM)
      */
-    virtual void logDebug(const String& message, LogModule module = LogModule::SYSTEM);
+    virtual void logDebug(const String& message,
+                          LogModule     module = LogModule::SYSTEM);
 
     /**
      * Log a verbose message
@@ -185,7 +191,8 @@ class Logger {
      * @param message Message to log
      * @param module Source module (default: SYSTEM)
      */
-    virtual void logVerbose(const String& message, LogModule module = LogModule::SYSTEM);
+    virtual void logVerbose(const String& message,
+                            LogModule     module = LogModule::SYSTEM);
 
     /**
      * Process any pending log entries
@@ -250,7 +257,7 @@ class Logger {
      */
     static String moduleToString(LogModule module);
 
-   private:
+private:
     // Logger state
     LogLevel m_globalLogLevel;
     bool     m_serialOutputEnabled;

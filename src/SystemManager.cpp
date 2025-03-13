@@ -6,7 +6,8 @@
 #include "SystemManager.h"
 
 SystemManager::SystemManager()
-    : m_statusReporter(nullptr),
+    : m_serialCommand(nullptr),
+      m_statusReporter(nullptr),
       m_safetyMonitor(nullptr),
       m_motorManager(nullptr),
       m_taskScheduler(nullptr),
@@ -24,6 +25,7 @@ SystemManager::SystemManager()
 
 SystemManager::~SystemManager() {
     // Clean up resources
+    delete m_serialCommand;
     delete m_statusReporter;
     delete m_safetyMonitor;
     delete m_motorManager;
@@ -38,45 +40,71 @@ bool SystemManager::initialize() {
 
     // Create system components in the correct order
 
-    // EEPROM Manager first as it's needed by other components
-    m_eepromManager = new EEPROMManager();
-    if (!m_eepromManager->initialize()) {
-        return false;
-    }
+    // Initialize logger with custom task parameters for better performance
+    LoggerTaskParams loggerParams;
+    loggerParams.taskStackSize = 3072;
+    loggerParams.taskPriority  = 2;
+    loggerParams.queueSize     = 30;
 
     // Logger for system-wide logging
     m_logger = new Logger();
-    if (!m_logger->initialize()) {
+    if (!m_logger->initialize(CONFIG_SERIAL_BAUD_RATE, loggerParams)) {
+        String output = ANSI_COLOR_RED;
+        output += "Logger initialization failed";
+        output += ANSI_COLOR_RESET;
+        Serial.println(output);
+
+        while (1) {
+            delay(1000);
+        }
+    }
+
+    // Configure module-specific log levels
+    m_logger->setModuleLogLevel(LogModule::MOTOR_MANAGER, LogLevel::INFO);
+    m_logger->setModuleLogLevel(LogModule::STEPPER_DRIVER, LogLevel::INFO);
+    m_logger->setModuleLogLevel(LogModule::PID_CONTROLLER, LogLevel::WARNING);
+    m_logger->setModuleLogLevel(LogModule::SAFETY_MONITOR, LogLevel::INFO);
+    m_logger->logInfo("System initializing...", LogModule::SYSTEM);
+
+    // Initialize The EEPROM Manager first as it's needed by other components
+    m_eepromManager = new EEPROMManager(m_logger);
+    if (!m_eepromManager->initialize()) {
+        m_logger->logError("Failed to initialize EEPROM manager", LogModule::SYSTEM);
         return false;
     }
 
-    m_logger->logInfo("System initializing...", LogModule::SYSTEM);
-
-    // Task scheduler
-    m_taskScheduler = new TaskScheduler();
+    // Initialize the Task scheduler
+    m_taskScheduler = new TaskScheduler(m_logger);
     if (!m_taskScheduler->initialize()) {
         m_logger->logError("Failed to initialize task scheduler", LogModule::SYSTEM);
         return false;
     }
 
-    // Motor manager for motion control
-    m_motorManager = new MotorManager(CONFIG_MAX_MOTORS, m_logger);
+    // Initialize the Motor manager with the configured motors
+    m_motorManager = new MotorManager(CONFIG_MAX_MOTORS, m_eepromManager, m_logger);
     if (!m_motorManager->initialize()) {
         m_logger->logError("Failed to initialize motor manager", LogModule::SYSTEM);
         return false;
     }
 
-    // Safety monitor
+    // Initialize The Safety monitor
     m_safetyMonitor = new SafetyMonitor(m_motorManager, m_logger);
     if (!m_safetyMonitor->initialize()) {
         m_logger->logError("Failed to initialize safety monitor", LogModule::SYSTEM);
         return false;
     }
 
-    // Status reporter
-    m_statusReporter = new StatusReporter(this);
+    // Initialize The Status reporter
+    m_statusReporter = new StatusReporter(this, CONFIG_STATUS_UPDATE_FREQUENCY_HZ);
     if (!m_statusReporter->initialize()) {
         m_logger->logError("Failed to initialize status reporter", LogModule::SYSTEM);
+        return false;
+    }
+
+    // Initialize The Serial command interface
+    m_serialCommand = new SerialCommand(this);
+    if (!m_serialCommand->initialize()) {
+        m_logger->logError("Failed to initialize serial command", LogModule::SYSTEM);
         return false;
     }
 
@@ -127,6 +155,10 @@ void SystemManager::setStatusReporter(StatusReporter *reporter) {
 
 EEPROMManager *SystemManager::getEEPROMManager() {
     return m_eepromManager;
+}
+
+SerialCommand *SystemManager::getSerialCommand() {
+    return m_serialCommand;
 }
 
 void SystemManager::setSystemState(SystemState state) {
