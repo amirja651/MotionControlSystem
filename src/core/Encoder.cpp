@@ -34,7 +34,7 @@ Encoder::Encoder(uint8_t  encAPin,
 
 bool Encoder::initialize() {
     // Get GPIO manager instance
-    GPIOManager* gpioManager = GPIOManager::getInstance();
+    GPIOManager* gpioManager = GPIOManager::getInstance(m_logger);
     if (gpioManager == nullptr) {
         m_logger->logError("GPIO Manager not available for motor manager",
                            LogModule::ENCODER);

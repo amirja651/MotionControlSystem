@@ -26,27 +26,27 @@ SafetyMonitor::SafetyMonitor(MotorManager* motorManager, Logger* logger)
       m_minVoltage(CONFIG_VOLTAGE_MIN),
       m_maxVoltage(CONFIG_VOLTAGE_MAX),
       m_voltageWarningThreshold(CONFIG_VOLTAGE_WARNING_THRESHOLD),
-      m_lastCheckTimeMs(0) {
-}
+      m_lastCheckTimeMs(0) {}
 
 bool SafetyMonitor::initialize() {
     // Validate pin numbers (ESP32 has GPIO pins 0-39)
     if (CONFIG_VOLTAGE_SENSE_PIN != 0xFF && CONFIG_VOLTAGE_SENSE_PIN > 39) {
-        m_logger->logError(
-            "Invalid voltage monitoring pin for motor: " + String(CONFIG_VOLTAGE_SENSE_PIN),
-            LogModule::MOTOR_MANAGER);
+        m_logger->logError("Invalid voltage monitoring pin for motor: "
+                               + String(CONFIG_VOLTAGE_SENSE_PIN),
+                           LogModule::MOTOR_MANAGER);
         return false;
     }
 
     // Initialize emergency stop pin if configured
     if (m_emergencyStopPin != 0xFF && m_emergencyStopPin > 39) {
-        m_logger->logError("Invalid emergency stop pin for motor: " + String(m_emergencyStopPin),
+        m_logger->logError("Invalid emergency stop pin for motor: "
+                               + String(m_emergencyStopPin),
                            LogModule::MOTOR_MANAGER);
         return false;
     }
 
     // Get GPIO manager instance
-    GPIOManager* gpioManager = GPIOManager::getInstance();
+    GPIOManager* gpioManager = GPIOManager::getInstance(m_logger);
 
     // Validate GPIO manager
     if (gpioManager == nullptr) {
@@ -57,11 +57,12 @@ bool SafetyMonitor::initialize() {
     }
 
     // Attempt to allocate pin for analog input
-    if (!gpioManager->allocatePin(
-            CONFIG_VOLTAGE_SENSE_PIN, PinMode::ANALOG_INPUT_PIN, "VoltageMonitoring")) {
-        m_logger->logError(
-            "Failed to allocate voltage sense pin: " + String(CONFIG_VOLTAGE_SENSE_PIN),
-            LogModule::SAFETY_MONITOR);
+    if (!gpioManager->allocatePin(CONFIG_VOLTAGE_SENSE_PIN,
+                                  PinMode::ANALOG_INPUT_PIN,
+                                  "VoltageMonitoring")) {
+        m_logger->logError("Failed to allocate voltage sense pin: "
+                               + String(CONFIG_VOLTAGE_SENSE_PIN),
+                           LogModule::SAFETY_MONITOR);
         return false;
     }
 
@@ -212,17 +213,11 @@ bool SafetyMonitor::resetEmergencyStop() {
     return true;
 }
 
-bool SafetyMonitor::isEmergencyStop() const {
-    return m_emergencyStopActive;
-}
+bool SafetyMonitor::isEmergencyStop() const { return m_emergencyStopActive; }
 
-SystemSafetyStatus SafetyMonitor::getStatus() const {
-    return m_status;
-}
+SystemSafetyStatus SafetyMonitor::getStatus() const { return m_status; }
 
-SafetyCode SafetyMonitor::getLastSafetyCode() const {
-    return m_lastCode;
-}
+SafetyCode SafetyMonitor::getLastSafetyCode() const { return m_lastCode; }
 
 void SafetyMonitor::setEmergencyStopPin(uint8_t pin, uint8_t activeLevel) {
     m_emergencyStopPin           = pin;
@@ -235,17 +230,20 @@ void SafetyMonitor::setEmergencyStopPin(uint8_t pin, uint8_t activeLevel) {
     }
 }
 
-void SafetyMonitor::setPositionTolerances(uint32_t warningThreshold, uint32_t errorThreshold) {
+void SafetyMonitor::setPositionTolerances(uint32_t warningThreshold,
+                                          uint32_t errorThreshold) {
     m_positionWarningThreshold = warningThreshold;
     m_positionErrorThreshold   = errorThreshold;
 }
 
-void SafetyMonitor::setVelocityTolerances(float warningThreshold, float errorThreshold) {
+void SafetyMonitor::setVelocityTolerances(float warningThreshold,
+                                          float errorThreshold) {
     m_velocityWarningThreshold = warningThreshold;
     m_velocityErrorThreshold   = errorThreshold;
 }
 
-void SafetyMonitor::setTemperatureTolerances(float warningThreshold, float errorThreshold) {
+void SafetyMonitor::setTemperatureTolerances(float warningThreshold,
+                                             float errorThreshold) {
     m_temperatureWarningThreshold = warningThreshold;
     m_temperatureErrorThreshold   = errorThreshold;
 }
@@ -317,8 +315,7 @@ SafetyCode SafetyMonitor::checkMotorSafety() {
                         case MotorError::ENCODER_ERROR:
                             return SafetyCode::ENCODER_ERROR;
 
-                        default:
-                            return SafetyCode::NONE;
+                        default: return SafetyCode::NONE;
                     }
                 }
             }
@@ -330,7 +327,8 @@ SafetyCode SafetyMonitor::checkMotorSafety() {
         Motor* motor = m_motorManager->getMotor(i);
         if (motor != nullptr && motor->isEnabled()
             && motor->getControlMode() == MotorControlMode::POSITION) {
-            int32_t positionError = abs(motor->getCurrentPosition() - motor->getTargetPosition());
+            int32_t positionError =
+                abs(motor->getCurrentPosition() - motor->getTargetPosition());
 
             if (positionError > m_positionErrorThreshold) {
                 return SafetyCode::POSITION_ERROR;
@@ -345,7 +343,8 @@ SafetyCode SafetyMonitor::checkMotorSafety() {
         Motor* motor = m_motorManager->getMotor(i);
         if (motor != nullptr && motor->isEnabled()
             && motor->getControlMode() == MotorControlMode::VELOCITY) {
-            float velocityError = fabs(motor->getCurrentVelocity() - motor->getTargetVelocity());
+            float velocityError =
+                fabs(motor->getCurrentVelocity() - motor->getTargetVelocity());
 
             if (velocityError > m_velocityErrorThreshold) {
                 return SafetyCode::VELOCITY_ERROR;
@@ -360,7 +359,8 @@ SafetyCode SafetyMonitor::checkMotorSafety() {
 
 SafetyCode SafetyMonitor::checkSystemConditions() {
     // This is a placeholder for system condition checks
-    // In a real implementation, you would check things like temperature, voltage, etc.
+    // In a real implementation, you would check things like temperature,
+    // voltage, etc.
 
     // Example: Check temperature (simulated)
     float temperature = 0.0f;
@@ -401,7 +401,8 @@ SafetyCode SafetyMonitor::checkSystemConditions() {
     float voltageMin = m_voltageBuffer.minimum();
     float voltageMax = m_voltageBuffer.maximum();
 
-    if (voltageMax - voltageMin > m_voltageWarningThreshold * (m_maxVoltage - m_minVoltage)) {
+    if (voltageMax - voltageMin
+        > m_voltageWarningThreshold * (m_maxVoltage - m_minVoltage)) {
         return SafetyCode::POWER_SUPPLY_FLUCTUATION;
     }
 #endif  // CONFIG_POWER_MONITORING_ENABLED
@@ -409,103 +410,77 @@ SafetyCode SafetyMonitor::checkSystemConditions() {
     return SafetyCode::NONE;
 }
 
-void SafetyMonitor::logSafetyEvent(SystemSafetyStatus status, SafetyCode code) {
+void SafetyMonitor::logSafetyEvent(SystemSafetyStatus status,
+                                   SafetyCode         code) {
     if (m_logger == nullptr) {
         return;
     }
 
     String statusStr;
     switch (status) {
-        case SystemSafetyStatus::NORMAL:
-            statusStr = "Normal";
-            break;
-        case SystemSafetyStatus::WARNING:
-            statusStr = "Warning";
-            break;
-        case SystemSafetyStatus::ERROR:
-            statusStr = "Error";
-            break;
+        case SystemSafetyStatus::NORMAL: statusStr = "Normal"; break;
+        case SystemSafetyStatus::WARNING: statusStr = "Warning"; break;
+        case SystemSafetyStatus::ERROR: statusStr = "Error"; break;
         case SystemSafetyStatus::EMERGENCY_STOP:
             statusStr = "Emergency Stop";
             break;
-        default:
-            statusStr = "Unknown";
-            break;
+        default: statusStr = "Unknown"; break;
     }
 
     String codeStr;
     switch (code) {
-        case SafetyCode::NONE:
-            codeStr = "None";
-            break;
+        case SafetyCode::NONE: codeStr = "None"; break;
         case SafetyCode::POSITION_DEVIATION:
             codeStr = "Position Deviation";
             break;
         case SafetyCode::VELOCITY_DEVIATION:
             codeStr = "Velocity Deviation";
             break;
-        case SafetyCode::HIGH_TEMPERATURE:
-            codeStr = "High Temperature";
-            break;
+        case SafetyCode::HIGH_TEMPERATURE: codeStr = "High Temperature"; break;
         case SafetyCode::POWER_SUPPLY_FLUCTUATION:
             codeStr = "Power Supply Fluctuation";
             break;
-        case SafetyCode::POSITION_ERROR:
-            codeStr = "Position Error";
-            break;
-        case SafetyCode::VELOCITY_ERROR:
-            codeStr = "Velocity Error";
-            break;
+        case SafetyCode::POSITION_ERROR: codeStr = "Position Error"; break;
+        case SafetyCode::VELOCITY_ERROR: codeStr = "Velocity Error"; break;
         case SafetyCode::LIMIT_SWITCH_TRIGGERED:
             codeStr = "Limit Switch Triggered";
             break;
-        case SafetyCode::DRIVER_FAULT:
-            codeStr = "Driver Fault";
-            break;
-        case SafetyCode::ENCODER_ERROR:
-            codeStr = "Encoder Error";
-            break;
+        case SafetyCode::DRIVER_FAULT: codeStr = "Driver Fault"; break;
+        case SafetyCode::ENCODER_ERROR: codeStr = "Encoder Error"; break;
         case SafetyCode::CONTROL_LOOP_TIMING:
             codeStr = "Control Loop Timing";
             break;
         case SafetyCode::CRITICAL_TEMPERATURE:
             codeStr = "Critical Temperature";
             break;
-        case SafetyCode::POWER_FAILURE:
-            codeStr = "Power Failure";
-            break;
+        case SafetyCode::POWER_FAILURE: codeStr = "Power Failure"; break;
         case SafetyCode::COMMUNICATION_TIMEOUT:
             codeStr = "Communication Timeout";
             break;
         case SafetyCode::EMERGENCY_STOP_PRESSED:
             codeStr = "Emergency Stop Pressed";
             break;
-        default:
-            codeStr = "Unknown";
-            break;
+        default: codeStr = "Unknown"; break;
     }
 
     String message = "Safety " + statusStr + ": " + codeStr;
 
     // Log based on status
     switch (status) {
-        case SystemSafetyStatus::WARNING:
-            m_logger->logWarning(message);
-            break;
+        case SystemSafetyStatus::WARNING: m_logger->logWarning(message); break;
         case SystemSafetyStatus::ERROR:
         case SystemSafetyStatus::EMERGENCY_STOP:
             m_logger->logError(message);
             break;
-        default:
-            m_logger->logInfo(message);
-            break;
+        default: m_logger->logInfo(message); break;
     }
 }
 
 float SafetyMonitor::readVoltageSensor() {
 // Skip voltage reading if power monitoring is disabled
 #if !CONFIG_POWER_MONITORING_ENABLED
-    return (m_minVoltage + m_maxVoltage) / 2.0f;  // Return a safe value in the middle of the range
+    return (m_minVoltage + m_maxVoltage)
+           / 2.0f;  // Return a safe value in the middle of the range
 #else
 
     // Read raw analog value
@@ -520,8 +495,8 @@ float SafetyMonitor::readVoltageSensor() {
     // voltage *= (R1 + R2) / R2;
 
     // Optional: Log voltage reading for debugging
-    m_logger->logDebug("Voltage Sensor: Raw=" + String(rawValue) + ", Voltage=" + String(voltage, 2)
-                       + "V");
+    m_logger->logDebug("Voltage Sensor: Raw=" + String(rawValue)
+                       + ", Voltage=" + String(voltage, 2) + "V");
     return voltage;
 #endif  // CONFIG_POWER_MONITORING_ENABLED
 }
